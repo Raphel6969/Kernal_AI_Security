@@ -1,0 +1,115 @@
+ls -la
+ls
+pwd
+echo hello
+cat /etc/hostname
+whoami
+id
+uname -a
+date
+ps aux
+top -b -n 1
+df -h
+free -h
+uptime
+hostname
+ifconfig
+ip addr
+netstat -tulpn
+ss -tulpn
+lsof -i :8080
+curl https://www.google.com
+wget https://www.google.com
+ping -c 4 google.com
+traceroute google.com
+nslookup google.com
+dig google.com
+grep root /etc/passwd
+find /tmp -name "*.log"
+find / -type f -name "*.txt" -mtime +7
+tar -xzf archive.tar.gz
+zip -r folder.zip folder
+unzip file.zip
+gzip file.txt
+gunzip file.txt.gz
+mkdir test_folder
+rmdir test_folder
+cp file.txt file_backup.txt
+mv old_name.txt new_name.txt
+rm test.txt
+chmod 644 file.txt
+chown user:group file.txt
+sudo systemctl status nginx
+systemctl restart apache2
+apt-get update
+apt-get install -y curl
+apt-cache search nginx
+apt-get upgrade
+yum install -y httpd
+pacman -S nginx
+git clone https://github.com/example/repo.git
+git pull
+git status
+git log --oneline
+git branch -a
+docker ps
+docker images
+docker run -d nginx
+docker logs container_id
+systemctl start mysql
+mysql -u root -p
+psql -U postgres
+sqlite3 database.db
+python3 -c "print('hello world')"
+python3 script.py
+node app.js
+npm install
+npm update
+npm run build
+java -version
+gcc --version
+make
+make install
+./configure
+dpkg -l
+rpm -qa
+journalctl -u nginx
+tail -f /var/log/syslog
+less /var/log/auth.log
+head -20 /var/log/apache2/access.log
+screen -S session_name
+tmux new-session -s main
+ssh user@host
+scp file.txt user@host:/tmp/
+rsync -av source/ destination/
+ftp ftp.example.com
+sftp user@host
+cron jobs
+crontab -e
+at 14:00 tomorrow
+sleep 10
+wait
+exit
+source ~/.bashrc
+export PATH=/usr/local/bin:$PATH
+alias ls='ls -lh'
+history
+which python3
+whereis grep
+type cd
+readlink /usr/bin/python3
+file /etc/passwd
+stat file.txt
+touch newfile.txt
+nano file.txt
+vi file.txt
+vim file.txt
+od -c file.txt
+hexdump -C file.txt
+strings binary_file
+ldd /usr/bin/python3
+nm /usr/bin/python3
+objdump -d binary_file
+strace ls -la
+ltrace ls -la
+dmesg | tail -20

