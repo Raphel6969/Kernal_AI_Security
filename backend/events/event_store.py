@@ -4,6 +4,7 @@ Maintains a rolling buffer of the most recent events.
 """
 
 from collections import deque
+import threading
 from typing import List
 from backend.events.models import SecurityEvent
 
@@ -23,6 +24,7 @@ class EventStore:
         """
         self.max_events = max_events
         self.events: deque = deque(maxlen=max_events)
+        self._lock = threading.Lock()
 
     def append(self, event: SecurityEvent) -> None:
         """
@@ -31,7 +33,8 @@ class EventStore:
         Args:
             event: SecurityEvent to store
         """
-        self.events.append(event)
+        with self._lock:
+            self.events.append(event)
 
     def get_recent(self, n: int = 100) -> List[SecurityEvent]:
         """
@@ -43,7 +46,10 @@ class EventStore:
         Returns:
             List of SecurityEvent objects (oldest to newest)
         """
-        return list(self.events)[-n:] if n > 0 else []
+        if n <= 0:
+            return []
+        with self._lock:
+            return list(self.events)[-n:]
 
     def get_all(self) -> List[SecurityEvent]:
         """
@@ -52,15 +58,18 @@ class EventStore:
         Returns:
             List of all SecurityEvent objects
         """
-        return list(self.events)
+        with self._lock:
+            return list(self.events)
 
     def clear(self) -> None:
         """Clear all events from the store."""
-        self.events.clear()
+        with self._lock:
+            self.events.clear()
 
     def size(self) -> int:
         """Get the current number of events in the store."""
-        return len(self.events)
+        with self._lock:
+            return len(self.events)
 
     def get_by_classification(self, classification: str) -> List[SecurityEvent]:
         """
@@ -72,7 +81,11 @@ class EventStore:
         Returns:
             List of matching SecurityEvent objects
         """
-        return [e for e in self.events if e.detection_result.classification == classification]
+        with self._lock:
+            return [
+                e for e in self.events
+                if e.detection_result.classification == classification
+            ]
 
     def get_malicious_count(self) -> int:
         """Get count of malicious events."""

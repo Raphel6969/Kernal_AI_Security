@@ -12,7 +12,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from fastapi import FastAPI, WebSocket, HTTPException
+from fastapi import FastAPI, WebSocket, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Set
@@ -54,10 +54,16 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS middleware for frontend
+# CORS middleware for frontend (restrict origins via env in production)
+frontend_origins_env = os.getenv(
+    "FRONTEND_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173",
+)
+allowed_origins = [origin.strip() for origin in frontend_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (restrict in production)
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,6 +77,8 @@ pipeline = get_detection_pipeline()
 event_store = get_event_store(max_events=1000)
 hook_manager = get_hook_manager()
 active_websockets: Set[WebSocket] = set()
+active_websockets_lock = asyncio.Lock()
+main_event_loop = None
 
 # ==============================================================================
 # Startup & Shutdown
@@ -79,7 +87,10 @@ active_websockets: Set[WebSocket] = set()
 @app.on_event("startup")
 async def startup_event():
     """Initialize backend systems on startup."""
+    global main_event_loop
+
     print("🚀 Starting AI Bouncer backend...")
+    main_event_loop = asyncio.get_running_loop()
     
     # Start kernel monitoring
     try:
@@ -172,7 +183,7 @@ async def analyze_command(request: CommandAnalysisRequest):
 
 
 @app.get("/events")
-async def get_events(limit: int = 100):
+async def get_events(limit: int = Query(default=100, ge=1, le=1000)):
     """
     Get recent security events.
     
@@ -208,10 +219,12 @@ async def websocket_endpoint(websocket: WebSocket):
     Broadcasts security events to all connected clients.
     """
     await websocket.accept()
-    active_websockets.add(websocket)
+    async with active_websockets_lock:
+        active_websockets.add(websocket)
+        active_count = len(active_websockets)
     
     try:
-        print(f"📡 WebSocket client connected ({len(active_websockets)} active)")
+        print(f"📡 WebSocket client connected ({active_count} active)")
         
         # Send recent events to new client
         recent_events = event_store.get_recent(100)
@@ -232,8 +245,10 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"❌ WebSocket error: {e}")
     
     finally:
-        active_websockets.discard(websocket)
-        print(f"📡 WebSocket client disconnected ({len(active_websockets)} active)")
+        async with active_websockets_lock:
+            active_websockets.discard(websocket)
+            active_count = len(active_websockets)
+        print(f"📡 WebSocket client disconnected ({active_count} active)")
 
 
 async def broadcast_event(event: SecurityEvent):
@@ -244,8 +259,12 @@ async def broadcast_event(event: SecurityEvent):
         event: SecurityEvent to broadcast
     """
     dead_connections = set()
-    
-    for websocket in active_websockets:
+
+    # Snapshot avoids set-size-change errors during iteration.
+    async with active_websockets_lock:
+        websockets_snapshot = list(active_websockets)
+
+    for websocket in websockets_snapshot:
         try:
             await websocket.send_json(event.dict())
         except Exception as e:
@@ -253,8 +272,10 @@ async def broadcast_event(event: SecurityEvent):
             dead_connections.add(websocket)
     
     # Cleanup dead connections
-    for ws in dead_connections:
-        active_websockets.discard(ws)
+    if dead_connections:
+        async with active_websockets_lock:
+            for ws in dead_connections:
+                active_websockets.discard(ws)
 
 
 # ==============================================================================
@@ -302,10 +323,15 @@ async def process_execve_event(command: str):
 def _setup_kernel_callback():
     """Setup the kernel monitor to call our async handler."""
     def sync_callback(event):
-        # This will be called from the kernel monitor thread
-        # We need to run the async function in the event loop
+        # Called from monitor thread; schedule work safely on the main event loop.
         try:
-            asyncio.create_task(process_execve_event(str(event)))
+            command = str(event)
+            if main_event_loop and main_event_loop.is_running():
+                main_event_loop.call_soon_threadsafe(
+                    lambda: asyncio.create_task(process_execve_event(command))
+                )
+            else:
+                print("⚠️ Main event loop not ready; dropping kernel event")
         except Exception as e:
             print(f"❌ Error processing kernel event: {e}")
     
