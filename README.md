@@ -8,7 +8,7 @@
 2. **AI Bouncer**: Machine learning + rule-based threat detection
 3. **Dashboard**: Real-time visualization of detected threats
 
-This is a hackathon project. API + dashboard run well on Windows/Linux, while kernel eBPF hooks require Linux (kernel 5.4+).
+This is a hackathon project. API + dashboard run well on Windows/Linux, while kernel eBPF hooks require Linux (kernel 5.4+). On WSL2, the backend falls back to API-only mode and skips eBPF pre-compilation.
 
 ---
 
@@ -53,6 +53,8 @@ cd frontend && npm run dev
 
 # Open http://localhost:5173
 ```
+
+If you are on WSL2, keep the same backend and frontend setup, but expect kernel monitoring to degrade gracefully. The Python BCC loader will still run, while the Makefile pre-compilation step is optional and skipped on WSL2.
 
 ---
 
@@ -275,15 +277,15 @@ LOG_LEVEL=INFO
 
 ### Phase Status
 - [x] Phase 1: Infrastructure & Setup
-- [ ] Phase 2: Kernel Guard (eBPF)
-- [ ] Phase 3: AI Bouncer Detection
-- [ ] Phase 4: FastAPI Integration
-- [ ] Phase 5: React Dashboard
-- [ ] Phase 6: Demo & Polish
+- [x] Phase 2: Kernel Guard (eBPF) - In-kernel execve monitoring via ring buffer
+- [x] Phase 3: Real-time integration - kernel events flow into detection, storage, and WebSocket broadcast
+- [x] Phase 4: React dashboard live updates and severity highlighting
+- [ ] Phase 5: Demo & polish (additional hardening, packaging, and optional persistence)
 
 ### Known Limitations (MVP)
 - eBPF monitoring is Linux-only (API/dashboard run cross-platform)
 - Requires root/CAP_BPF for eBPF
+- On WSL2, eBPF pre-compilation is intentionally skipped and the backend runs in API-only mode
 - LLM reasoning deferred to post-MVP
 - No persistence (in-memory events only)
 
@@ -298,6 +300,8 @@ LOG_LEVEL=INFO
 
 ## 📚 Documentation
 
+- [docs/README.md](docs/README.md) - Documentation hub and entry point
+- [docs/QUICK_START.md](docs/QUICK_START.md) - Fast setup and test flow
 - [SETUP.md](docs/SETUP.md) - Detailed Linux environment setup
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design deep dive
 - [API.md](docs/API.md) - Complete API reference
@@ -326,6 +330,7 @@ Hackathon Project - MIT License
 - Check kernel version: `uname -r` (need 5.4+)
 - Verify BCC installed: `python3 -c 'from bcc import BPF'`
 - Try running as root: `sudo python backend/app.py`
+- On WSL2, this is expected; the system should continue in API-only mode
 
 **ML model not found**
 - Train model first: `python backend/models/train_model.py`
@@ -338,4 +343,4 @@ Hackathon Project - MIT License
 
 ---
 
-Built with ❤️ for the Hackathon
+Built for the Hackathon

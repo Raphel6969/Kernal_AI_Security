@@ -80,3 +80,18 @@ echo ""
 echo "⚡ Verify setup:"
 echo "   $ clang --version"
 echo "   $ python3 -c 'from bcc import BPF'"
+echo ""
+echo "🔨 Compiling eBPF program..."
+cd "$(dirname "$0")/../kernel"
+if make check; then
+    echo "✅ All eBPF build tools verified"
+    make clean
+    make all
+    echo "✅ eBPF program compiled: $(pwd)/.output/execve_hook.o"
+else
+    echo "⚠️  eBPF build check failed - see above for details"
+    exit 1
+fi
+echo ""
+echo "🎉 Kernel Guard Phase 2 setup complete!"
+echo "   Ready to monitor execve syscalls with eBPF"

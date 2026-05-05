@@ -94,13 +94,28 @@ python3 -c "from bcc import BPF; print('✓ BCC installed')"
 
 ### Build eBPF Program
 
-Once Phase 2 is complete, compile the eBPF program:
+**Phase 2: Kernel Guard** - Compile the eBPF program:
 ```bash
 cd kernel
-make
+make check    # Verify all build tools are installed
+make clean    # Clean previous builds
+make all      # Compile execve_hook.c → .output/execve_hook.o
 ```
 
-This compiles `execve_hook.c` → `execve_hook.o`
+This compiles the tracepoint hook using clang/llvm. The `.output/execve_hook.o` binary is automatically loaded by BCC when the backend starts.
+
+On WSL2, `make all` now prints a skip message instead of failing. That is expected: the backend uses BCC inline compilation and continues in API-only mode if kernel loading is unavailable.
+
+**Verify compilation**:
+```bash
+ls -lah kernel/.output/execve_hook.o
+```
+
+**Run the full setup**:
+The `scripts/setup_kernel.sh` now automatically:
+1. Installs all eBPF dependencies (clang, llvm, BCC)
+2. Installs kernel headers
+3. Compiles the eBPF program
 
 ## Step 4: Frontend Setup
 
@@ -248,20 +263,19 @@ python backend/models/train_model.py
 **Console shows "WebSocket closed"**
 
 1. Check backend is running and accessible
-2. Try reconnecting after 3 seconds (auto-retry is enabled)
+2. Reconnects now use exponential backoff with jitter, so allow a few seconds between retries
 3. Check browser console for errors
 
 ### Kernel monitoring not capturing events
 
-This is expected in MVP - Phase 2 (eBPF) will be integrated next. Currently, events only appear when using the API `/analyze` endpoint.
+This is expected on Windows and WSL2. Kernel capture requires Linux with eBPF support, while API and dashboard functionality continue to work.
 
 ## Next Steps
 
-1. **Phase 2**: Implement eBPF execve hook (currently a stub)
-2. **Phase 3**: Optimize detection rules and ML model
-3. **Phase 4**: Add LLM reasoning layer (Ollama integration)
-4. **Phase 5**: Add persistence (SQLite)
-5. **Phase 6**: Deploy to production environment
+1. **Persistence**: Add SQLite storage and log rotation
+2. **Alerting**: Add Slack, email, or SIEM integrations
+3. **Cross-platform kernels**: Explore ETW and DTrace backends
+4. **Packaging**: Add production deployment and release automation
 
 ## Support
 
