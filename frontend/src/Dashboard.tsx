@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import { useWebSocket } from './useWebSocket';
 import './Dashboard.css';
 
@@ -14,6 +14,7 @@ export function Dashboard() {
   const [webhooks, setWebhooks] = React.useState<any[]>([]);
   const [alertHistory, setAlertHistory] = React.useState<any[]>([]);
   const [newWebhookUrl, setNewWebhookUrl] = React.useState("");
+  const [remediationEnabled, setRemediationEnabled] = React.useState(false);
 
   const fetchWebhooks = () => {
     fetch('http://localhost:8000/webhooks')
@@ -26,6 +27,25 @@ export function Dashboard() {
     fetch('http://localhost:8000/alerts/history')
       .then((r) => r.json())
       .then(setAlertHistory)
+      .catch(console.error);
+  };
+
+  const fetchRemediationState = () => {
+    fetch('http://localhost:8000/settings/remediation')
+      .then((r) => r.json())
+      .then((d) => setRemediationEnabled(d.enabled))
+      .catch(console.error);
+  };
+
+  const toggleRemediation = () => {
+    const next = !remediationEnabled;
+    fetch('http://localhost:8000/settings/remediation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: next }),
+    })
+      .then((r) => r.json())
+      .then((d) => setRemediationEnabled(d.enabled))
       .catch(console.error);
   };
 
@@ -56,7 +76,7 @@ export function Dashboard() {
   React.useEffect(() => {
     fetchWebhooks();
     fetchAlertHistory();
-    // Fetch stats every second
+    fetchRemediationState();
     const interval = setInterval(() => {
       fetch('http://localhost:8000/stats')
         .then((r) => r.json())
@@ -172,6 +192,7 @@ export function Dashboard() {
                 <th>Severity</th>
                 <th>Confidence</th>
                 <th>Patterns</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -205,6 +226,18 @@ export function Dashboard() {
                   </td>
                   <td>{(event.ml_confidence * 100).toFixed(0)}%</td>
                   <td>{event.matched_rules.join(', ') || '-'}</td>
+                  <td>
+                    {event.remediation_status === 'success' && (
+                      <span className="badge" style={{ backgroundColor: '#7c3aed', fontSize: '11px' }} title="Process was automatically terminated">
+                        🛑 Killed
+                      </span>
+                    )}
+                    {event.remediation_status && event.remediation_status !== 'success' && (
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }} title={event.remediation_status}>
+                        {event.remediation_status}
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -213,6 +246,36 @@ export function Dashboard() {
       </div>
 
       <div className="two-column-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+        {/* Auto-Remediation Toggle */}
+        <div className="events-container" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px' }}>
+          <div>
+            <h2 style={{ margin: 0 }}>⚡ Auto-Remediation</h2>
+            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px' }}>
+              When <b>enabled</b>, malicious processes are automatically killed the moment they are detected.
+              Only effective on Linux with active kernel monitoring.
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={toggleRemediation}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: remediationEnabled ? '#ef4444' : '#64748b' } as CSSProperties}>
+              {remediationEnabled ? '🔴 ACTIVE' : '⚫ OFF'}
+            </span>
+            <div
+              id="remediation-toggle"
+              style={{
+                width: '52px', height: '28px', borderRadius: '14px', cursor: 'pointer',
+                backgroundColor: remediationEnabled ? '#ef4444' : '#cbd5e1',
+                position: 'relative', transition: 'background-color 0.2s',
+              } as CSSProperties}
+            >
+              <div style={{
+                width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'white',
+                position: 'absolute', top: '3px',
+                left: remediationEnabled ? '27px' : '3px',
+                transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+              } as CSSProperties} />
+            </div>
+          </div>
+        </div>
         <div className="events-container webhooks-container">
           <h2>Webhook Integrations</h2>
           <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '16px' }}>

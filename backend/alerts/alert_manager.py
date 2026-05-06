@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import uuid
 import json
@@ -11,13 +12,19 @@ import requests
 from backend.events.models import SecurityEvent
 from backend.alerts.models import WebhookResponse, AlertHistoryResponse
 
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_DEFAULT_DB_PATH = os.path.join(_PROJECT_ROOT, "data", "events.db")
+
 class AlertManager:
-    def __init__(self, db_path: str = "data/events.db"):
+    def __init__(self, db_path: str = _DEFAULT_DB_PATH):
         self.db_path = db_path
         self._lock = threading.Lock()
         self._init_db()
         
     def _init_db(self):
+        parent_dir = os.path.dirname(self.db_path)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS webhooks (

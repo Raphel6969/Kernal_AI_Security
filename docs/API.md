@@ -246,6 +246,82 @@ curl http://localhost:8000/stats | jq '.'
 
 ---
 
+## Webhooks & Alerts
+
+Manage webhook integrations and view alert history.
+
+### Add Webhook
+
+Register a new webhook URL to receive alerts for malicious events.
+
+```http
+POST /webhooks
+Content-Type: application/json
+
+{
+  "url": "https://webhook.site/...",
+  "is_active": true
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "id": "wh_a1b2c3d4",
+  "url": "https://webhook.site/...",
+  "is_active": true,
+  "created_at": 1699500000.123
+}
+```
+
+### List Webhooks
+
+Get all registered webhooks.
+
+```http
+GET /webhooks
+```
+
+**Response** (200 OK): Array of Webhook objects.
+
+### Delete Webhook
+
+Remove a webhook integration.
+
+```http
+DELETE /webhooks/{webhook_id}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true
+}
+```
+
+### Get Alert History
+
+Retrieve a log of sent alerts and their delivery status.
+
+```http
+GET /alerts/history?limit=50
+```
+
+**Response** (200 OK):
+```json
+[
+  {
+    "id": "alt_1234",
+    "event_id": "evt_abcd",
+    "webhook_url": "https://webhook.site/...",
+    "status": "success",
+    "timestamp": 1699500100.456
+  }
+]
+```
+
+---
+
 ## WebSocket
 
 Stream real-time security events to connected clients.

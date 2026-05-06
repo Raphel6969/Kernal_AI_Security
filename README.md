@@ -13,24 +13,6 @@ This is a hackathon project. API + dashboard run well on Windows/Linux/macOS, wh
 
 ---
 
-## ⚠️ Known Limitations (Phase 4-5 In Progress)
-
-**Agent Event Loop Not Yet Implemented:**
-- ✅ Agent can receive events via `/agent/events` endpoint
-- ❌ Agent does NOT automatically collect from kernel hook yet
-- ❌ User must still manually POST to `/analyze` endpoint
-- **Workaround:** Use POST `/analyze` for manual testing or wait for [backend/agent/main.py](backend/agent/main.py) implementation
-
-**What's missing:**
-- `backend/agent/main.py` - Event collection loop that reads eBPF ring buffer and forwards events continuously
-- See [FUTURE_LOG.md](FUTURE_LOG.md) for implementation plan
-
-**Expected in next commit:**
-- Automatic agent → backend event forwarding (no manual POST needed)
-- True always-on monitoring with real-time dashboard updates
-
----
-
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -327,21 +309,23 @@ LOG_LEVEL=INFO
 - [x] Phase 2: Kernel Guard (eBPF) - In-kernel execve monitoring via ring buffer
 - [x] Phase 3: Real-time integration - kernel events flow into detection, storage, and WebSocket broadcast
 - [x] Phase 4: React dashboard live updates and severity highlighting
-- [ ] Phase 5: Demo & polish (additional hardening, packaging, and optional persistence)
+- [x] Phase 5: Agent capability detection and bridge
+- [x] Phase 6: Persistent Event Storage (SQLite)
+- [x] Phase 6b: Alerting & Webhooks (Slack/Discord integrations)
+- [ ] Phase 7: Auto-Remediation (Auto-kill malicious processes)
 
 ### Known Limitations (MVP)
 - eBPF monitoring is Linux-only (API/dashboard run cross-platform)
 - Requires root/CAP_BPF for eBPF
 - On WSL2, eBPF pre-compilation is intentionally skipped and the backend runs in API-only mode
 - LLM reasoning deferred to post-MVP
-- No persistence (in-memory events only)
 
 ### Future Enhancements
+- Auto-Remediation (Kill/Quarantine)
 - Windows/Mac support (ETW, DTrace)
-- SQLite persistence
+- PostgreSQL for production scaling
 - Async LLM explanation layer
 - Custom rule builder UI
-- Alert integrations (Slack, PagerDuty)
 
 ---
 

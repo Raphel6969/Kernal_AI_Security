@@ -1,7 +1,7 @@
 # Kernel AI Bouncer - Future Log & Architecture Documentation
 
 **Project Start Date:** May 6, 2026  
-**Current Phase:** 6 (Persistent Event Storage - In Progress)  
+**Current Phase:** 7 (Auto-Remediation - Complete)  
 **Last Updated:** May 6, 2026
 
 ---
@@ -49,8 +49,8 @@ The system is designed to scale from single-machine monitoring to enterprise-wid
 | 4 | Always-on Agent | ✅ Complete | Agent runtime detection + event collection loop |
 | 5 | Agent-to-Backend Bridge | ✅ Complete | API endpoint to ingest agent-captured events |
 | 6 | Persistent Event Storage | ✅ Complete | SQLite-backed event store with in-memory LRU cache |
-| 6b | Alerting & Webhooks | ✅ Complete | Alert rules, external service notifications |
-| 7 | Remediation | ⏳ Planned | Auto-kill processes, quarantine binaries |
+| 6b | Alerting & Webhooks | ✅ Complete | Alert rules, Discord/Slack webhook notifications |
+| 7 | Auto-Remediation | ✅ Complete | Process termination via psutil, dashboard toggle, 🛑 Killed badge |
 | 8 | Auth & Access Control | ⏳ Planned | Role-based access, API key management |
 | 9 | Scaling & Durability | ⏳ Planned | PostgreSQL, distributed queues, HA |
 | 10 | Stress Testing | ⏳ Planned | Load tests, chaos engineering |

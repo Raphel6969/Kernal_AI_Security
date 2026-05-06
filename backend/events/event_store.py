@@ -3,6 +3,7 @@ SQLite-backed event store for security events with in-memory LRU cache for recen
 Provides persistent storage with same API as in-memory implementation.
 """
 
+import os
 import sqlite3
 import json
 import threading
@@ -11,6 +12,10 @@ from typing import List, Optional, OrderedDict
 from collections import OrderedDict as ODict
 from backend.events.models import SecurityEvent, DetectionResult, ExecveEvent
 
+# Resolve db path relative to project root so it works from any cwd
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_DEFAULT_DB_PATH = os.path.join(_PROJECT_ROOT, "data", "events.db")
+
 
 class EventStore:
     """
@@ -18,7 +23,7 @@ class EventStore:
     Recent events are cached in memory for fast access; all events persisted to disk.
     """
 
-    def __init__(self, max_events: int = 1000, db_path: str = "data/events.db"):
+    def __init__(self, max_events: int = 1000, db_path: str = _DEFAULT_DB_PATH):
         """
         Initialize event store with SQLite backend.
         
@@ -36,6 +41,10 @@ class EventStore:
     
     def _init_db(self) -> None:
         """Initialize SQLite database and create tables if needed."""
+        # Ensure the parent directory exists (handles first-run on any platform)
+        parent_dir = os.path.dirname(self.db_path)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS security_events (
@@ -55,9 +64,17 @@ class EventStore:
                     ml_confidence REAL,
                     matched_rules TEXT,
                     explanation TEXT,
+                    remediation_action TEXT,
+                    remediation_status TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            # Migrate existing DBs that don't have the remediation columns yet
+            for col, coltype in [("remediation_action", "TEXT"), ("remediation_status", "TEXT")]:
+                try:
+                    conn.execute(f"ALTER TABLE security_events ADD COLUMN {col} {coltype}")
+                except Exception:
+                    pass  # Column already exists
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_timestamp 
                 ON security_events(timestamp DESC)
@@ -87,46 +104,50 @@ class EventStore:
             'ml_confidence': event.detection_result.ml_confidence,
             'matched_rules': json.dumps(event.detection_result.matched_rules),
             'explanation': event.detection_result.explanation,
+            'remediation_action': event.remediation_action,
+            'remediation_status': event.remediation_status,
         }
     
-    def _row_to_event(self, row: tuple) -> Optional[SecurityEvent]:
-        """Reconstruct SecurityEvent from database row."""
+    # Canonical SELECT used everywhere — explicit names defeat column-order bugs on migrated DBs
+    _SELECT_COLS = """
+        id, event_id, timestamp, detected_at,
+        pid, ppid, uid, gid,
+        command, argv_str, comm,
+        classification, risk_score, ml_confidence,
+        matched_rules, explanation,
+        remediation_action, remediation_status,
+        created_at
+    """
+
+    def _row_to_event(self, row) -> Optional[SecurityEvent]:
+        """Reconstruct SecurityEvent from a sqlite3.Row (named-column access)."""
         try:
-            # row format: (id, event_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm, classification, risk_score, ml_confidence, matched_rules, explanation, created_at)
-            _, event_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm, classification, risk_score, ml_confidence, matched_rules, explanation, _ = row
-            
-            # Reconstruct ExecveEvent
             execve_event = ExecveEvent(
-                pid=pid,
-                ppid=ppid,
-                uid=uid,
-                gid=gid,
-                command=command,
-                argv_str=argv_str,
-                timestamp=timestamp,
-                comm=comm
+                pid=row['pid'] or 0,
+                ppid=row['ppid'] or 0,
+                uid=row['uid'] or 0,
+                gid=row['gid'] or 0,
+                command=row['command'] or '',
+                argv_str=row['argv_str'] or '',
+                timestamp=row['timestamp'],
+                comm=row['comm'] or '',
             )
-            
-            # Parse matched_rules
-            matched_rules_list = json.loads(matched_rules) if matched_rules else []
-            
-            # Reconstruct DetectionResult
+            matched_rules_list = json.loads(row['matched_rules']) if row['matched_rules'] else []
             detection_result = DetectionResult(
-                classification=classification,
-                risk_score=risk_score,
+                classification=row['classification'],
+                risk_score=row['risk_score'],
                 matched_rules=matched_rules_list,
-                ml_confidence=ml_confidence,
-                explanation=explanation
+                ml_confidence=row['ml_confidence'],
+                explanation=row['explanation'],
             )
-            
-            # Reconstruct SecurityEvent
-            event = SecurityEvent(
-                id=event_id,
+            return SecurityEvent(
+                id=row['event_id'],
                 execve_event=execve_event,
                 detection_result=detection_result,
-                detected_at=detected_at
+                detected_at=row['detected_at'],
+                remediation_action=row['remediation_action'],
+                remediation_status=row['remediation_status'],
             )
-            return event
         except Exception as e:
             print(f"Error reconstructing event from database row: {e}")
             return None
@@ -145,13 +166,16 @@ class EventStore:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
                     INSERT INTO security_events 
-                    (id, event_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm, classification, risk_score, ml_confidence, matched_rules, explanation)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (id, event_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm,
+                     classification, risk_score, ml_confidence, matched_rules, explanation,
+                     remediation_action, remediation_status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (row_data['id'], row_data['event_id'], row_data['timestamp'], row_data['detected_at'], 
                       row_data['pid'], row_data['ppid'], row_data['uid'], row_data['gid'],
                       row_data['command'], row_data['argv_str'], row_data['comm'],
                       row_data['classification'], row_data['risk_score'], row_data['ml_confidence'],
-                      row_data['matched_rules'], row_data['explanation']))
+                      row_data['matched_rules'], row_data['explanation'],
+                      row_data['remediation_action'], row_data['remediation_status']))
                 conn.commit()
             
             # Add to in-memory cache (maintain LRU)
@@ -177,22 +201,14 @@ class EventStore:
         
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
-                # Get total count
-                cursor = conn.execute("SELECT COUNT(*) FROM security_events")
-                total = cursor.fetchone()[0]
-                
-                # Calculate offset to get last n rows
-                offset = max(0, total - n)
-                
-                # Get rows in ascending order (oldest to newest)
-                cursor = conn.execute("""
-                    SELECT * FROM security_events 
-                    ORDER BY timestamp ASC 
-                    LIMIT ? OFFSET ?
-                """, (n, offset))
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute(
+                    f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp DESC LIMIT ?",
+                    (n,)
+                )
                 rows = cursor.fetchall()
-            
             events = [self._row_to_event(row) for row in rows]
+            # Return newest-first (already DESC from query)
             return [e for e in events if e is not None]
 
     def get_all(self) -> List[SecurityEvent]:
@@ -204,12 +220,11 @@ class EventStore:
         """
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("""
-                    SELECT * FROM security_events 
-                    ORDER BY timestamp ASC
-                """)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute(
+                    f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp ASC"
+                )
                 rows = cursor.fetchall()
-            
             events = [self._row_to_event(row) for row in rows]
             return [e for e in events if e is not None]
 

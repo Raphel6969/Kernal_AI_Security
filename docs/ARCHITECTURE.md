@@ -437,46 +437,44 @@ ws://localhost:8000/ws
 
 ## Development Phases
 
-### Phase 1 ✅ (Complete)
-- Project structure
-- Python backend scaffold
-- Training data curation
-- Rule engine
-- ML model training
-- FastAPI server
-- React dashboard
-
-### Phase 2 (Completed)
-- eBPF execve hooking
+### Phase 1: Kernel Monitoring (eBPF) ✅
+- Hooking `sys_enter_execve` tracepoint
 - Ring buffer integration
-- Kernel event processing
 
-### Phase 3 (Completed)
-- Kernel events routed into detection pipeline
-- SecurityEvent storage and WebSocket broadcast
+### Phase 2: Detection Pipeline ✅
+- Rule engine + ML Scoring model
+- Classification pipeline
 
-### Phase 4 (Completed)
-- Live dashboard event rendering
-- Severity highlighting and connection state UI
+### Phase 3: Real-time Dashboard ✅
+- React UI with live WebSocket feed
 
-### Phase 5 (Planned)
-- SQLite persistence
-- Alert integrations (Slack, email)
-- Custom rule builder UI
-- Windows/Mac kernel backends (ETW, DTrace)
+### Phase 4: Always-On Agent ✅
+- Background agent detection loop
+- Forwarding events automatically
+
+### Phase 5: Agent-to-Backend Bridge ✅
+- `/agent/events` ingestion endpoint
+
+### Phase 6: Persistent Event Storage ✅
+- SQLite Database (`data/events.db`)
+- In-memory LRU cache
+
+### Phase 6b: Alerting & Webhooks ✅
+- Configurable webhooks (Slack, Discord)
+- Alert history tracking
+
+### Phase 7: Auto-Remediation (In Progress)
+- Kill processes based on classification
+- Quarantine capabilities
 
 ---
 
 ## Future Enhancements
 
 1. **LLM Reasoning**: Add GPT/Ollama layer for complex interpretation
-2. **Persistence**: SQLite + log rotation for forensics
-3. **Integration**: Slack/PagerDuty alerts, SIEM export
-4. **UI**: Custom rule builder, attack timeline view
-5. **Cross-Platform**: Windows ETW, Mac DTrace backends
-6. **ML**: Continuous learning, anomaly detection
-7. **Performance**: GPU acceleration, distributed detection
+2. **Cross-Platform**: Windows ETW, Mac DTrace backends
+3. **Scaling**: Postgres + Redis for large-scale deployments
 
 ---
 
-**Last Updated**: May 2026 | **Status**: MVP Phase 1 Complete
+**Last Updated**: May 2026 | **Status**: Phase 6b Complete, Phase 7 Planned

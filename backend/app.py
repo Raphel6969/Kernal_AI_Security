@@ -26,6 +26,7 @@ from backend.events.models import ExecveEvent, SecurityEvent
 from backend.kernel.execve_hook import get_hook_manager
 from backend.alerts.alert_manager import get_alert_manager
 from backend.alerts.models import WebhookCreate, WebhookResponse, AlertHistoryResponse
+from backend.agent.remediation import kill_process, is_remediation_enabled, set_remediation_enabled
 
 # ==============================================================================
 # Models
@@ -147,14 +148,21 @@ async def ingest_security_event(
         detected_at=datetime.now().timestamp(),
     )
 
+    # Auto-Remediation: kill the process if malicious and toggle is ON
+    if detection_result.classification == "malicious" and is_remediation_enabled():
+        rem_result = kill_process(execve_event.pid)
+        security_event.remediation_action = rem_result["action"]
+        security_event.remediation_status = rem_result["status"]
+
     event_store.append(security_event)
     asyncio.create_task(alert_manager.dispatch(security_event))
 
     emoji = "🟢" if security_event.detection_result.classification == "safe" else \
             "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
+    rem_info = f" | 🛑 {security_event.remediation_status}" if security_event.remediation_status else ""
     print(
         f"{emoji} {source.upper()} event: {execve_event.command[:50]} "
-        f"(PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}"
+        f"(PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}{rem_info}"
     )
 
     await broadcast_event(security_event)
@@ -309,6 +317,24 @@ async def delete_webhook(webhook_id: str):
 async def list_alert_history(limit: int = Query(default=50, ge=1, le=1000)):
     """Get history of triggered alerts."""
     return alert_manager.get_alert_history(limit)
+
+
+# ==============================================================================
+# Remediation Settings
+# ==============================================================================
+
+@app.get("/settings/remediation")
+async def get_remediation_settings():
+    """Get current auto-remediation toggle state."""
+    return {"enabled": is_remediation_enabled()}
+
+
+@app.post("/settings/remediation")
+async def update_remediation_settings(body: dict):
+    """Enable or disable auto-remediation."""
+    enabled = body.get("enabled", False)
+    set_remediation_enabled(bool(enabled))
+    return {"enabled": is_remediation_enabled()}
 
 
 # ==============================================================================
