@@ -18,7 +18,7 @@ class EventStore:
     Recent events are cached in memory for fast access; all events persisted to disk.
     """
 
-    def __init__(self, max_events: int = 1000, db_path: str = "events.db"):
+    def __init__(self, max_events: int = 1000, db_path: str = "data/events.db"):
         """
         Initialize event store with SQLite backend.
         

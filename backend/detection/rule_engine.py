@@ -92,32 +92,32 @@ class RuleEngine:
         
         # Check for injection operators combined with suspicious tools
         if self._has_piping_to_shell(command):
-            risk_score += 25
+            risk_score += 45
             matched_rules.append("shell_piping")
         
         # Check for reverse shell patterns
         if self._has_reverse_shell_pattern(command):
-            risk_score += 30
+            risk_score += 55
             matched_rules.append("reverse_shell_pattern")
         
         # Check for destructive patterns
         if self._has_destructive_pattern(command):
-            risk_score += 35
+            risk_score += 65
             matched_rules.append("destructive_pattern")
         
         # Check for privilege escalation
         if self._has_privesc_pattern(command):
-            risk_score += 25
+            risk_score += 45
             matched_rules.append("privilege_escalation")
         
         # Check for data exfiltration
         if self._has_exfiltration_pattern(command):
-            risk_score += 20
+            risk_score += 40
             matched_rules.append("data_exfiltration")
         
         # Check for encoded payloads
         if self._has_encoding_pattern(command):
-            risk_score += 15
+            risk_score += 25
             matched_rules.append("encoded_payload")
         
         # Cap at 100
@@ -128,7 +128,7 @@ class RuleEngine:
         for tool in self.suspicious_tools:
             for op in ['|', '||', '&&']:
                 for shell in self.shell_tools:
-                    pattern = f'{tool}.*{op}\\s*{shell}'
+                    pattern = f'{tool}.*{re.escape(op)}\\s*{shell}'
                     if re.search(pattern, command, re.IGNORECASE):
                         return True
         return False

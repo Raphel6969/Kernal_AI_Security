@@ -24,6 +24,8 @@ from backend.detection.pipeline import get_detection_pipeline
 from backend.events.event_store import get_event_store
 from backend.events.models import ExecveEvent, SecurityEvent
 from backend.kernel.execve_hook import get_hook_manager
+from backend.alerts.alert_manager import get_alert_manager
+from backend.alerts.models import WebhookCreate, WebhookResponse, AlertHistoryResponse
 
 # ==============================================================================
 # Models
@@ -88,6 +90,7 @@ app.add_middleware(
 pipeline = get_detection_pipeline()
 event_store = get_event_store(max_events=1000)
 hook_manager = get_hook_manager()
+alert_manager = get_alert_manager()
 active_websockets: Set[WebSocket] = set()
 active_websockets_lock = asyncio.Lock()
 main_event_loop = None
@@ -145,6 +148,7 @@ async def ingest_security_event(
     )
 
     event_store.append(security_event)
+    asyncio.create_task(alert_manager.dispatch(security_event))
 
     emoji = "🟢" if security_event.detection_result.classification == "safe" else \
             "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
@@ -278,6 +282,33 @@ async def get_stats():
         "suspicious": event_store.get_suspicious_count(),
         "malicious": event_store.get_malicious_count(),
     }
+
+
+@app.get("/webhooks", response_model=List[WebhookResponse])
+async def list_webhooks():
+    """List all registered webhooks."""
+    return alert_manager.get_webhooks()
+
+
+@app.post("/webhooks", response_model=WebhookResponse)
+async def create_webhook(request: WebhookCreate):
+    """Register a new webhook URL."""
+    if not request.url.startswith("http"):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+    return alert_manager.add_webhook(request.url)
+
+
+@app.delete("/webhooks/{webhook_id}")
+async def delete_webhook(webhook_id: str):
+    """Remove a webhook."""
+    alert_manager.remove_webhook(webhook_id)
+    return {"status": "success"}
+
+
+@app.get("/alerts/history", response_model=List[AlertHistoryResponse])
+async def list_alert_history(limit: int = Query(default=50, ge=1, le=1000)):
+    """Get history of triggered alerts."""
+    return alert_manager.get_alert_history(limit)
 
 
 # ==============================================================================

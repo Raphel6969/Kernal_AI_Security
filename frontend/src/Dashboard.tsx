@@ -11,16 +11,58 @@ export function Dashboard() {
     malicious: 0,
   });
 
+  const [webhooks, setWebhooks] = React.useState<any[]>([]);
+  const [alertHistory, setAlertHistory] = React.useState<any[]>([]);
+  const [newWebhookUrl, setNewWebhookUrl] = React.useState("");
+
+  const fetchWebhooks = () => {
+    fetch('http://localhost:8000/webhooks')
+      .then((r) => r.json())
+      .then(setWebhooks)
+      .catch(console.error);
+  };
+
+  const fetchAlertHistory = () => {
+    fetch('http://localhost:8000/alerts/history')
+      .then((r) => r.json())
+      .then(setAlertHistory)
+      .catch(console.error);
+  };
+
+  const handleAddWebhook = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newWebhookUrl) return;
+    fetch('http://localhost:8000/webhooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: newWebhookUrl }),
+    })
+      .then(() => {
+        setNewWebhookUrl("");
+        fetchWebhooks();
+      })
+      .catch(console.error);
+  };
+
+  const handleDeleteWebhook = (id: string) => {
+    fetch(`http://localhost:8000/webhooks/${id}`, { method: 'DELETE' })
+      .then(fetchWebhooks)
+      .catch(console.error);
+  };
+
   const latestEvent = events[0];
   const activeAlerts = events.filter((event) => event.classification !== 'safe').length;
 
   React.useEffect(() => {
+    fetchWebhooks();
+    fetchAlertHistory();
     // Fetch stats every second
     const interval = setInterval(() => {
       fetch('http://localhost:8000/stats')
         .then((r) => r.json())
         .then(setStats)
         .catch(console.error);
+      fetchAlertHistory();
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -168,6 +210,71 @@ export function Dashboard() {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="two-column-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+        <div className="events-container webhooks-container">
+          <h2>Webhook Integrations</h2>
+          <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '16px' }}>
+            Trigger a webhook when a <b>malicious</b> event is detected.
+          </p>
+          <form onSubmit={handleAddWebhook} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <input 
+              type="url" 
+              placeholder="https://hooks.slack.com/services/..." 
+              value={newWebhookUrl}
+              onChange={(e) => setNewWebhookUrl(e.target.value)}
+              style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+              required
+            />
+            <button type="submit" style={{ padding: '8px 16px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Add</button>
+          </form>
+
+          {webhooks.length === 0 ? (
+            <p className="empty-state" style={{ padding: '20px' }}>No webhooks configured.</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {webhooks.map(wh => (
+                <li key={wh.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', marginBottom: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '13px', color: '#334155', wordBreak: 'break-all', marginRight: '10px' }}>{wh.url}</span>
+                  <button onClick={() => handleDeleteWebhook(wh.id)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}>Remove</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="events-container alerts-container">
+          <h2>Alert History</h2>
+          {alertHistory.length === 0 ? (
+             <p className="empty-state" style={{ padding: '20px' }}>No alerts triggered yet.</p>
+          ) : (
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <table className="events-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Destination</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alertHistory.map(alert => (
+                    <tr key={alert.id}>
+                      <td style={{ fontSize: '12px' }}>{new Date(alert.timestamp * 1000).toLocaleTimeString()}</td>
+                      <td>
+                        <span className="badge" style={{ backgroundColor: alert.status === 'success' ? '#10b981' : '#ef4444' }}>
+                          {alert.status}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '12px', color: '#64748b' }}>{alert.url.substring(0, 30)}...</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

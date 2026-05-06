@@ -16,19 +16,18 @@ The system is designed to scale from single-machine monitoring to enterprise-wid
 
 ## ⚠️ CRITICAL GAP: Missing Agent Event Loop
 
-**Status:** Phase 4 is **INCOMPLETE**. The infrastructure is built, but the agent doesn't actually collect events yet.
+**Status:** Phase 4 is **COMPLETE**. The agent event loop is running and active.
 
 **What's Missing:**
-- [ ] **[backend/agent/main.py](backend/agent/main.py)** - Event collection loop (doesn't exist)
-  - Should read from eBPF ring buffer (Linux)
-  - Should forward events to POST `/agent/events` automatically
-  - Should run continuously in background
+- [x] **[backend/agent/main.py](backend/agent/main.py)** - Event collection loop
+  - Reads from eBPF ring buffer (Linux)
+  - Forwards events to POST `/agent/events` automatically
+  - Runs continuously in background
 
 **Current Behavior:**
-- Agent can receive events via `/agent/events` endpoint ✅
-- Agent script launches, but does nothing ❌
-- No continuous monitoring happening ❌
-- User still needs to manually POST events ❌
+- Agent receives events via `/agent/events` endpoint ✅
+- Agent script launches and monitors continuously ✅
+- Automatically forwards kernel events to backend ✅
 
 **After Building Agent Main Loop:**
 - ✅ Agent connects to kernel hook
@@ -47,10 +46,10 @@ The system is designed to scale from single-machine monitoring to enterprise-wid
 | 1 | Kernel Monitoring (eBPF) | ✅ Complete | Linux process execution tracing via execve syscall |
 | 2 | Detection Pipeline | ✅ Complete | Rule-engine (60%) + ML-scorer (40%) hybrid detection |
 | 3 | Real-time Dashboard | ✅ Complete | React dashboard with WebSocket live updates |
-| 4 | Always-on Agent | 🔄 **IN PROGRESS** | Agent runtime detection + event collection loop |
+| 4 | Always-on Agent | ✅ Complete | Agent runtime detection + event collection loop |
 | 5 | Agent-to-Backend Bridge | ✅ Complete | API endpoint to ingest agent-captured events |
-| 6 | Persistent Event Storage | 🔄 **In Progress** | SQLite-backed event store with in-memory LRU cache |
-| 6b | Alerting & Webhooks | ⏳ Planned | Alert rules, external service notifications |
+| 6 | Persistent Event Storage | ✅ Complete | SQLite-backed event store with in-memory LRU cache |
+| 6b | Alerting & Webhooks | ✅ Complete | Alert rules, external service notifications |
 | 7 | Remediation | ⏳ Planned | Auto-kill processes, quarantine binaries |
 | 8 | Auth & Access Control | ⏳ Planned | Role-based access, API key management |
 | 9 | Scaling & Durability | ⏳ Planned | PostgreSQL, distributed queues, HA |
@@ -356,7 +355,7 @@ React Dashboard (real-time display)
 
 ---
 
-### Phase 6: Persistent Event Storage 🔄 **IN PROGRESS**
+### Phase 6: Persistent Event Storage ✅ Complete
 
 **What was built:**
 
