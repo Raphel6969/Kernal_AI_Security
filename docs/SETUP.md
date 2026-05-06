@@ -9,6 +9,12 @@
 - **Sudo/Root**: Required for eBPF operations
 - **Internet**: For downloading dependencies
 
+### Platform Behavior
+
+- **Linux**: full agent + backend + kernel monitoring
+- **Windows**: agent + backend + dashboard in API-only mode
+- **macOS**: agent + backend + dashboard in API-only mode
+
 ## Step 1: Verify System Requirements
 
 ```bash
@@ -51,6 +57,12 @@ This will:
 - Install FastAPI, scikit-learn, pandas, and other dependencies
 - Create the `venv/` folder
 
+For the always-on agent phase, you can start the agent wrapper directly after setup:
+
+```bash
+bash scripts/run_agent.sh
+```
+
 Verify installation:
 ```bash
 source venv/bin/activate
@@ -72,6 +84,19 @@ This will:
 
 Expected accuracy: 85-95%
 
+## Step 2.5: Agent Runtime
+
+Before connecting the full event pipeline, verify the agent runtime starts and reports the correct mode:
+
+```bash
+python -c "from backend.agent.runtime import format_startup_message; print(format_startup_message())"
+```
+
+Expected behavior:
+- Linux reports `kernel`
+- Windows and macOS report `api-only`
+- Unsupported platforms report `unsupported`
+
 ## Step 3: Kernel Monitoring Setup
 
 ### Install eBPF Dependencies
@@ -85,6 +110,8 @@ This will:
 - Install clang, llvm, libelf-dev
 - Install linux-headers for your kernel
 - Install BCC (eBPF toolkit) and Python bindings
+
+If you're on macOS, this step is not applicable today. Use API-only mode and the dashboard until a Mac-native collector is added.
 
 Verify installation:
 ```bash
@@ -147,11 +174,12 @@ cd frontend && npm list | head -10
 
 ## Step 5: Running the System
 
-### Terminal 1: Start Backend API
+### Terminal 1: Start Agent + Backend API
 
 ```bash
 cd kernal_ai_bouncer
 source venv/bin/activate
+python -c "from backend.agent.runtime import format_startup_message; print(format_startup_message())"
 python backend/app.py
 ```
 

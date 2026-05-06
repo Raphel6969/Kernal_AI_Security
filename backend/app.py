@@ -34,6 +34,18 @@ class CommandAnalysisRequest(BaseModel):
     command: str
 
 
+class AgentEventRequest(BaseModel):
+    """Event forwarded by the always-on agent."""
+    command: str
+    pid: int = 0
+    ppid: int = 0
+    uid: int = 0
+    gid: int = 0
+    argv_str: str | None = None
+    comm: str = "agent"
+    timestamp: float | None = None
+
+
 class CommandAnalysisResponse(BaseModel):
     """Response from command analysis."""
     command: str
@@ -80,6 +92,70 @@ active_websockets: Set[WebSocket] = set()
 active_websockets_lock = asyncio.Lock()
 main_event_loop = None
 
+
+def _build_execve_event(
+    command: str,
+    *,
+    pid: int = 0,
+    ppid: int = 0,
+    uid: int = 0,
+    gid: int = 0,
+    argv_str: str | None = None,
+    comm: str = "api",
+    timestamp: float | None = None,
+) -> ExecveEvent:
+    """Build a normalized execve event for both API and agent inputs."""
+    return ExecveEvent(
+        pid=pid,
+        ppid=ppid,
+        uid=uid,
+        gid=gid,
+        command=command,
+        argv_str=argv_str or command,
+        timestamp=timestamp or datetime.now().timestamp(),
+        comm=comm,
+    )
+
+
+def _build_response(security_event: SecurityEvent) -> CommandAnalysisResponse:
+    """Convert a security event into the API response model."""
+    result = security_event.detection_result
+    return CommandAnalysisResponse(
+        command=security_event.execve_event.command,
+        classification=result.classification,
+        risk_score=result.risk_score,
+        matched_rules=result.matched_rules,
+        ml_confidence=result.ml_confidence,
+        explanation=result.explanation or "",
+    )
+
+
+async def ingest_security_event(
+    execve_event: ExecveEvent,
+    *,
+    source: str = "api",
+) -> SecurityEvent:
+    """Run detection, store the event, and broadcast it to the dashboard."""
+    detection_result = pipeline.detect(execve_event.command)
+    security_event = SecurityEvent(
+        id=f"evt_{uuid.uuid4().hex[:8]}",
+        execve_event=execve_event,
+        detection_result=detection_result,
+        detected_at=datetime.now().timestamp(),
+    )
+
+    event_store.append(security_event)
+
+    emoji = "🟢" if security_event.detection_result.classification == "safe" else \
+            "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
+    print(
+        f"{emoji} {source.upper()} event: {execve_event.command[:50]} "
+        f"(PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}"
+    )
+
+    await broadcast_event(security_event)
+    return security_event
+
 # ==============================================================================
 # Startup & Shutdown
 # ==============================================================================
@@ -97,29 +173,10 @@ async def startup_event():
         """Handle kernel events from eBPF."""
         try:
             # Run detection pipeline
-            detection_result = pipeline.detect(execve_event.command)
-            
-            # Create SecurityEvent
-            security_event = SecurityEvent(
-                id=f"evt_{uuid.uuid4().hex[:8]}",
-                execve_event=execve_event,
-                detection_result=detection_result,
-                detected_at=datetime.now().timestamp(),
-            )
-            
-            # Store event
-            event_store.append(security_event)
-            
-            # Log to console
-            emoji = "🟢" if security_event.detection_result.classification == "safe" else \
-                    "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
-            print(f"{emoji} Kernel event: {execve_event.command[:50]} (PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}")
-            
-            # Broadcast asynchronously to WebSocket clients
             if main_event_loop:
                 asyncio.run_coroutine_threadsafe(
-                    broadcast_event(security_event),
-                    main_event_loop
+                    ingest_security_event(execve_event, source="kernel"),
+                    main_event_loop,
                 )
         except Exception as e:
             print(f"⚠️  Kernel event processing error: {e}")
@@ -172,46 +229,29 @@ async def analyze_command(request: CommandAnalysisRequest):
     if not request.command or not request.command.strip():
         raise HTTPException(status_code=400, detail="Command cannot be empty")
     
-    # Run detection pipeline
-    result = pipeline.detect(request.command)
+    execve_event = _build_execve_event(request.command)
+    security_event = await ingest_security_event(execve_event, source="api")
+    return _build_response(security_event)
 
-    # Build a minimal ExecveEvent for UI purposes (kernel fields unknown here)
-    execve_event = ExecveEvent(
-        pid=0,
-        ppid=0,
-        uid=0,
-        gid=0,
-        command=request.command,
-        argv_str=request.command,
-        timestamp=datetime.now().timestamp(),
-        comm="api",
+
+@app.post("/agent/events", response_model=CommandAnalysisResponse)
+async def ingest_agent_event(request: AgentEventRequest):
+    """Ingest an event forwarded by the always-on agent."""
+    if not request.command or not request.command.strip():
+        raise HTTPException(status_code=400, detail="Command cannot be empty")
+
+    execve_event = _build_execve_event(
+        request.command,
+        pid=request.pid,
+        ppid=request.ppid,
+        uid=request.uid,
+        gid=request.gid,
+        argv_str=request.argv_str,
+        comm=request.comm,
+        timestamp=request.timestamp,
     )
-
-    # Create SecurityEvent and store/broadcast it
-    security_event = SecurityEvent(
-        id=f"evt_{uuid.uuid4().hex[:8]}",
-        execve_event=execve_event,
-        detection_result=result,
-        detected_at=datetime.now().timestamp(),
-    )
-
-    # Store event in memory
-    event_store.append(security_event)
-
-    # Broadcast asynchronously to WebSocket clients
-    try:
-        asyncio.create_task(broadcast_event(security_event))
-    except Exception as e:
-        print(f"⚠️ Failed to schedule broadcast: {e}")
-
-    return CommandAnalysisResponse(
-        command=request.command,
-        classification=result.classification,
-        risk_score=result.risk_score,
-        matched_rules=result.matched_rules,
-        ml_confidence=result.ml_confidence,
-        explanation=result.explanation,
-    )
+    security_event = await ingest_security_event(execve_event, source="agent")
+    return _build_response(security_event)
 
 
 @app.get("/events")
@@ -324,19 +364,7 @@ async def process_execve_event(execve_event: ExecveEvent):
     # Run detection pipeline
     detection_result = pipeline.detect(execve_event.command)
     
-    # Create SecurityEvent
-    security_event = SecurityEvent(
-        id=f"evt_{uuid.uuid4().hex[:8]}",
-        execve_event=execve_event,
-        detection_result=detection_result,
-        detected_at=datetime.now().timestamp(),
-    )
-    
-    # Store event
-    event_store.append(security_event)
-    
-    # Broadcast to WebSocket clients
-    await broadcast_event(security_event)
+    await ingest_security_event(execve_event, source="kernel")
 
 
 # Set the kernel monitor callback

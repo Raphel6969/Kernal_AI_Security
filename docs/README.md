@@ -4,6 +4,7 @@ This folder contains the project documentation in one place.
 
 ## Start Here
 
+- [Phase 3 Draft](PHASE3_PERSISTENCE_AND_ALERTING.md) - Agent-first roadmap, persistence, and alerting plan
 - [Quick Start](QUICK_START.md) - Fast setup and test flow for the current build
 - [Setup Guide](SETUP.md) - Environment setup and runtime notes
 - [Architecture](ARCHITECTURE.md) - System design and data flow
@@ -12,7 +13,8 @@ This folder contains the project documentation in one place.
 
 ## Status Notes
 
-- Kernel capture is Linux-only and falls back cleanly on Windows and WSL2.
+- Kernel capture is Linux-only and falls back cleanly on Windows, WSL2, and macOS.
+- The new agent/runtime starts the backend first and reports whether the current host is kernel-capable or API-only.
 - The dashboard now receives live events through the WebSocket stream.
 - The current remaining work is persistence, alerting, and optional platform expansion.
 

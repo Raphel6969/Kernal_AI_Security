@@ -2,7 +2,7 @@
 
 ## Overview
 
-AI Bouncer + Kernel Guard is a **three-layer real-time RCE prevention system** that combines kernel-level monitoring with intelligent threat detection.
+AI Bouncer + Kernel Guard is a **four-layer real-time RCE prevention system** that combines an always-on agent, kernel-level monitoring, intelligent threat detection, and a live dashboard.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -32,6 +32,13 @@ AI Bouncer + Kernel Guard is a **three-layer real-time RCE prevention system** t
 │  - Streams events to user space via ring buffer            │
 │  - Graceful fallback on Windows/WSL2                       │
 └─────────────────────────────────────────────────────────────┘
+                       │
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 4: Agent Runtime (Always On)                        │
+│  - Starts the backend as a background service              │
+│  - Detects Linux vs macOS vs Windows capability            │
+│  - Runs kernel mode on Linux and API-only mode elsewhere   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -43,7 +50,9 @@ AI Bouncer + Kernel Guard is a **three-layer real-time RCE prevention system** t
 ```
 User/Process attempts execution
        ↓
-Kernel Guard (eBPF) intercepts execve
+Agent runtime keeps backend alive
+   ↓
+Kernel Guard (eBPF) intercepts execve (Linux only)
        ↓
 Ring buffer → User space (Python)
        ↓
@@ -55,12 +64,20 @@ Risk score calculated (0-100)
        ↓
 Classification: safe / suspicious / malicious
        ↓
-Event stored in memory buffer
+Event stored in memory buffer (and later persistence layer)
        ↓
 WebSocket broadcasts to all connected clients
        ↓
 Dashboard updates in real-time
 ```
+
+### 3. Agent Startup Path
+
+The agent/runtime is the first process the user starts. It determines whether the machine can run kernel mode or must remain API-only.
+
+- **Linux**: runs in kernel mode and starts the backend in always-on monitoring mode.
+- **Windows**: runs in API-only mode.
+- **macOS**: runs in API-only mode until a native collector exists.
 
 ### 2. API Command Analysis Path
 
@@ -221,6 +238,18 @@ else:
    - Color coding: Green (safe), Yellow (suspicious), Red (malicious)
    - Risk score bar chart
    - Responsive grid layout
+
+### Layer 4: Agent Runtime (Always On)
+
+**Files**: `backend/agent/runtime.py`, `backend/agent/bridge.py`, `scripts/run_agent.sh`, `scripts/run_agent.ps1`
+
+**Responsibility**: Start the backend and choose the correct runtime mode for the host OS
+
+**Key Features**:
+- Detects Linux, macOS, Windows, or unsupported platforms
+- Uses kernel mode on Linux
+- Uses API-only mode on macOS and Windows
+- Provides a consistent launch path for the rest of the stack
 
 ---
 

@@ -26,3 +26,6 @@ htmlcov/
 out/
 frontend/dist/
 backend/.mypy_cache/
+*.db
+events.db
+

@@ -4,6 +4,8 @@
 
 The AI Bouncer API is built with FastAPI and provides both synchronous HTTP endpoints and real-time WebSocket streaming for threat analysis.
 
+The normal production flow is agent-driven: the endpoint agent keeps the backend running and forwards events automatically. The `/analyze` endpoint remains useful for manual testing, demos, and standalone analysis.
+
 **Base URL**: `http://localhost:8000`  
 **Docs**: `http://localhost:8000/docs` (Swagger UI)  
 **ReDoc**: `http://localhost:8000/redoc` (ReDoc UI)
@@ -47,6 +49,10 @@ Content-Type: application/json
 
 **Parameters**:
 - `command` (string, required): The command to analyze (non-empty)
+
+**Usage Notes**:
+- This endpoint is primarily for manual analysis and test traffic.
+- The agent/runtime path is what will feed the backend automatically in the next phase.
 
 **Response** (200 OK):
 ```json
@@ -115,6 +121,35 @@ Response:
 
 ---
 
+### Ingest Agent Event
+
+Receive an event forwarded by the always-on agent.
+
+```http
+POST /agent/events
+Content-Type: application/json
+
+{
+  "command": "string",
+  "pid": 1234,
+  "ppid": 1200,
+  "uid": 1000,
+  "gid": 1000,
+  "argv_str": "string",
+  "comm": "string",
+  "timestamp": 1699500000.123
+}
+```
+
+**Usage Notes**:
+- This is the always-on agent path for forwarded endpoint events.
+- The backend runs the same detection pipeline, stores the event, and broadcasts it to the dashboard.
+
+**Response** (200 OK):
+Same shape as `/analyze`.
+
+---
+
 ### Get Events
 
 Retrieve recent security events.
@@ -125,6 +160,10 @@ GET /events?limit=100
 
 **Query Parameters**:
 - `limit` (integer, optional): Max events to return (default: 100, max: 1000)
+
+**Usage Notes**:
+- The dashboard hydrates from this endpoint on load.
+- Agent-fed events and API-analyzed events both appear here once persistence is connected.
 
 **Response** (200 OK):
 ```json

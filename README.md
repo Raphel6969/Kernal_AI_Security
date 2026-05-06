@@ -4,11 +4,30 @@
 
 **AI Bouncer + Kernel Guard** is a real-time RCE (Remote Code Execution) prevention system that combines:
 
-1. **Kernel Guard**: eBPF-based kernel hooks monitoring system calls
-2. **AI Bouncer**: Machine learning + rule-based threat detection
-3. **Dashboard**: Real-time visualization of detected threats
+1. **Agent**: Always-on endpoint runner that keeps the stack alive
+2. **Kernel Guard**: eBPF-based kernel hooks monitoring system calls on Linux
+3. **AI Bouncer**: Machine learning + rule-based threat detection
+4. **Dashboard**: Real-time visualization of detected threats
 
-This is a hackathon project. API + dashboard run well on Windows/Linux, while kernel eBPF hooks require Linux (kernel 5.4+). On WSL2, the backend falls back to API-only mode and skips eBPF pre-compilation.
+This is a hackathon project. API + dashboard run well on Windows/Linux/macOS, while kernel eBPF hooks require Linux (kernel 5.4+). On WSL2, the backend falls back to API-only mode and skips eBPF pre-compilation. macOS currently runs in API-only mode until a native endpoint collector is added.
+
+---
+
+## ⚠️ Known Limitations (Phase 4-5 In Progress)
+
+**Agent Event Loop Not Yet Implemented:**
+- ✅ Agent can receive events via `/agent/events` endpoint
+- ❌ Agent does NOT automatically collect from kernel hook yet
+- ❌ User must still manually POST to `/analyze` endpoint
+- **Workaround:** Use POST `/analyze` for manual testing or wait for [backend/agent/main.py](backend/agent/main.py) implementation
+
+**What's missing:**
+- `backend/agent/main.py` - Event collection loop that reads eBPF ring buffer and forwards events continuously
+- See [FUTURE_LOG.md](FUTURE_LOG.md) for implementation plan
+
+**Expected in next commit:**
+- Automatic agent → backend event forwarding (no manual POST needed)
+- True always-on monitoring with real-time dashboard updates
 
 ---
 
@@ -25,6 +44,11 @@ This is a hackathon project. API + dashboard run well on Windows/Linux, while ke
 - [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/) (Python 3.11 recommended)
 - Node.js 16+
 - Note: eBPF kernel hooks require Linux
+
+**macOS** (API & Dashboard only):
+- Python 3.11+
+- Node.js 16+
+- Note: the agent/runtime treats macOS as API-only today; kernel capture remains Linux-only
 
 ---
 
@@ -45,8 +69,8 @@ bash scripts/setup_kernel.sh
 bash scripts/setup_frontend.sh
 
 # 4. Run
-# Terminal 1: Backend (from project root)
-uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload --reload-dir backend
+# Terminal 1: Agent + Backend (from project root)
+bash scripts/run_agent.sh
 
 # Terminal 2: Frontend
 cd frontend && npm run dev
@@ -55,6 +79,29 @@ cd frontend && npm run dev
 ```
 
 If you are on WSL2, keep the same backend and frontend setup, but expect kernel monitoring to degrade gracefully. The Python BCC loader will still run, while the Makefile pre-compilation step is optional and skipped on WSL2.
+
+### Setup on macOS
+
+**Note:** macOS runs the agent/runtime in API-only mode today. The backend, dashboard, and manual analysis endpoints are available, but the Linux kernel capture path is not.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+python backend/models/train_model.py
+python -c "from backend.agent.runtime import format_startup_message; print(format_startup_message())"
+uvicorn backend.app:app --host 0.0.0.0 --port 8000
+```
+
+---
+
+## Agent-First Flow
+
+1. Start the agent/runtime first.
+2. Let the backend collect and analyze events.
+3. Review live events and alerts in the dashboard.
+4. On Linux, kernel monitoring feeds the pipeline automatically.
+5. On macOS and Windows, the system stays in API-only mode until a native collector is added.
 
 ---
 
