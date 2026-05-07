@@ -89,16 +89,16 @@ class TestEventStoreAPI:
     """Test EventStore API contract."""
     
     def test_get_recent_returns_correct_order(self, event_store):
-        """Verify get_recent() returns events in correct order."""
+        """Verify get_recent() returns events in reverse chronological order (newest first)."""
         for i in range(10):
             event = create_event(pid=1000 + i, command=f"/bin/cmd_{i}", timestamp=1234567890.0 + i)
             event_store.append(event)
         
         recent = event_store.get_recent(5)
         assert len(recent) == 5
-        # Should be oldest to newest
-        assert recent[0].execve_event.pid == 1005
-        assert recent[-1].execve_event.pid == 1009
+        # Should be newest to oldest (reverse chronological)
+        assert recent[0].execve_event.pid == 1009  # Newest (highest timestamp)
+        assert recent[-1].execve_event.pid == 1005  # Oldest of the 5
     
     def test_get_recent_respects_limit(self, event_store):
         """Verify get_recent() respects the limit parameter."""
@@ -250,77 +250,4 @@ class TestEventStoreIntegration:
         assert retrieved_event.execve_event.command == original_event.execve_event.command
         assert retrieved_event.detection_result.classification == "malicious"
         assert retrieved_event.detection_result.risk_score == 95.0
-
-
-
-class TestEventStorePersistence:
-    """Test that events persist to SQLite database."""
-    
-    def test_append_persists_to_db(self, event_store):
-        """Verify that append() saves to SQLite."""
-        event = create_event()
-        assert event_store.size() == 0
-        event_store.append(event)
-        assert event_store.size() == 1
-        
-        # Create new store instance pointing to same DB to verify persistence
-        new_store = EventStore(db_path=event_store.db_path)
-        assert new_store.size() == 1
-    
-    def test_multiple_appends(self, event_store):
-        """Verify multiple appends are persisted."""
-        for i in range(5):
-            event = create_event(pid=1000 + i, command=f"/bin/cmd_{i}", timestamp=1234567890.0 + i)
-            event_store.append(event)
-        
-        assert event_store.size() == 5
-        
-        # Verify persistence
-        new_store = EventStore(db_path=event_store.db_path)
-        assert new_store.size() == 5
-
-
-class TestEventStoreAPI:
-    """Test EventStore API contract."""
-    
-    def test_get_recent_returns_correct_order(self, event_store):
-        """Verify get_recent() returns events in correct order."""
-        for i in range(10):
-            event = create_event(pid=1000 + i, command=f"/bin/cmd_{i}", timestamp=1234567890.0 + i)
-            event_store.append(event)
-        
-        recent = event_store.get_recent(5)
-        assert len(recent) == 5
-        # Should be oldest to newest
-        assert recent[0].execve_event.pid == 1005
-        assert recent[-1].execve_event.pid == 1009
-    
-    def test_get_recent_respects_limit(self, event_store):
-        """Verify get_recent() respects the limit parameter."""
-        for i in range(20):
-            event = create_event(pid=1000 + i, command=f"/bin/cmd_{i}", timestamp=1234567890.0 + i)
-            event_store.append(event)
-        
-        assert len(event_store.get_recent(5)) == 5
-        assert len(event_store.get_recent(100)) == 20
-        assert len(event_store.get_recent(0)) == 0
-    
-    def test_get_all_returns_all_events(self, event_store):
-        """Verify get_all() returns all events."""
-        for i in range(10):
-            event = create_event(pid=1000 + i, command=f"/bin/cmd_{i}", timestamp=1234567890.0 + i)
-            event_store.append(event)
-        
-        all_events = event_store.get_all()
-        assert len(all_events) == 10
-    
-    def test_clear_removes_all_events(self, event_store):
-        """Verify clear() removes all events."""
-        for i in range(5):
-            event = create_event(pid=1000 + i, command=f"/bin/cmd_{i}", timestamp=1234567890.0 + i)
-            event_store.append(event)
-        
-        assert event_store.size() == 5
-        event_store.clear()
-        assert event_store.size() == 0
 

@@ -18,6 +18,8 @@ build/
 *.swp
 *.swo
 *~
+.pytest-db/
+test_events_*.db
 .pytest_cache/
 .coverage
 htmlcov/

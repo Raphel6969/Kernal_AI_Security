@@ -90,7 +90,7 @@ app.add_middleware(
 # ==============================================================================
 
 pipeline = get_detection_pipeline()
-event_store = get_event_store(max_events=1000)
+event_store = get_event_store(max_events=settings.event_cache_size)
 hook_manager = get_hook_manager()
 alert_manager = get_alert_manager()
 active_websockets: Set[WebSocket] = set()
@@ -431,29 +431,6 @@ async def process_execve_event(execve_event: ExecveEvent):
     detection_result = pipeline.detect(execve_event.command)
     
     await ingest_security_event(execve_event, source="kernel")
-
-
-# Set the kernel monitor callback
-def _setup_kernel_callback():
-    """Setup the kernel monitor to call our async handler."""
-    def sync_callback(event):
-        # Called from monitor thread; schedule work safely on the main event loop.
-        try:
-            command = str(event)
-            if main_event_loop and main_event_loop.is_running():
-                main_event_loop.call_soon_threadsafe(
-                    lambda: asyncio.create_task(process_execve_event(command))
-                )
-            else:
-                print("⚠️ Main event loop not ready; dropping kernel event")
-        except Exception as e:
-            print(f"❌ Error processing kernel event: {e}")
-    
-    hook_manager.set_callback(sync_callback)
-
-
-# Call this after app creation
-_setup_kernel_callback()
 
 
 # ==============================================================================

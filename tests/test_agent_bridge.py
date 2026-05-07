@@ -15,9 +15,9 @@ def test_agent_payload_serialization():
     assert data["pid"] == 10
 
 
-def test_agent_event_ingest_endpoint(monkeypatch, tmp_path):
-    store = EventStore(max_events=100)
-    monkeypatch.setattr("backend.app.event_store", store)
+def test_agent_event_ingest_endpoint(monkeypatch, isolated_event_store):
+    """Test that agent events are properly ingested into isolated store."""
+    monkeypatch.setattr("backend.app.event_store", isolated_event_store)
 
     response = asyncio.run(
         ingest_agent_event(
@@ -26,4 +26,4 @@ def test_agent_event_ingest_endpoint(monkeypatch, tmp_path):
     )
 
     assert response.command == "echo hello"
-    assert store.size() == 1
+    assert isolated_event_store.size() == 1

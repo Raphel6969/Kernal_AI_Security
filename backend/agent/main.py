@@ -23,12 +23,15 @@ async def agent_event_loop():
 
         # We need an async queue to pass events from the background thread to the async loop
         queue = asyncio.Queue()
+        
+        # Capture the running loop in async context BEFORE defining the callback
+        # This avoids asyncio.get_running_loop() failure when callback is invoked from monitor thread
+        loop = asyncio.get_running_loop()
 
         def on_event(event):
             # This is called from the background thread of RCEMonitor
-            # We must use call_soon_threadsafe to put it into the async queue
+            # We use the captured loop to safely enqueue from the background thread
             try:
-                loop = asyncio.get_running_loop()
                 loop.call_soon_threadsafe(queue.put_nowait, event)
             except Exception as e:
                 logger.error(f"Failed to queue event: {e}")

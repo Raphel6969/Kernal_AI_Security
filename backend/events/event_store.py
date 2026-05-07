@@ -192,7 +192,7 @@ class EventStore:
             n: Number of recent events to retrieve
             
         Returns:
-            List of SecurityEvent objects (oldest to newest)
+            List of SecurityEvent objects in reverse chronological order (newest to oldest)
         """
         if n <= 0:
             return []
@@ -206,7 +206,7 @@ class EventStore:
                 )
                 rows = cursor.fetchall()
             events = [self._row_to_event(row) for row in rows]
-            # Return newest-first (already DESC from query)
+            # Return newest-first (DESC from query)
             return [e for e in events if e is not None]
 
     def get_all(self) -> List[SecurityEvent]:
