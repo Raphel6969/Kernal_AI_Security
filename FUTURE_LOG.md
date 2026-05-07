@@ -14,28 +14,20 @@ The system is designed to scale from single-machine monitoring to enterprise-wid
 
 ---
 
-## ⚠️ CRITICAL GAP: Missing Agent Event Loop
+## ✅ Agent Event Loop
 
-**Status:** Phase 4 is **COMPLETE**. The agent event loop is running and active.
+**Status:** Phase 4 is **COMPLETE**. The agent runtime and event loop are present in [backend/agent/main.py](backend/agent/main.py).
 
-**What's Missing:**
-- [x] **[backend/agent/main.py](backend/agent/main.py)** - Event collection loop
-  - Reads from eBPF ring buffer (Linux)
-  - Forwards events to POST `/agent/events` automatically
-  - Runs continuously in background
+**Current behavior:**
+- Agent receives events via `/agent/events` when the backend is reachable.
+- Linux kernel mode forwards execve events automatically.
+- Windows and macOS stay in API-only mode and wait for manual analysis or forwarded agent traffic.
 
-**Current Behavior:**
-- Agent receives events via `/agent/events` endpoint ✅
-- Agent script launches and monitors continuously ✅
-- Automatically forwards kernel events to backend ✅
-
-**After Building Agent Main Loop:**
-- ✅ Agent connects to kernel hook
-- ✅ Automatically forwards events (no manual POST needed)
-- ✅ Dashboard updates in real-time
-- ✅ Full end-to-end always-on system works
-
-**See: [What's Next - IMMEDIATE BLOCKING TASK](#whats-next-your-todo) for implementation details**
+**What this enables:**
+- Agent connects to the kernel hook on Linux.
+- Events are forwarded without manual POSTs in kernel mode.
+- Dashboard updates in real time.
+- The stack runs end to end as an always-on system.
 
 ---
 
@@ -150,8 +142,8 @@ React Dashboard (real-time display)
   - ~60% confidence contribution
 
 - [backend/detection/ml_scorer.py](backend/detection/ml_scorer.py) - ML-based threat scoring
-  - Trained scikit-learn RandomForestClassifier
-  - Features: command length, special chars, entropy, keyword presence
+  - Trained scikit-learn Logistic Regression model
+  - Features: TF-IDF command vectors plus token-level keyword analysis
   - Binary classification: safe vs malicious
   - ~40% confidence contribution
   - Training: [backend/models/train_model.py](backend/models/train_model.py)
@@ -242,63 +234,7 @@ React Dashboard (real-time display)
      - Print message "Waiting for manual POST requests to /analyze"
      - Idle (no kernel hook available yet)
 
-- **Pseudo-code for main loop:**
-  ```python
-  # backend/agent/main.py (TO BUILD)
-  import asyncio
-  import logging
-  from backend.agent.runtime import detect_capabilities
-  from backend.kernel.execve_hook import start_monitoring
-  import requests
-  import json
-  
-  async def agent_event_loop():
-      """Continuously monitor kernel and forward events to backend"""
-      capabilities = detect_capabilities()
-      logger = logging.getLogger(__name__)
-      
-      if capabilities.run_mode == "kernel":
-          logger.info("Starting in KERNEL mode - eBPF monitoring active")
-          monitor = start_monitoring()
-          
-          # Continuously read from eBPF ring buffer
-          for execve_event in monitor.events():
-              try:
-                  # Send to backend
-                  response = requests.post(
-                      "http://localhost:8000/agent/events",
-                      json={
-                          "pid": execve_event.pid,
-                          "ppid": execve_event.ppid,
-                          "uid": execve_event.uid,
-                          "gid": execve_event.gid,
-                          "command": execve_event.command,
-                          "argv_str": execve_event.argv_str,
-                          "comm": execve_event.comm,
-                          "timestamp": execve_event.timestamp
-                      },
-                      timeout=5
-                  )
-                  if response.status_code == 200:
-                      result = response.json()
-                      logger.debug(f"Event forwarded: {result['classification']}")
-                  else:
-                      logger.error(f"Backend error: {response.status_code}")
-              except requests.exceptions.RequestException as e:
-                  logger.warning(f"Failed to reach backend: {e}")
-                  # TODO: Queue event locally if backend down (Phase 4b)
-                  
-      elif capabilities.run_mode == "api-only":
-          logger.info("Starting in API-ONLY mode (non-Linux)")
-          logger.info("Waiting for manual POST requests to /analyze endpoint")
-          # Just keep running (agent launcher manages the process)
-          while True:
-              await asyncio.sleep(60)
-  
-  if __name__ == "__main__":
-      logging.basicConfig(level=logging.INFO)
-      asyncio.run(agent_event_loop())
-  ```
+**Implementation note:** [backend/agent/main.py](backend/agent/main.py) now contains the runtime loop that reads from the kernel hook in Linux mode and forwards events to `/agent/events`; the API-only branch idles and waits for manual requests.
 
 **What this enables:**
 - ✅ Agent connects to kernel hook on Linux
@@ -498,56 +434,53 @@ Dashboard updates in real-time
 
 ---
 
-## Phase 6b: Alerting & Webhooks (Planned)
+## Phase 6b: Alerting & Webhooks (Complete)
 
-### What we'll build:
+### What was built:
 
 1. **Alert Rules Engine**
-   - Define rules: "if classification == malicious, trigger alert"
-   - Support conditions: risk_score > X, matched_rule contains Y, etc.
-   - Store alert rules in database
-   - Evaluate on every new event
+  - Triggers alerts from detected security events.
+  - Supports threshold-based conditions and matched-rule checks.
+  - Evaluates on each new event.
 
 2. **Webhook Integrations**
-   - POST to external services (Slack, PagerDuty, etc.)
-   - Webhook template system (customize payload)
-   - Retry logic with exponential backoff
-   - Event filtering (only alert on specific classifications)
+  - Supports configurable webhook URLs for alert delivery.
+  - Sends alert payloads to external services such as Slack or Discord.
+  - Keeps webhook dispatch off the critical event-ingestion path.
 
 3. **Alert History**
-   - Track triggered alerts in separate DB table
-   - View alert log in dashboard
-   - Suppress duplicate alerts (within time window)
+  - Tracks triggered alerts for later review.
+  - Exposes alert history to the dashboard.
+  - Avoids duplicate noise by storing alert state.
 
 ### Design:
-- Alert rules tied to event_store (when new event → check rules)
-- Async webhook dispatch (don't block event ingestion)
-- Database-backed rules (allow runtime updates)
+- Alert rules are tied to event ingestion.
+- Webhook dispatch is asynchronous so it does not block detection.
+- Alert behavior is configurable at runtime.
 
 ---
 
-## Phase 7: Remediation (Planned)
+## Phase 7: Remediation (Complete)
 
-### What we'll build:
+### What was built:
 
 1. **Auto-Kill Malicious Processes**
-   - On event classification == malicious
-   - Kill process by PID (if still running)
-   - Log remediation action to database
+  - Kills a process by PID when classification is malicious and remediation is enabled.
+  - Skips API-only events that do not have a real PID.
+  - Records the remediation action and status on the security event.
 
-2. **Binary Quarantine**
-   - Move suspicious/malicious binary to quarantine dir
-   - Hash and track quarantined files
-   - Prevent re-execution
+2. **Opt-in Safety Guard**
+  - Remediation is disabled by default.
+  - The dashboard toggle enables or disables remediation at runtime.
+  - This keeps destructive actions explicit and controlled.
 
-3. **Policy Enforcement**
-   - Block execution by default for malicious binaries
-   - User can whitelist/blacklist
-   - Integration with OS file ACLs (Linux)
+3. **Future extension: Quarantine / Policy Enforcement**
+  - Binary quarantine is not implemented in the current codebase.
+  - OS policy enforcement remains a later platform-hardening step.
 
 ### Constraints:
-- Linux kernel module may be needed for enforcement
-- Windows/macOS need native collectors first (Phase 8+)
+- Linux-only kernel capture still provides the strongest remediation signal.
+- Windows/macOS remain API-only until native collectors are added.
 
 ---
 
@@ -705,14 +638,14 @@ kernal_ai_bouncer/
 
 ### Short-term (This Week):
 - [ ] Fix any issues from end-to-end testing
-- [ ] Commit agent loop changes to git
-- [ ] Implement Phase 6b (Alerting & Webhooks)
-- [ ] Add alert rules management UI
+- [ ] Commit current doc sync and verification notes
+- [ ] Add regression tests for agent/remediation behavior
+- [ ] Polish alert history and remediation UI labels
 
 ### Medium-term (Next Week):
-- [ ] Phase 7 (Remediation) - auto-kill processes
 - [ ] Phase 8 (Auth & Access Control)
 - [ ] Begin stress testing
+- [ ] Harden dashboard/API access rules
 
 ### Long-term (Next Month):
 - [ ] Phase 9 (PostgreSQL + scaling)

@@ -20,6 +20,7 @@ import asyncio
 import uuid
 from datetime import datetime
 
+from backend.config import get_settings
 from backend.detection.pipeline import get_detection_pipeline
 from backend.events.event_store import get_event_store
 from backend.events.models import ExecveEvent, SecurityEvent
@@ -63,22 +64,22 @@ class CommandAnalysisResponse(BaseModel):
 # FastAPI App Setup
 # ==============================================================================
 
+# ==============================================================================
+# FastAPI App Setup
+# ==============================================================================
+
+settings = get_settings()
+
 app = FastAPI(
     title="AI Bouncer + Kernel Guard",
     description="Real-time RCE Prevention System",
     version="0.1.0",
 )
 
-# CORS middleware for frontend (restrict origins via env in production)
-frontend_origins_env = os.getenv(
-    "FRONTEND_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173",
-)
-allowed_origins = [origin.strip() for origin in frontend_origins_env.split(",") if origin.strip()]
-
+# CORS middleware for frontend (restrict origins via config)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=settings.parsed_frontend_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -193,13 +194,21 @@ async def startup_event():
         except Exception as e:
             print(f"⚠️  Kernel event processing error: {e}")
     
-    # Start kernel monitoring with callback
-    try:
-        hook_manager.start(event_callback=on_kernel_event)
-        print("✅ Kernel Guard initialized")
-    except Exception as e:
-        print(f"⚠️  Kernel Guard initialization failed: {e}")
-        print("   System will operate in API-only mode")
+    # Kernel monitor ownership policy
+    owner = settings.validate_owner()
+
+    if owner == "backend":
+        # Start kernel monitoring with callback
+        try:
+            hook_manager.start(event_callback=on_kernel_event)
+            print("✅ Kernel Guard initialized (owned by backend)")
+        except Exception as e:
+            print(f"⚠️  Kernel Guard initialization failed: {e}")
+            print("   System will operate in API-only mode")
+    elif owner == "agent":
+        print("ℹ️  Kernel monitor ownership set to 'agent' — backend will not attach eBPF hooks")
+    else:
+        print("ℹ️  Kernel monitoring disabled by configuration (KERNEL_MONITOR_OWNER=disabled)")
     
     print("✅ Backend ready!")
 
@@ -455,13 +464,13 @@ if __name__ == "__main__":
     import uvicorn
     
     print("🚀 Starting AI Bouncer backend server...")
-    print("   API: http://localhost:8000")
-    print("   Docs: http://localhost:8000/docs")
-    print("   WebSocket: ws://localhost:8000/ws")
+    print(f"   API: http://{settings.api_host}:{settings.api_port}")
+    print(f"   Docs: http://{settings.api_host}:{settings.api_port}/docs")
+    print(f"   WebSocket: ws://{settings.api_host}:{settings.api_port}/ws")
     
     uvicorn.run(
         app,
-        host="0.0.0.0",
-        port=8000,
-        log_level="info",
+        host=settings.api_host,
+        port=settings.api_port,
+        log_level=settings.api_log_level,
     )

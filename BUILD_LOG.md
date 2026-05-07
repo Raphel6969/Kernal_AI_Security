@@ -18,6 +18,8 @@ This workspace now has a full MVP scaffold for the system:
 
 The eBPF enforcement layer is implemented, including kernel capture, BCC loading, event storage, and WebSocket broadcast.
 
+Current state: phases 1-7 are complete in the codebase, and the next roadmap items begin at Phase 8 (auth/access control, scaling, and stress testing).
+
 ## Session 1: Foundation and MVP scaffold
 
 ### Files created and what each one does
@@ -164,7 +166,7 @@ Expected behavior:
 - API `/analyze` endpoint works (already in Phase 1)
 - WebSocket `/ws` is ready for real-time integration
 
-### Next phase
+### Next roadmap
 
 - Add persistence/alerting for high-risk events
 - Extend platform-specific kernel capture options

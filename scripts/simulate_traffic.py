@@ -2,8 +2,16 @@ import time
 import requests
 import json
 import random
+import sys
+import os
 
-API_URL = "http://localhost:8000/analyze"
+# Add parent directory to path so we can import backend modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.config import get_settings
+
+settings = get_settings()
+API_URL = f"{settings.backend_url}/analyze"
 
 COMMANDS = [
     # --- SAFE COMMANDS ---

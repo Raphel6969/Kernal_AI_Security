@@ -16,7 +16,7 @@ This folder contains the project documentation in one place.
 - Kernel capture is Linux-only and falls back cleanly on Windows, WSL2, and macOS.
 - The new agent/runtime starts the backend first and reports whether the current host is kernel-capable or API-only.
 - The dashboard now receives live events through the WebSocket stream.
-- The current remaining work is persistence, alerting, and optional platform expansion.
+- Phases 1-7 are complete; the current remaining work starts at Phase 8 (auth/access control, scaling, and broader platform support).
 
 ## Supporting Files
 

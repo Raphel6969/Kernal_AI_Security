@@ -1,9 +1,11 @@
-Phase 3 — Persistence & Alerting (draft)
+Phase 3 — Persistence & Alerting (historical draft)
 =====================================
 
 Summary
 -------
 This draft recommends a production-ready database and outlines an actionable plan to implement persistent event storage, alerting, and the remaining todos tracked in the repository TODO list.
+
+Status note: the current codebase already includes the always-on agent, live event flow, and opt-in remediation support. Treat the steps below as a planning reference for future durability and platform expansion work rather than the current implementation state.
 
 Recommended database
 --------------------

@@ -312,7 +312,7 @@ LOG_LEVEL=INFO
 - [x] Phase 5: Agent capability detection and bridge
 - [x] Phase 6: Persistent Event Storage (SQLite)
 - [x] Phase 6b: Alerting & Webhooks (Slack/Discord integrations)
-- [ ] Phase 7: Auto-Remediation (Auto-kill malicious processes)
+- [x] Phase 7: Auto-Remediation (Opt-in process kill for malicious events)
 
 ### Known Limitations (MVP)
 - eBPF monitoring is Linux-only (API/dashboard run cross-platform)
@@ -321,7 +321,9 @@ LOG_LEVEL=INFO
 - LLM reasoning deferred to post-MVP
 
 ### Future Enhancements
-- Auto-Remediation (Kill/Quarantine)
+- Quarantine and policy enforcement extensions for remediation
+- Auth & Access Control
+- Scaling & Durability
 - Windows/Mac support (ETW, DTrace)
 - PostgreSQL for production scaling
 - Async LLM explanation layer

@@ -1,9 +1,12 @@
 import asyncio
 import logging
+import os
 import requests
 from backend.agent.runtime import detect_capabilities
+from backend.config import get_settings
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 async def agent_event_loop():
     """Continuously monitor kernel and forward events to backend"""
@@ -14,10 +17,13 @@ async def agent_event_loop():
         from backend.kernel.execve_hook import get_hook_manager
         
         logger.info("Starting in KERNEL mode - eBPF monitoring active")
-        
+
+        # Respect ownership configuration. If backend owns the monitor, do not start it here.
+        owner = settings.validate_owner()
+
         # We need an async queue to pass events from the background thread to the async loop
         queue = asyncio.Queue()
-        
+
         def on_event(event):
             # This is called from the background thread of RCEMonitor
             # We must use call_soon_threadsafe to put it into the async queue
@@ -28,8 +34,31 @@ async def agent_event_loop():
                 logger.error(f"Failed to queue event: {e}")
 
         manager = get_hook_manager()
-        manager.start(on_event)
-        
+
+        # If the monitor is already running in another process, prefer to set the callback only.
+        # If this process is the owner, start the monitor; if disabled, do nothing.
+        try:
+            monitor_running = bool(getattr(manager.monitor, "running", False))
+        except Exception:
+            monitor_running = False
+
+        if owner == "disabled":
+            logger.info("Kernel monitoring disabled by configuration; agent will not attach hooks")
+        elif owner == "backend":
+            # Backend owns the monitor; if it's already running in this process, set callback; otherwise do not start.
+            if monitor_running:
+                logger.info("Monitor already running in this process; registering callback")
+                manager.set_callback(on_event)
+            else:
+                logger.info("Backend is owner; agent will not start local monitor")
+        else:  # owner == 'agent'
+            if monitor_running:
+                logger.info("Monitor already running; registering callback")
+                manager.set_callback(on_event)
+            else:
+                logger.info("Agent owns the monitor; starting local monitor")
+                manager.start(on_event)
+
         try:
             # Continuously read from the queue
             while True:
@@ -37,7 +66,7 @@ async def agent_event_loop():
                 try:
                     # Send to backend
                     response = requests.post(
-                        "http://localhost:8000/agent/events",
+                        f"{settings.backend_url}/agent/events",
                         json={
                             "pid": execve_event.pid,
                             "ppid": execve_event.ppid,
@@ -48,7 +77,7 @@ async def agent_event_loop():
                             "comm": execve_event.comm,
                             "timestamp": execve_event.timestamp
                         },
-                        timeout=5
+                        timeout=settings.agent_event_timeout
                     )
                     if response.status_code == 200:
                         result = response.json()
@@ -62,7 +91,10 @@ async def agent_event_loop():
                     queue.task_done()
         except asyncio.CancelledError:
             logger.info("Agent loop cancelled, stopping monitor...")
-            manager.stop()
+            try:
+                manager.stop()
+            except Exception:
+                pass
             raise
             
     elif capabilities.run_mode == "api-only":

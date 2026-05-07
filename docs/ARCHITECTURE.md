@@ -463,9 +463,9 @@ ws://localhost:8000/ws
 - Configurable webhooks (Slack, Discord)
 - Alert history tracking
 
-### Phase 7: Auto-Remediation (In Progress)
+### Phase 7: Auto-Remediation ✅
 - Kill processes based on classification
-- Quarantine capabilities
+- Quarantine remains a future extension
 
 ---
 
@@ -477,4 +477,4 @@ ws://localhost:8000/ws
 
 ---
 
-**Last Updated**: May 2026 | **Status**: Phase 6b Complete, Phase 7 Planned
+**Last Updated**: May 2026 | **Status**: Phase 7 Complete, Phase 8 Planned

@@ -52,7 +52,7 @@ Content-Type: application/json
 
 **Usage Notes**:
 - This endpoint is primarily for manual analysis and test traffic.
-- The agent/runtime path is what will feed the backend automatically in the next phase.
+- The agent/runtime path already feeds the backend automatically in kernel mode.
 
 **Response** (200 OK):
 ```json
@@ -143,6 +143,7 @@ Content-Type: application/json
 
 **Usage Notes**:
 - This is the always-on agent path for forwarded endpoint events.
+- The agent/runtime path already feeds the backend automatically in kernel mode.
 - The backend runs the same detection pipeline, stores the event, and broadcasts it to the dashboard.
 
 **Response** (200 OK):

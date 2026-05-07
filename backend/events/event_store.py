@@ -11,10 +11,7 @@ import uuid
 from typing import List, Optional, OrderedDict
 from collections import OrderedDict as ODict
 from backend.events.models import SecurityEvent, DetectionResult, ExecveEvent
-
-# Resolve db path relative to project root so it works from any cwd
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_DEFAULT_DB_PATH = os.path.join(_PROJECT_ROOT, "data", "events.db")
+from backend.config import get_settings
 
 
 class EventStore:
@@ -23,16 +20,17 @@ class EventStore:
     Recent events are cached in memory for fast access; all events persisted to disk.
     """
 
-    def __init__(self, max_events: int = 1000, db_path: str = _DEFAULT_DB_PATH):
+    def __init__(self, max_events: int = None, db_path: str = None):
         """
         Initialize event store with SQLite backend.
         
         Args:
-            max_events: Maximum number of events to keep in memory cache
-            db_path: Path to SQLite database file
+            max_events: Maximum number of events to keep in memory cache (uses config default if None)
+            db_path: Path to SQLite database file (uses config default if None)
         """
-        self.max_events = max_events
-        self.db_path = db_path
+        settings = get_settings()
+        self.max_events = max_events if max_events is not None else settings.event_cache_size
+        self.db_path = db_path if db_path is not None else settings.db_path
         self._lock = threading.Lock()
         self._cache: ODict = ODict()  # In-memory LRU cache
         
@@ -256,8 +254,9 @@ class EventStore:
         """
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("""
-                    SELECT * FROM security_events 
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute(f"""
+                    SELECT {self._SELECT_COLS} FROM security_events 
                     WHERE classification = ?
                     ORDER BY timestamp ASC
                 """, (classification,))
@@ -284,12 +283,12 @@ class EventStore:
 _event_store = None
 
 
-def get_event_store(max_events: int = 1000) -> EventStore:
+def get_event_store(max_events: int = None) -> EventStore:
     """
     Get or create the global event store.
     
     Args:
-        max_events: Max events to keep in cache (only used on first call)
+        max_events: Max events to keep in cache (uses config if None, only used on first call)
         
     Returns:
         The global EventStore instance
