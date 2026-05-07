@@ -1,9 +1,10 @@
 import React, { CSSProperties } from 'react';
 import { useWebSocket } from './useWebSocket';
+import { API_URL } from './config';
 import './Dashboard.css';
 
 export function Dashboard() {
-  const { events, isConnected } = useWebSocket('ws://localhost:8000/ws');
+  const { events, isConnected } = useWebSocket();
   const [stats, setStats] = React.useState({
     total_events: 0,
     safe: 0,
@@ -15,23 +16,24 @@ export function Dashboard() {
   const [alertHistory, setAlertHistory] = React.useState<any[]>([]);
   const [newWebhookUrl, setNewWebhookUrl] = React.useState("");
   const [remediationEnabled, setRemediationEnabled] = React.useState(false);
+  const [isBackendOnline, setIsBackendOnline] = React.useState(false);
 
   const fetchWebhooks = () => {
-    fetch('http://localhost:8000/webhooks')
+    fetch(`${API_URL}/webhooks`)
       .then((r) => r.json())
       .then(setWebhooks)
       .catch(console.error);
   };
 
   const fetchAlertHistory = () => {
-    fetch('http://localhost:8000/alerts/history')
+    fetch(`${API_URL}/alerts/history`)
       .then((r) => r.json())
       .then(setAlertHistory)
       .catch(console.error);
   };
 
   const fetchRemediationState = () => {
-    fetch('http://localhost:8000/settings/remediation')
+    fetch(`${API_URL}/settings/remediation`)
       .then((r) => r.json())
       .then((d) => setRemediationEnabled(d.enabled))
       .catch(console.error);
@@ -39,7 +41,7 @@ export function Dashboard() {
 
   const toggleRemediation = () => {
     const next = !remediationEnabled;
-    fetch('http://localhost:8000/settings/remediation', {
+    fetch(`${API_URL}/settings/remediation`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: next }),
@@ -52,7 +54,7 @@ export function Dashboard() {
   const handleAddWebhook = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWebhookUrl) return;
-    fetch('http://localhost:8000/webhooks', {
+    fetch(`${API_URL}/webhooks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: newWebhookUrl }),
@@ -65,7 +67,7 @@ export function Dashboard() {
   };
 
   const handleDeleteWebhook = (id: string) => {
-    fetch(`http://localhost:8000/webhooks/${id}`, { method: 'DELETE' })
+    fetch(`${API_URL}/webhooks/${id}`, { method: 'DELETE' })
       .then(fetchWebhooks)
       .catch(console.error);
   };
@@ -78,7 +80,11 @@ export function Dashboard() {
     fetchAlertHistory();
     fetchRemediationState();
     const interval = setInterval(() => {
-      fetch('http://localhost:8000/stats')
+      fetch(`${API_URL}/healthz`)
+        .then((r) => setIsBackendOnline(r.ok))
+        .catch(() => setIsBackendOnline(false));
+
+      fetch(`${API_URL}/stats`)
         .then((r) => r.json())
         .then(setStats)
         .catch(console.error);
@@ -130,9 +136,39 @@ export function Dashboard() {
             severity cues for fast triage.
           </p>
         </div>
-        <div className={`connection-pill ${isConnected ? 'connected' : 'disconnected'}`}>
-          <span className="pulse-dot" />
-          {isConnected ? 'Connected' : 'Disconnected'}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
+          <div className={`connection-pill ${isBackendOnline ? 'connected' : 'disconnected'}`}>
+            <span className="pulse-dot" />
+            Backend: {isBackendOnline ? 'Online' : 'Offline'}
+          </div>
+          <div className={`connection-pill ${isConnected ? 'connected' : 'disconnected'}`}>
+            <span className="pulse-dot" />
+            WebSocket: {isConnected ? 'Connected' : 'Disconnected'}
+          </div>
+
+          <div
+            title="Auto-Remediation Toggle"
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', background: 'rgba(255,255,255,0.1)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.2)' }}
+            onClick={toggleRemediation}
+          >
+            <span style={{ fontSize: '13px', fontWeight: 600, color: remediationEnabled ? '#ef4444' : 'rgba(255,255,255,0.8)' } as CSSProperties}>
+              🛡️ Remediation: {remediationEnabled ? 'ACTIVE' : 'OFF'}
+            </span>
+            <div
+              style={{
+                width: '40px', height: '22px', borderRadius: '11px',
+                backgroundColor: remediationEnabled ? '#ef4444' : '#cbd5e1',
+                position: 'relative', transition: 'background-color 0.2s',
+              } as CSSProperties}
+            >
+              <div style={{
+                width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white',
+                position: 'absolute', top: '2px',
+                left: remediationEnabled ? '20px' : '2px',
+                transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+              } as CSSProperties} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -168,10 +204,13 @@ export function Dashboard() {
             </div>
             <span className="severity-chip">{getSeverityLabel(latestEvent.classification)}</span>
           </div>
-          <div className="latest-event-meta">
+          <div className="latest-event-meta" style={{ flexWrap: 'wrap' }}>
             <span>PID {latestEvent.pid}</span>
             <span>Risk {latestEvent.risk_score.toFixed(1)}</span>
             <span>{latestEvent.matched_rules.join(', ') || 'No matched rules'}</span>
+            <span style={{ flexBasis: '100%', marginTop: '6px', fontStyle: 'italic', fontSize: '13px', color: '#1e293b' }}>
+              💡 <b>Why flagged:</b> {latestEvent.explanation || 'No explanation provided.'}
+            </span>
           </div>
         </div>
       )}
@@ -246,45 +285,15 @@ export function Dashboard() {
       </div>
 
       <div className="two-column-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
-        {/* Auto-Remediation Toggle */}
-        <div className="events-container" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px' }}>
-          <div>
-            <h2 style={{ margin: 0 }}>⚡ Auto-Remediation</h2>
-            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px' }}>
-              When <b>enabled</b>, malicious processes are automatically killed the moment they are detected.
-              Only effective on Linux with active kernel monitoring.
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={toggleRemediation}>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: remediationEnabled ? '#ef4444' : '#64748b' } as CSSProperties}>
-              {remediationEnabled ? '🔴 ACTIVE' : '⚫ OFF'}
-            </span>
-            <div
-              id="remediation-toggle"
-              style={{
-                width: '52px', height: '28px', borderRadius: '14px', cursor: 'pointer',
-                backgroundColor: remediationEnabled ? '#ef4444' : '#cbd5e1',
-                position: 'relative', transition: 'background-color 0.2s',
-              } as CSSProperties}
-            >
-              <div style={{
-                width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'white',
-                position: 'absolute', top: '3px',
-                left: remediationEnabled ? '27px' : '3px',
-                transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-              } as CSSProperties} />
-            </div>
-          </div>
-        </div>
         <div className="events-container webhooks-container">
           <h2>Webhook Integrations</h2>
           <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '16px' }}>
             Trigger a webhook when a <b>malicious</b> event is detected.
           </p>
           <form onSubmit={handleAddWebhook} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            <input 
-              type="url" 
-              placeholder="https://hooks.slack.com/services/..." 
+            <input
+              type="url"
+              placeholder="https://hooks.slack.com/services/..."
               value={newWebhookUrl}
               onChange={(e) => setNewWebhookUrl(e.target.value)}
               style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
@@ -310,7 +319,7 @@ export function Dashboard() {
         <div className="events-container alerts-container">
           <h2>Alert History</h2>
           {alertHistory.length === 0 ? (
-             <p className="empty-state" style={{ padding: '20px' }}>No alerts triggered yet.</p>
+            <p className="empty-state" style={{ padding: '20px' }}>No alerts triggered yet.</p>
           ) : (
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
               <table className="events-table">

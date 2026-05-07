@@ -5,6 +5,7 @@ All environment variables and settings are defined here using pydantic.
 
 import os
 from typing import Optional
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -42,20 +43,24 @@ class Settings(BaseSettings):
     backend_url: str = "http://localhost:8000"
     agent_event_timeout: int = 5
 
-    class Config:
-        """Pydantic config."""
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     def __init__(self, **data):
         """Initialize settings and resolve db_path if needed."""
         super().__init__(**data)
         
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
         # If db_path not set, default to project_root/data/events.db
         if not self.db_path:
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             self.db_path = os.path.join(project_root, "data", "events.db")
+        elif not os.path.isabs(self.db_path):
+            # Ensure it is an absolute path to survive restarts across different working directories
+            self.db_path = os.path.abspath(os.path.join(project_root, self.db_path))
 
     @property
     def parsed_frontend_origins(self) -> list[str]:

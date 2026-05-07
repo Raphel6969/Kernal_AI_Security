@@ -14,9 +14,24 @@ The normal production flow is agent-driven: the endpoint agent keeps the backend
 
 ## HTTP Endpoints
 
-### Health Check
+### Liveness Probe
 
-Check if the API is running and get basic stats.
+Fast health check — use this for uptime monitoring and pre-flight checks.
+
+```http
+GET /healthz
+```
+
+**Response** (200 OK):
+```json
+{"status": "ok"}
+```
+
+---
+
+### Full Health Check
+
+Returns basic API metadata and event count.
 
 ```http
 GET /
@@ -476,36 +491,35 @@ Where:
 
 ## Rate Limiting
 
-Currently: **No rate limiting** (suitable for MVP)
+Currently: **No rate limiting** (planned in Phase 3)
 
-For production:
-- Implement rate limiting (e.g., 100 req/min per IP)
-- Add authentication (API keys)
-- Add CORS restrictions
+For production, the plan is to apply:
+- `POST /analyze` → 30 req/min per IP
+- `POST /agent/events` → 60 req/min per IP
+- `GET /events` → 20 req/min per IP
 
 ---
 
 ## Authentication
 
-Currently: **No authentication required** (open for hackathon)
+Currently: **No authentication required** (open for demo)
 
-For production:
-- Add JWT or API key authentication
-- Implement role-based access control (RBAC)
-- Add audit logging
+Planned for Phase 3: API key header (`X-API-Key`) via env var.
 
 ---
 
 ## CORS
 
-**Allowed Origins**: All (`*`)
+**Allowed Origins** are controlled by the `FRONTEND_ORIGINS` env variable in `.env`.
 
-**For Production**, restrict to:
-```python
-allow_origins=[
-    "http://localhost:5173",
-    "https://yourdomain.com"
-]
+Default:
+```
+FRONTEND_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+For a deployed demo, add your URL:
+```
+FRONTEND_ORIGINS=http://localhost:5173,https://your-app.vercel.app
 ```
 
 ---

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { API_URL, WS_URL } from './config';
 
 interface SecurityEvent {
   id: string;
@@ -20,7 +21,7 @@ interface SecurityEvent {
   remediation_status?: string | null;
 }
 
-export function useWebSocket(url: string) {
+export function useWebSocket() {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
@@ -42,7 +43,7 @@ export function useWebSocket(url: string) {
     // Defined first so connect()'s onopen closure can reference it safely
     const hydrateEvents = async () => {
       try {
-        const response = await fetch('http://localhost:8000/events?limit=100');
+        const response = await fetch(`${API_URL}/events?limit=100`);
         if (!response.ok) return;
         const history = (await response.json()) as SecurityEvent[];
         if (!mountedRef.current || history.length === 0) return;
@@ -66,7 +67,7 @@ export function useWebSocket(url: string) {
     };
 
     const connect = () => {
-      const socket = new WebSocket(url);
+      const socket = new WebSocket(WS_URL);
       setWs(socket);
 
       socket.onopen = () => {
@@ -129,7 +130,7 @@ export function useWebSocket(url: string) {
       setWs(null);
       seenEventIdsRef.current.clear();
     };
-  }, [url]);
+  }, []);
 
   return { events, isConnected, ws };
 }

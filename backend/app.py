@@ -150,10 +150,13 @@ async def ingest_security_event(
     )
 
     # Auto-Remediation: kill the process if malicious and toggle is ON
-    if detection_result.classification == "malicious" and is_remediation_enabled():
-        rem_result = kill_process(execve_event.pid)
-        security_event.remediation_action = rem_result["action"]
-        security_event.remediation_status = rem_result["status"]
+    if detection_result.classification == "malicious":
+        if is_remediation_enabled():
+            rem_result = kill_process(execve_event.pid)
+            security_event.remediation_action = rem_result["action"]
+            security_event.remediation_status = rem_result["status"]
+        else:
+            print(f"⚠️  Malicious event detected (PID {execve_event.pid}) but Auto-Remediation is DISABLED. Skipping kill.")
 
     event_store.append(security_event)
     asyncio.create_task(alert_manager.dispatch(security_event))
@@ -178,7 +181,6 @@ async def startup_event():
     """Initialize backend systems on startup."""
     global main_event_loop
 
-    print("🚀 Starting AI Bouncer backend...")
     main_event_loop = asyncio.get_running_loop()
     
     # Define kernel event callback
@@ -196,11 +198,20 @@ async def startup_event():
     
     # Kernel monitor ownership policy
     owner = settings.validate_owner()
+    kernel_active = False
+
+    print("==================================================")
+    print("🚀 Starting AI Bouncer backend...")
+    print(f"   Platform:      {sys.platform}")
+    print(f"   Owner Mode:    {owner}")
+    print(f"   API URL:       http://{settings.api_host}:{settings.api_port}")
+    print(f"   WebSocket URL: ws://{settings.api_host}:{settings.api_port}/ws")
 
     if owner == "backend":
         # Start kernel monitoring with callback
         try:
             hook_manager.start(event_callback=on_kernel_event)
+            kernel_active = getattr(hook_manager.monitor, "running", False)
             print("✅ Kernel Guard initialized (owned by backend)")
         except Exception as e:
             print(f"⚠️  Kernel Guard initialization failed: {e}")
@@ -210,6 +221,8 @@ async def startup_event():
     else:
         print("ℹ️  Kernel monitoring disabled by configuration (KERNEL_MONITOR_OWNER=disabled)")
     
+    print(f"   Kernel Active: {'YES' if kernel_active else 'NO'}")
+    print("==================================================")
     print("✅ Backend ready!")
 
 
@@ -224,6 +237,11 @@ async def shutdown_event():
 # ==============================================================================
 # API Endpoints
 # ==============================================================================
+
+@app.get("/healthz")
+async def healthz():
+    """Fast health ping."""
+    return {"status": "ok"}
 
 @app.get("/")
 async def root():

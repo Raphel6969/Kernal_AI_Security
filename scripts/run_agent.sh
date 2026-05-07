@@ -14,7 +14,7 @@ echo ""
 
 if [ "$KERNEL_MONITOR_OWNER" = "backend" ]; then
     echo "✓ Backend will own kernel monitoring"
-    echo "✓ Agent will register callback (no duplicate monitoring)"
+    echo "✓ Agent will idle (no duplicate monitoring)"
 elif [ "$KERNEL_MONITOR_OWNER" = "agent" ]; then
     echo "✓ Agent will own kernel monitoring"
     echo "✓ Backend will operate in API-only mode"

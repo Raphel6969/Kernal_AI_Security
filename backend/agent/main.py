@@ -88,7 +88,8 @@ async def agent_event_loop():
                     else:
                         logger.error(f"Backend error: {response.status_code} - {response.text}")
                 except requests.exceptions.RequestException as e:
-                    logger.warning(f"Failed to reach backend: {e}")
+                    logger.warning(f"Failed to reach backend ({e}). Retrying in 5 seconds...")
+                    await asyncio.sleep(5)
                     # Future Phase: Queue event locally if backend down
                 finally:
                     queue.task_done()
