@@ -2,7 +2,7 @@
 
 ## Overview
 
-AI Bouncer + Kernel Guard is a **three-layer real-time RCE prevention system** that combines kernel-level monitoring with intelligent threat detection.
+AI Bouncer + Kernel Guard is a **four-layer real-time RCE prevention system** that combines an always-on agent, kernel-level monitoring, intelligent threat detection, and a live dashboard.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -32,6 +32,13 @@ AI Bouncer + Kernel Guard is a **three-layer real-time RCE prevention system** t
 │  - Streams events to user space via ring buffer            │
 │  - Graceful fallback on Windows/WSL2                       │
 └─────────────────────────────────────────────────────────────┘
+                       │
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 4: Agent Runtime (Always On)                        │
+│  - Starts the backend as a background service              │
+│  - Detects Linux vs macOS vs Windows capability            │
+│  - Runs kernel mode on Linux and API-only mode elsewhere   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -43,7 +50,9 @@ AI Bouncer + Kernel Guard is a **three-layer real-time RCE prevention system** t
 ```
 User/Process attempts execution
        ↓
-Kernel Guard (eBPF) intercepts execve
+Agent runtime keeps backend alive
+   ↓
+Kernel Guard (eBPF) intercepts execve (Linux only)
        ↓
 Ring buffer → User space (Python)
        ↓
@@ -55,12 +64,20 @@ Risk score calculated (0-100)
        ↓
 Classification: safe / suspicious / malicious
        ↓
-Event stored in memory buffer
+Event stored in memory buffer (and later persistence layer)
        ↓
 WebSocket broadcasts to all connected clients
        ↓
 Dashboard updates in real-time
 ```
+
+### 3. Agent Startup Path
+
+The agent/runtime is the first process the user starts. It determines whether the machine can run kernel mode or must remain API-only.
+
+- **Linux**: runs in kernel mode and starts the backend in always-on monitoring mode.
+- **Windows**: runs in API-only mode.
+- **macOS**: runs in API-only mode until a native collector exists.
 
 ### 2. API Command Analysis Path
 
@@ -221,6 +238,18 @@ else:
    - Color coding: Green (safe), Yellow (suspicious), Red (malicious)
    - Risk score bar chart
    - Responsive grid layout
+
+### Layer 4: Agent Runtime (Always On)
+
+**Files**: `backend/agent/runtime.py`, `backend/agent/bridge.py`, `scripts/run_agent.sh`, `scripts/run_agent.ps1`
+
+**Responsibility**: Start the backend and choose the correct runtime mode for the host OS
+
+**Key Features**:
+- Detects Linux, macOS, Windows, or unsupported platforms
+- Uses kernel mode on Linux
+- Uses API-only mode on macOS and Windows
+- Provides a consistent launch path for the rest of the stack
 
 ---
 
@@ -408,46 +437,44 @@ ws://localhost:8000/ws
 
 ## Development Phases
 
-### Phase 1 ✅ (Complete)
-- Project structure
-- Python backend scaffold
-- Training data curation
-- Rule engine
-- ML model training
-- FastAPI server
-- React dashboard
-
-### Phase 2 (Completed)
-- eBPF execve hooking
+### Phase 1: Kernel Monitoring (eBPF) ✅
+- Hooking `sys_enter_execve` tracepoint
 - Ring buffer integration
-- Kernel event processing
 
-### Phase 3 (Completed)
-- Kernel events routed into detection pipeline
-- SecurityEvent storage and WebSocket broadcast
+### Phase 2: Detection Pipeline ✅
+- Rule engine + ML Scoring model
+- Classification pipeline
 
-### Phase 4 (Completed)
-- Live dashboard event rendering
-- Severity highlighting and connection state UI
+### Phase 3: Real-time Dashboard ✅
+- React UI with live WebSocket feed
 
-### Phase 5 (Planned)
-- SQLite persistence
-- Alert integrations (Slack, email)
-- Custom rule builder UI
-- Windows/Mac kernel backends (ETW, DTrace)
+### Phase 4: Always-On Agent ✅
+- Background agent detection loop
+- Forwarding events automatically
+
+### Phase 5: Agent-to-Backend Bridge ✅
+- `/agent/events` ingestion endpoint
+
+### Phase 6: Persistent Event Storage ✅
+- SQLite Database (`data/events.db`)
+- In-memory LRU cache
+
+### Phase 6b: Alerting & Webhooks ✅
+- Configurable webhooks (Slack, Discord)
+- Alert history tracking
+
+### Phase 7: Auto-Remediation ✅
+- Kill processes based on classification
+- Quarantine remains a future extension
 
 ---
 
 ## Future Enhancements
 
 1. **LLM Reasoning**: Add GPT/Ollama layer for complex interpretation
-2. **Persistence**: SQLite + log rotation for forensics
-3. **Integration**: Slack/PagerDuty alerts, SIEM export
-4. **UI**: Custom rule builder, attack timeline view
-5. **Cross-Platform**: Windows ETW, Mac DTrace backends
-6. **ML**: Continuous learning, anomaly detection
-7. **Performance**: GPU acceleration, distributed detection
+2. **Cross-Platform**: Windows ETW, Mac DTrace backends
+3. **Scaling**: Postgres + Redis for large-scale deployments
 
 ---
 
-**Last Updated**: May 2026 | **Status**: MVP Phase 1 Complete
+**Last Updated**: May 2026 | **Status**: Phase 7 Complete, Phase 8 Planned

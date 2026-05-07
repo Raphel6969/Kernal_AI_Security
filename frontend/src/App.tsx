@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { Dashboard } from './Dashboard';
+import { API_URL } from './config';
 
 function App() {
   const [apiStatus, setApiStatus] = useState('connecting');
 
   useEffect(() => {
     // Check API health
-    fetch('http://localhost:8000/')
+    fetch(`${API_URL}/healthz`)
       .then(() => setApiStatus('online'))
       .catch(() => setApiStatus('offline'));
   }, []);

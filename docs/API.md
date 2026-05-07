@@ -4,6 +4,8 @@
 
 The AI Bouncer API is built with FastAPI and provides both synchronous HTTP endpoints and real-time WebSocket streaming for threat analysis.
 
+The normal production flow is agent-driven: the endpoint agent keeps the backend running and forwards events automatically. The `/analyze` endpoint remains useful for manual testing, demos, and standalone analysis.
+
 **Base URL**: `http://localhost:8000`  
 **Docs**: `http://localhost:8000/docs` (Swagger UI)  
 **ReDoc**: `http://localhost:8000/redoc` (ReDoc UI)
@@ -12,9 +14,24 @@ The AI Bouncer API is built with FastAPI and provides both synchronous HTTP endp
 
 ## HTTP Endpoints
 
-### Health Check
+### Liveness Probe
 
-Check if the API is running and get basic stats.
+Fast health check — use this for uptime monitoring and pre-flight checks.
+
+```http
+GET /healthz
+```
+
+**Response** (200 OK):
+```json
+{"status": "ok"}
+```
+
+---
+
+### Full Health Check
+
+Returns basic API metadata and event count.
 
 ```http
 GET /
@@ -47,6 +64,10 @@ Content-Type: application/json
 
 **Parameters**:
 - `command` (string, required): The command to analyze (non-empty)
+
+**Usage Notes**:
+- This endpoint is primarily for manual analysis and test traffic.
+- The agent/runtime path already feeds the backend automatically in kernel mode.
 
 **Response** (200 OK):
 ```json
@@ -115,6 +136,36 @@ Response:
 
 ---
 
+### Ingest Agent Event
+
+Receive an event forwarded by the always-on agent.
+
+```http
+POST /agent/events
+Content-Type: application/json
+
+{
+  "command": "string",
+  "pid": 1234,
+  "ppid": 1200,
+  "uid": 1000,
+  "gid": 1000,
+  "argv_str": "string",
+  "comm": "string",
+  "timestamp": 1699500000.123
+}
+```
+
+**Usage Notes**:
+- This is the always-on agent path for forwarded endpoint events.
+- The agent/runtime path already feeds the backend automatically in kernel mode.
+- The backend runs the same detection pipeline, stores the event, and broadcasts it to the dashboard.
+
+**Response** (200 OK):
+Same shape as `/analyze`.
+
+---
+
 ### Get Events
 
 Retrieve recent security events.
@@ -125,6 +176,10 @@ GET /events?limit=100
 
 **Query Parameters**:
 - `limit` (integer, optional): Max events to return (default: 100, max: 1000)
+
+**Usage Notes**:
+- The dashboard hydrates from this endpoint on load.
+- Agent-fed events and API-analyzed events both appear here once persistence is connected.
 
 **Response** (200 OK):
 ```json
@@ -203,6 +258,82 @@ GET /stats
 **Example**:
 ```bash
 curl http://localhost:8000/stats | jq '.'
+```
+
+---
+
+## Webhooks & Alerts
+
+Manage webhook integrations and view alert history.
+
+### Add Webhook
+
+Register a new webhook URL to receive alerts for malicious events.
+
+```http
+POST /webhooks
+Content-Type: application/json
+
+{
+  "url": "https://webhook.site/...",
+  "is_active": true
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "id": "wh_a1b2c3d4",
+  "url": "https://webhook.site/...",
+  "is_active": true,
+  "created_at": 1699500000.123
+}
+```
+
+### List Webhooks
+
+Get all registered webhooks.
+
+```http
+GET /webhooks
+```
+
+**Response** (200 OK): Array of Webhook objects.
+
+### Delete Webhook
+
+Remove a webhook integration.
+
+```http
+DELETE /webhooks/{webhook_id}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true
+}
+```
+
+### Get Alert History
+
+Retrieve a log of sent alerts and their delivery status.
+
+```http
+GET /alerts/history?limit=50
+```
+
+**Response** (200 OK):
+```json
+[
+  {
+    "id": "alt_1234",
+    "event_id": "evt_abcd",
+    "webhook_url": "https://webhook.site/...",
+    "status": "success",
+    "timestamp": 1699500100.456
+  }
+]
 ```
 
 ---
@@ -360,36 +491,35 @@ Where:
 
 ## Rate Limiting
 
-Currently: **No rate limiting** (suitable for MVP)
+Currently: **No rate limiting** (planned in Phase 3)
 
-For production:
-- Implement rate limiting (e.g., 100 req/min per IP)
-- Add authentication (API keys)
-- Add CORS restrictions
+For production, the plan is to apply:
+- `POST /analyze` → 30 req/min per IP
+- `POST /agent/events` → 60 req/min per IP
+- `GET /events` → 20 req/min per IP
 
 ---
 
 ## Authentication
 
-Currently: **No authentication required** (open for hackathon)
+Currently: **No authentication required** (open for demo)
 
-For production:
-- Add JWT or API key authentication
-- Implement role-based access control (RBAC)
-- Add audit logging
+Planned for Phase 3: API key header (`X-API-Key`) via env var.
 
 ---
 
 ## CORS
 
-**Allowed Origins**: All (`*`)
+**Allowed Origins** are controlled by the `FRONTEND_ORIGINS` env variable in `.env`.
 
-**For Production**, restrict to:
-```python
-allow_origins=[
-    "http://localhost:5173",
-    "https://yourdomain.com"
-]
+Default:
+```
+FRONTEND_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+For a deployed demo, add your URL:
+```
+FRONTEND_ORIGINS=http://localhost:5173,https://your-app.vercel.app
 ```
 
 ---

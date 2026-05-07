@@ -20,10 +20,14 @@ import asyncio
 import uuid
 from datetime import datetime
 
+from backend.config import get_settings
 from backend.detection.pipeline import get_detection_pipeline
 from backend.events.event_store import get_event_store
 from backend.events.models import ExecveEvent, SecurityEvent
 from backend.kernel.execve_hook import get_hook_manager
+from backend.alerts.alert_manager import get_alert_manager
+from backend.alerts.models import WebhookCreate, WebhookResponse, AlertHistoryResponse
+from backend.agent.remediation import kill_process, is_remediation_enabled, set_remediation_enabled
 
 # ==============================================================================
 # Models
@@ -32,6 +36,18 @@ from backend.kernel.execve_hook import get_hook_manager
 class CommandAnalysisRequest(BaseModel):
     """Request to analyze a command."""
     command: str
+
+
+class AgentEventRequest(BaseModel):
+    """Event forwarded by the always-on agent."""
+    command: str
+    pid: int = 0
+    ppid: int = 0
+    uid: int = 0
+    gid: int = 0
+    argv_str: str | None = None
+    comm: str = "agent"
+    timestamp: float | None = None
 
 
 class CommandAnalysisResponse(BaseModel):
@@ -48,22 +64,22 @@ class CommandAnalysisResponse(BaseModel):
 # FastAPI App Setup
 # ==============================================================================
 
+# ==============================================================================
+# FastAPI App Setup
+# ==============================================================================
+
+settings = get_settings()
+
 app = FastAPI(
     title="AI Bouncer + Kernel Guard",
     description="Real-time RCE Prevention System",
     version="0.1.0",
 )
 
-# CORS middleware for frontend (restrict origins via env in production)
-frontend_origins_env = os.getenv(
-    "FRONTEND_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173",
-)
-allowed_origins = [origin.strip() for origin in frontend_origins_env.split(",") if origin.strip()]
-
+# CORS middleware for frontend (restrict origins via config)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=settings.parsed_frontend_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,11 +90,87 @@ app.add_middleware(
 # ==============================================================================
 
 pipeline = get_detection_pipeline()
-event_store = get_event_store(max_events=1000)
+event_store = get_event_store(max_events=settings.event_cache_size)
 hook_manager = get_hook_manager()
+alert_manager = get_alert_manager()
 active_websockets: Set[WebSocket] = set()
 active_websockets_lock = asyncio.Lock()
 main_event_loop = None
+
+
+def _build_execve_event(
+    command: str,
+    *,
+    pid: int = 0,
+    ppid: int = 0,
+    uid: int = 0,
+    gid: int = 0,
+    argv_str: str | None = None,
+    comm: str = "api",
+    timestamp: float | None = None,
+) -> ExecveEvent:
+    """Build a normalized execve event for both API and agent inputs."""
+    return ExecveEvent(
+        pid=pid,
+        ppid=ppid,
+        uid=uid,
+        gid=gid,
+        command=command,
+        argv_str=argv_str or command,
+        timestamp=timestamp or datetime.now().timestamp(),
+        comm=comm,
+    )
+
+
+def _build_response(security_event: SecurityEvent) -> CommandAnalysisResponse:
+    """Convert a security event into the API response model."""
+    result = security_event.detection_result
+    return CommandAnalysisResponse(
+        command=security_event.execve_event.command,
+        classification=result.classification,
+        risk_score=result.risk_score,
+        matched_rules=result.matched_rules,
+        ml_confidence=result.ml_confidence,
+        explanation=result.explanation or "",
+    )
+
+
+async def ingest_security_event(
+    execve_event: ExecveEvent,
+    *,
+    source: str = "api",
+) -> SecurityEvent:
+    """Run detection, store the event, and broadcast it to the dashboard."""
+    detection_result = pipeline.detect(execve_event.command)
+    security_event = SecurityEvent(
+        id=f"evt_{uuid.uuid4().hex[:8]}",
+        execve_event=execve_event,
+        detection_result=detection_result,
+        detected_at=datetime.now().timestamp(),
+    )
+
+    # Auto-Remediation: kill the process if malicious and toggle is ON
+    if detection_result.classification == "malicious":
+        if is_remediation_enabled():
+            rem_result = kill_process(execve_event.pid)
+            security_event.remediation_action = rem_result["action"]
+            security_event.remediation_status = rem_result["status"]
+        else:
+            print(f"⚠️  Malicious event detected (PID {execve_event.pid}) but Auto-Remediation is DISABLED. Skipping kill.")
+
+    event_store.append(security_event)
+    asyncio.create_task(alert_manager.dispatch(security_event))
+
+    emoji = "🟢" if security_event.detection_result.classification == "safe" else \
+            "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
+    rem_info = f" | 🛑 {security_event.remediation_status}" if security_event.remediation_status else ""
+    print(
+        f"{emoji} {source.upper()} event: {execve_event.command[:50]} "
+        f"(PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}{rem_info}"
+    )
+
+    await broadcast_event(security_event)
+    return security_event
 
 # ==============================================================================
 # Startup & Shutdown
@@ -89,7 +181,6 @@ async def startup_event():
     """Initialize backend systems on startup."""
     global main_event_loop
 
-    print("🚀 Starting AI Bouncer backend...")
     main_event_loop = asyncio.get_running_loop()
     
     # Define kernel event callback
@@ -97,41 +188,41 @@ async def startup_event():
         """Handle kernel events from eBPF."""
         try:
             # Run detection pipeline
-            detection_result = pipeline.detect(execve_event.command)
-            
-            # Create SecurityEvent
-            security_event = SecurityEvent(
-                id=f"evt_{uuid.uuid4().hex[:8]}",
-                execve_event=execve_event,
-                detection_result=detection_result,
-                detected_at=datetime.now().timestamp(),
-            )
-            
-            # Store event
-            event_store.append(security_event)
-            
-            # Log to console
-            emoji = "🟢" if security_event.detection_result.classification == "safe" else \
-                    "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
-            print(f"{emoji} Kernel event: {execve_event.command[:50]} (PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}")
-            
-            # Broadcast asynchronously to WebSocket clients
             if main_event_loop:
                 asyncio.run_coroutine_threadsafe(
-                    broadcast_event(security_event),
-                    main_event_loop
+                    ingest_security_event(execve_event, source="kernel"),
+                    main_event_loop,
                 )
         except Exception as e:
             print(f"⚠️  Kernel event processing error: {e}")
     
-    # Start kernel monitoring with callback
-    try:
-        hook_manager.start(event_callback=on_kernel_event)
-        print("✅ Kernel Guard initialized")
-    except Exception as e:
-        print(f"⚠️  Kernel Guard initialization failed: {e}")
-        print("   System will operate in API-only mode")
+    # Kernel monitor ownership policy
+    owner = settings.validate_owner()
+    kernel_active = False
+
+    print("==================================================")
+    print("🚀 Starting AI Bouncer backend...")
+    print(f"   Platform:      {sys.platform}")
+    print(f"   Owner Mode:    {owner}")
+    print(f"   API URL:       http://{settings.api_host}:{settings.api_port}")
+    print(f"   WebSocket URL: ws://{settings.api_host}:{settings.api_port}/ws")
+
+    if owner == "backend":
+        # Start kernel monitoring with callback
+        try:
+            hook_manager.start(event_callback=on_kernel_event)
+            kernel_active = getattr(hook_manager.monitor, "running", False)
+            print("✅ Kernel Guard initialized (owned by backend)")
+        except Exception as e:
+            print(f"⚠️  Kernel Guard initialization failed: {e}")
+            print("   System will operate in API-only mode")
+    elif owner == "agent":
+        print("ℹ️  Kernel monitor ownership set to 'agent' — backend will not attach eBPF hooks")
+    else:
+        print("ℹ️  Kernel monitoring disabled by configuration (KERNEL_MONITOR_OWNER=disabled)")
     
+    print(f"   Kernel Active: {'YES' if kernel_active else 'NO'}")
+    print("==================================================")
     print("✅ Backend ready!")
 
 
@@ -146,6 +237,11 @@ async def shutdown_event():
 # ==============================================================================
 # API Endpoints
 # ==============================================================================
+
+@app.get("/healthz")
+async def healthz():
+    """Fast health ping."""
+    return {"status": "ok"}
 
 @app.get("/")
 async def root():
@@ -172,46 +268,29 @@ async def analyze_command(request: CommandAnalysisRequest):
     if not request.command or not request.command.strip():
         raise HTTPException(status_code=400, detail="Command cannot be empty")
     
-    # Run detection pipeline
-    result = pipeline.detect(request.command)
+    execve_event = _build_execve_event(request.command)
+    security_event = await ingest_security_event(execve_event, source="api")
+    return _build_response(security_event)
 
-    # Build a minimal ExecveEvent for UI purposes (kernel fields unknown here)
-    execve_event = ExecveEvent(
-        pid=0,
-        ppid=0,
-        uid=0,
-        gid=0,
-        command=request.command,
-        argv_str=request.command,
-        timestamp=datetime.now().timestamp(),
-        comm="api",
+
+@app.post("/agent/events", response_model=CommandAnalysisResponse)
+async def ingest_agent_event(request: AgentEventRequest):
+    """Ingest an event forwarded by the always-on agent."""
+    if not request.command or not request.command.strip():
+        raise HTTPException(status_code=400, detail="Command cannot be empty")
+
+    execve_event = _build_execve_event(
+        request.command,
+        pid=request.pid,
+        ppid=request.ppid,
+        uid=request.uid,
+        gid=request.gid,
+        argv_str=request.argv_str,
+        comm=request.comm,
+        timestamp=request.timestamp,
     )
-
-    # Create SecurityEvent and store/broadcast it
-    security_event = SecurityEvent(
-        id=f"evt_{uuid.uuid4().hex[:8]}",
-        execve_event=execve_event,
-        detection_result=result,
-        detected_at=datetime.now().timestamp(),
-    )
-
-    # Store event in memory
-    event_store.append(security_event)
-
-    # Broadcast asynchronously to WebSocket clients
-    try:
-        asyncio.create_task(broadcast_event(security_event))
-    except Exception as e:
-        print(f"⚠️ Failed to schedule broadcast: {e}")
-
-    return CommandAnalysisResponse(
-        command=request.command,
-        classification=result.classification,
-        risk_score=result.risk_score,
-        matched_rules=result.matched_rules,
-        ml_confidence=result.ml_confidence,
-        explanation=result.explanation,
-    )
+    security_event = await ingest_security_event(execve_event, source="agent")
+    return _build_response(security_event)
 
 
 @app.get("/events")
@@ -238,6 +317,51 @@ async def get_stats():
         "suspicious": event_store.get_suspicious_count(),
         "malicious": event_store.get_malicious_count(),
     }
+
+
+@app.get("/webhooks", response_model=List[WebhookResponse])
+async def list_webhooks():
+    """List all registered webhooks."""
+    return alert_manager.get_webhooks()
+
+
+@app.post("/webhooks", response_model=WebhookResponse)
+async def create_webhook(request: WebhookCreate):
+    """Register a new webhook URL."""
+    if not request.url.startswith("http"):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+    return alert_manager.add_webhook(request.url)
+
+
+@app.delete("/webhooks/{webhook_id}")
+async def delete_webhook(webhook_id: str):
+    """Remove a webhook."""
+    alert_manager.remove_webhook(webhook_id)
+    return {"status": "success"}
+
+
+@app.get("/alerts/history", response_model=List[AlertHistoryResponse])
+async def list_alert_history(limit: int = Query(default=50, ge=1, le=1000)):
+    """Get history of triggered alerts."""
+    return alert_manager.get_alert_history(limit)
+
+
+# ==============================================================================
+# Remediation Settings
+# ==============================================================================
+
+@app.get("/settings/remediation")
+async def get_remediation_settings():
+    """Get current auto-remediation toggle state."""
+    return {"enabled": is_remediation_enabled()}
+
+
+@app.post("/settings/remediation")
+async def update_remediation_settings(body: dict):
+    """Enable or disable auto-remediation."""
+    enabled = body.get("enabled", False)
+    set_remediation_enabled(bool(enabled))
+    return {"enabled": is_remediation_enabled()}
 
 
 # ==============================================================================
@@ -324,42 +448,7 @@ async def process_execve_event(execve_event: ExecveEvent):
     # Run detection pipeline
     detection_result = pipeline.detect(execve_event.command)
     
-    # Create SecurityEvent
-    security_event = SecurityEvent(
-        id=f"evt_{uuid.uuid4().hex[:8]}",
-        execve_event=execve_event,
-        detection_result=detection_result,
-        detected_at=datetime.now().timestamp(),
-    )
-    
-    # Store event
-    event_store.append(security_event)
-    
-    # Broadcast to WebSocket clients
-    await broadcast_event(security_event)
-
-
-# Set the kernel monitor callback
-def _setup_kernel_callback():
-    """Setup the kernel monitor to call our async handler."""
-    def sync_callback(event):
-        # Called from monitor thread; schedule work safely on the main event loop.
-        try:
-            command = str(event)
-            if main_event_loop and main_event_loop.is_running():
-                main_event_loop.call_soon_threadsafe(
-                    lambda: asyncio.create_task(process_execve_event(command))
-                )
-            else:
-                print("⚠️ Main event loop not ready; dropping kernel event")
-        except Exception as e:
-            print(f"❌ Error processing kernel event: {e}")
-    
-    hook_manager.set_callback(sync_callback)
-
-
-# Call this after app creation
-_setup_kernel_callback()
+    await ingest_security_event(execve_event, source="kernel")
 
 
 # ==============================================================================
@@ -370,13 +459,13 @@ if __name__ == "__main__":
     import uvicorn
     
     print("🚀 Starting AI Bouncer backend server...")
-    print("   API: http://localhost:8000")
-    print("   Docs: http://localhost:8000/docs")
-    print("   WebSocket: ws://localhost:8000/ws")
+    print(f"   API: http://{settings.api_host}:{settings.api_port}")
+    print(f"   Docs: http://{settings.api_host}:{settings.api_port}/docs")
+    print(f"   WebSocket: ws://{settings.api_host}:{settings.api_port}/ws")
     
     uvicorn.run(
         app,
-        host="0.0.0.0",
-        port=8000,
-        log_level="info",
+        host=settings.api_host,
+        port=settings.api_port,
+        log_level=settings.api_log_level,
     )

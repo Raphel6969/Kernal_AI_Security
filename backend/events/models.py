@@ -38,6 +38,8 @@ class SecurityEvent:
     execve_event: ExecveEvent
     detection_result: DetectionResult
     detected_at: float  # When detection ran (Unix timestamp)
+    remediation_action: Optional[str] = None   # e.g. "kill_process"
+    remediation_status: Optional[str] = None   # e.g. "success", "skipped_no_pid"
 
     def dict(self):
         """Convert to dict for JSON serialization."""
@@ -57,6 +59,8 @@ class SecurityEvent:
             "ml_confidence": self.detection_result.ml_confidence,
             "explanation": self.detection_result.explanation,
             "detected_at": self.detected_at,
+            "remediation_action": self.remediation_action,
+            "remediation_status": self.remediation_status,
         }
 
     def json(self):
