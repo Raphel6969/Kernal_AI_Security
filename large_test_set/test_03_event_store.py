@@ -302,3 +302,84 @@ def test_max_events_respected_under_concurrent_load():
         t.join()
 
     assert store.size() <= 50
+
+
+# ===========================================================================
+# 9. Edge Cases Extended
+# ===========================================================================
+
+class TestEventStoreEdgeCasesExtended:
+
+    def test_max_events_one_keeps_only_last(self):
+        """A single-slot buffer must always hold only the most recent event."""
+        store = EventStore(max_events=1)
+        store.append(_make_event(idx=0))
+        store.append(_make_event(idx=1))
+        assert store.size() == 1
+        assert store.get_all()[0].id == "evt_1"
+
+    def test_get_all_returns_oldest_to_newest(self):
+        """get_all() must preserve insertion order (oldest → newest)."""
+        store = EventStore(max_events=100)
+        for i in range(5):
+            store.append(_make_event(idx=i))
+        ids = [e.id for e in store.get_all()]
+        assert ids == ["evt_0", "evt_1", "evt_2", "evt_3", "evt_4"]
+
+    def test_get_recent_ordering_after_buffer_wrap(self):
+        """After the circular buffer wraps, ordering must stay oldest→newest."""
+        store = EventStore(max_events=3)
+        for i in range(6):
+            store.append(_make_event(idx=i))
+        ids = [e.id for e in store.get_recent(3)]
+        assert ids == ["evt_3", "evt_4", "evt_5"]
+
+    def test_get_by_classification_after_buffer_eviction(self):
+        """Counts must reflect only events still inside the buffer."""
+        store = EventStore(max_events=3)
+        store.append(_make_event("malicious", idx=0))
+        store.append(_make_event("malicious", idx=1))
+        store.append(_make_event("safe", idx=2))
+        store.append(_make_event("safe", idx=3))
+        store.append(_make_event("safe", idx=4))
+        # evt_0 and evt_1 (malicious) are evicted; only 3 safe remain
+        assert store.get_malicious_count() == 0
+        assert store.get_safe_count() == 3
+
+    def test_get_by_classification_on_empty_store(self):
+        store = EventStore(max_events=100)
+        assert store.get_by_classification("safe") == []
+        assert store.get_by_classification("malicious") == []
+        assert store.get_by_classification("suspicious") == []
+
+    def test_concurrent_clear_and_append_no_crash(self):
+        """clear() racing with append() must not corrupt state or raise."""
+        store = EventStore(max_events=200)
+        errors = []
+
+        def appender():
+            try:
+                for i in range(100):
+                    store.append(_make_event(idx=i))
+            except Exception as e:
+                errors.append(("append", e))
+
+        def clearer():
+            try:
+                for _ in range(5):
+                    store.clear()
+                    time.sleep(0.005)
+            except Exception as e:
+                errors.append(("clear", e))
+
+        threads = [
+            threading.Thread(target=appender),
+            threading.Thread(target=clearer),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == [], f"Errors during concurrent clear/append: {errors}"
+        assert store.size() <= 200

