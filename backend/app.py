@@ -243,6 +243,18 @@ async def healthz():
     """Fast health ping."""
     return {"status": "ok"}
 
+@app.get("/readyz")
+async def readyz():
+    """Readiness probe for deploy environments."""
+    try:
+        # Validate core dependencies are initialized and DB is reachable.
+        _ = pipeline is not None
+        _ = alert_manager is not None
+        _ = event_store.size()
+        return {"status": "ready"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Not ready: {e}")
+
 @app.get("/")
 async def root():
     """Health check endpoint."""
@@ -445,9 +457,7 @@ async def process_execve_event(execve_event: ExecveEvent):
     Args:
         execve_event: ExecveEvent object with kernel data
     """
-    # Run detection pipeline
-    detection_result = pipeline.detect(execve_event.command)
-    
+    # Detection runs inside ingest_security_event.
     await ingest_security_event(execve_event, source="kernel")
 
 

@@ -32,7 +32,6 @@ pick_api_url() {
         echo "🔗 Running on native Linux, using localhost"
     fi
 }
-
 pick_api_url
 
 echo ""
