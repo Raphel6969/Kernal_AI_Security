@@ -79,18 +79,28 @@ export function Dashboard() {
     fetchWebhooks();
     fetchAlertHistory();
     fetchRemediationState();
-    const interval = setInterval(() => {
+    const healthInterval = setInterval(() => {
       fetch(`${API_URL}/healthz`)
         .then((r) => setIsBackendOnline(r.ok))
         .catch(() => setIsBackendOnline(false));
+    }, 3000);
 
+    const statsInterval = setInterval(() => {
       fetch(`${API_URL}/stats`)
         .then((r) => r.json())
         .then(setStats)
         .catch(console.error);
+    }, 3000);
+
+    const alertsInterval = setInterval(() => {
       fetchAlertHistory();
-    }, 1000);
-    return () => clearInterval(interval);
+    }, 7000);
+
+    return () => {
+      clearInterval(healthInterval);
+      clearInterval(statsInterval);
+      clearInterval(alertsInterval);
+    };
   }, []);
 
   const getClassColor = (classification: string) => {
