@@ -36,8 +36,8 @@ class DetectionPipeline:
         except FileNotFoundError:
             print("⚠️  ML model not yet trained. Detection will use rules only.")
             
-        self.suspicious_threshold = 30.0
-        self.malicious_threshold = 70.0
+        self.suspicious_threshold = 25.0
+        self.malicious_threshold = 60.0
 
     def update_thresholds(self, suspicious: float, malicious: float):
         self.suspicious_threshold = suspicious

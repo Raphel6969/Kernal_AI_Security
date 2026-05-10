@@ -1,85 +1,66 @@
 """
 Rule-based detection engine for RCE prevention.
-Detects common attack patterns through keyword and regex matching.
+Detects common attack patterns through keyword, regex matching, and entropy.
 """
 
 import re
+import math
+from collections import defaultdict
 from typing import List, Tuple
 
 class RuleEngine:
     """
     Rule-based detection for malicious commands.
-    Uses keyword matching and regex patterns to identify RCE attack vectors.
+    Uses pattern matching, keyword scoring, and Shannon entropy.
     """
 
     def __init__(self):
-        # Command injection operators
-        self.injection_operators = [';', '&&', '||', '|', '\n', '\r', '&']
-        
-        # Shell execution tools
-        self.shell_tools = ['bash', 'sh', 'zsh', 'ksh', 'csh', 'dash', 'eval', 'exec', 'source']
-        
-        # Reverse shell patterns
-        self.reverse_shell_patterns = [
-            '/dev/tcp/',
-            '/dev/udp/',
-            'nc -',
-            'ncat',
-            'socat',
-            'tclsh',
-        ]
-        
-        # Suspicious tools for downloads/execution
-        self.suspicious_tools = [
-            'curl',
-            'wget',
-            'python',
-            'python3',
-            'perl',
-            'ruby',
-            'php',
-            'node',
-            'awk',
-            'sed',
-            'paste',
-        ]
-        
-        # Destructive commands
-        self.destructive_patterns = [
-            r'rm\s+-rf\s+/',
-            r'mkfs\.',
-            r'dd\s+if=/dev/(zero|random|mem)',
-            r':\(\)',  # Bash fork bomb
-        ]
-        
-        # Privilege escalation patterns
-        self.privesc_patterns = [
-            r'sudo\s+-u\s+root',
-            r'su\s+-',
-            r'su\s+root',
-            r'chmod\s+777\s+/etc/(shadow|passwd)',
-        ]
-        
-        # File/data exfiltration
-        self.exfiltration_patterns = [
-            r'cat\s+/etc/(shadow|passwd)',
-            r'/root/\.ssh',
-            r'/etc/(shadow|passwd)\s*>',
-            r'dd\s+if=/dev/(sda|mem|zero)',
-        ]
-        
-        # Encoded payload detection
-        self.encoding_patterns = [
-            r'base64\s+(-d|--decode)',
-            r'echo.*\|.*base64',
-            r'xxd\s+-r',
-            r'printf\s+.*\\x',
-            r'od\s+.*-t',
-        ]
+        self.patterns = {
+            "reverse_shell":  [
+                r"/dev/tcp/",
+                r"bash\s*-i",
+                r"nc\s+-e\s*/bin",
+                r"ncat\s+.*-e",
+            ],
+            "pipe_to_shell":  [r"\|\s*bash", r"\|\s*sh\b", r"\|\s*zsh"],
+            "obfuscated_b64": [r"base64\s+-d", r"base64\s+--decode", r"\{echo,"],
+            "destructive":    [
+                r"rm\s+-rf\s+/\s+--no-preserve",
+                r"dd\s+if=/dev/zero",
+                r"mkfs\.",
+            ],
+            "priv_esc":       [r"chmod\s+4[0-9]{3}\s+/bin/", r"NOPASSWD:ALL"],
+            "data_exfil":     [
+                r"cat\s+/etc/shadow",
+                r"find.*id_rsa.*xargs\s+cat",
+                r"\|\s*nc\s+\d+\.\d+\.\d+\.\d+",
+            ],
+            "fork_bomb":      [r":\(\)\s*\{", r":\|\:&"],
+            "log_wipe":       [r"shred.*\s+/var/log", r"truncate\s+-s\s+0\s+/var/log/"],
+            "download_exec":  [r"wget.*-O\s+/tmp.*&&.*chmod.*&&", r"curl.*\|\s*bash"],
+            "ssh_inject":     [r"authorized_keys"],
+            "web_shell":      [r"php.*system\(\$", r"php.*passthru\(\$"],
+            "eval_payload":   [r"eval\s*\$\(\s*cat", r"exec\s*\$\(\s*cat"],
+        }
+
+        self.keyword_scores = {
+            "eval": 25, "exec": 20, "base64": 30, "nc ": 25,
+            "/tmp/": 10,  "pty.spawn": 30, "socket.connect": 25, "os.dup2": 25,
+        }
+
+    def _shannon_entropy(self, s: str) -> float:
+        """Compute Shannon entropy of a string."""
+        if not s:
+            return 0.0
+        freq = defaultdict(int)
+        for c in s:
+            freq[c] += 1
+        n = len(s)
+        return -sum((v / n) * math.log2(v / n) for v in freq.values())
 
     def score_rules(self, command: str) -> Tuple[float, List[str]]:
         """
-        Score a command based on rule matches.
+        Score a command based on rule matches, keywords, and entropy.
         
         Args:
             command: The command string to analyze
@@ -87,86 +68,33 @@ class RuleEngine:
         Returns:
             Tuple of (risk_score: 0-100, matched_rules: list of rule names)
         """
-        risk_score = 0.0
+        score = 0.0
         matched_rules = []
-        
-        # Check for injection operators combined with suspicious tools
-        if self._has_piping_to_shell(command):
-            risk_score += 45
-            matched_rules.append("shell_piping")
-        
-        # Check for reverse shell patterns
-        if self._has_reverse_shell_pattern(command):
-            risk_score += 55
-            matched_rules.append("reverse_shell_pattern")
-        
-        # Check for destructive patterns
-        if self._has_destructive_pattern(command):
-            risk_score += 65
-            matched_rules.append("destructive_pattern")
-        
-        # Check for privilege escalation
-        if self._has_privesc_pattern(command):
-            risk_score += 45
-            matched_rules.append("privilege_escalation")
-        
-        # Check for data exfiltration
-        if self._has_exfiltration_pattern(command):
-            risk_score += 40
-            matched_rules.append("data_exfiltration")
-        
-        # Check for encoded payloads
-        if self._has_encoding_pattern(command):
-            risk_score += 25
-            matched_rules.append("encoded_payload")
-        
-        # Cap at 100
-        return min(risk_score, 100), matched_rules
+        cmd_lower = command.lower()
 
-    def _has_piping_to_shell(self, command: str) -> bool:
-        """Detect piping to shell: curl | bash, etc."""
-        for tool in self.suspicious_tools:
-            for op in ['|', '||', '&&']:
-                for shell in self.shell_tools:
-                    pattern = f'{tool}.*{re.escape(op)}\\s*{shell}'
-                    if re.search(pattern, command, re.IGNORECASE):
-                        return True
-        return False
+        # Check Patterns
+        for rule_name, patterns in self.patterns.items():
+            for pat in patterns:
+                if re.search(pat, command, re.IGNORECASE):
+                    score += 40
+                    matched_rules.append(rule_name)
+                    break
 
-    def _has_reverse_shell_pattern(self, command: str) -> bool:
-        """Detect reverse shell patterns."""
-        for pattern in self.reverse_shell_patterns:
-            if pattern in command:
-                return True
-        return False
+        # Check Keywords
+        for kw, pts in self.keyword_scores.items():
+            if kw in cmd_lower:
+                score += pts
 
-    def _has_destructive_pattern(self, command: str) -> bool:
-        """Detect destructive/wiping patterns."""
-        for pattern in self.destructive_patterns:
-            if re.search(pattern, command, re.IGNORECASE):
-                return True
-        return False
+        # Add Entropy Penalty for obfuscation
+        ent = self._shannon_entropy(command)
+        if ent > 4.5:
+            score += 20
+            matched_rules.append("high_entropy_obfuscation")
+        elif ent > 3.8:
+            score += 10
+            matched_rules.append("moderate_entropy")
 
-    def _has_privesc_pattern(self, command: str) -> bool:
-        """Detect privilege escalation attempts."""
-        for pattern in self.privesc_patterns:
-            if re.search(pattern, command, re.IGNORECASE):
-                return True
-        return False
-
-    def _has_exfiltration_pattern(self, command: str) -> bool:
-        """Detect data exfiltration patterns."""
-        for pattern in self.exfiltration_patterns:
-            if re.search(pattern, command, re.IGNORECASE):
-                return True
-        return False
-
-    def _has_encoding_pattern(self, command: str) -> bool:
-        """Detect encoded/obfuscated payloads."""
-        for pattern in self.encoding_patterns:
-            if re.search(pattern, command, re.IGNORECASE):
-                return True
-        return False
+        return min(score, 100.0), list(set(matched_rules))
 
 
 # Singleton instance
