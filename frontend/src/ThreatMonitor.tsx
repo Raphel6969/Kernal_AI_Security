@@ -4,10 +4,9 @@ import { Download } from 'lucide-react';
 
 interface ThreatMonitorProps {
   events: any[];
-  remediationEnabled: boolean;
 }
 
-export function ThreatMonitor({ events, remediationEnabled }: ThreatMonitorProps) {
+export function ThreatMonitor({ events }: ThreatMonitorProps) {
   const [stats, setStats] = useState({
     total_events: 0,
     safe: 0,

@@ -203,7 +203,7 @@ function App() {
             </div>
           )}
 
-          {activePage === 'monitor' && <ThreatMonitor events={events} remediationEnabled={remediationEnabled} />}
+          {activePage === 'monitor' && <ThreatMonitor events={events} />}
           {activePage === 'settings' && <SystemSettings theme={theme} setTheme={setTheme} />}
         </div>
       </main>
