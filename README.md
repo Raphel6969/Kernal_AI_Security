@@ -343,6 +343,9 @@ The project whitepaper provides a detailed breakdown of:
 - [x] Auto-remediation (kill malicious process)
 - [x] `/healthz` liveness probe
 - [x] Startup banner with system state
+- [x] Dynamic AI Sensitivity Thresholds
+- [x] Tag-based Webhook Filtering (Safe/Suspicious/Malicious)
+- [x] Real-time JSON Log Export
 - [ ] Rate limiting (Phase 3)
 - [ ] API key auth + tunnel protection (Phase 3)
 - [ ] LLM-powered explanation tier (Tier C)

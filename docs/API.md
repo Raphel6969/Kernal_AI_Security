@@ -276,7 +276,9 @@ Content-Type: application/json
 
 {
   "url": "https://webhook.site/...",
-  "is_active": true
+  "trigger_safe": false,
+  "trigger_suspicious": true,
+  "trigger_malicious": true
 }
 ```
 
@@ -286,7 +288,10 @@ Content-Type: application/json
   "id": "wh_a1b2c3d4",
   "url": "https://webhook.site/...",
   "is_active": true,
-  "created_at": 1699500000.123
+  "created_at": 1699500000.123,
+  "trigger_safe": false,
+  "trigger_suspicious": true,
+  "trigger_malicious": true
 }
 ```
 
@@ -474,13 +479,51 @@ All errors follow this format:
 
 | Range | Classification | Action |
 |-------|----------------|--------|
-| 0-29 | `safe` | Allow execution |
-| 30-69 | `suspicious` | Log and allow |
-| 70-100 | `malicious` | Block and alert |
+| < Suspicious Threshold | `safe` | Allow execution |
+| < Malicious Threshold | `suspicious` | Log and allow |
+| >= Malicious Threshold | `malicious` | Block and alert |
 
 Risk score is calculated as:
 ```
 risk_score = 0.6 * rule_score + 0.4 * ml_score
+```
+
+### Get Thresholds
+
+Retrieve current AI sensitivity thresholds.
+
+```http
+GET /settings/thresholds
+```
+
+**Response** (200 OK):
+```json
+{
+  "suspicious_threshold": 30.0,
+  "malicious_threshold": 70.0
+}
+```
+
+### Update Thresholds
+
+Update AI sensitivity thresholds dynamically.
+
+```http
+POST /settings/thresholds
+Content-Type: application/json
+
+{
+  "suspicious_threshold": 30.0,
+  "malicious_threshold": 70.0
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "suspicious_threshold": 30.0,
+  "malicious_threshold": 70.0
+}
 ```
 
 Where:
@@ -491,9 +534,8 @@ Where:
 
 ## Rate Limiting
 
-Currently: **No rate limiting** (planned in Phase 3)
+Rate limiting is actively enforced via `slowapi` to prevent abuse and database scraping:
 
-For production, the plan is to apply:
 - `POST /analyze` → 30 req/min per IP
 - `POST /agent/events` → 60 req/min per IP
 - `GET /events` → 20 req/min per IP

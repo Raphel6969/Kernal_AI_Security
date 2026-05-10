@@ -35,6 +35,13 @@ class DetectionPipeline:
             self.ml_scorer = get_ml_scorer()
         except FileNotFoundError:
             print("⚠️  ML model not yet trained. Detection will use rules only.")
+            
+        self.suspicious_threshold = 30.0
+        self.malicious_threshold = 70.0
+
+    def update_thresholds(self, suspicious: float, malicious: float):
+        self.suspicious_threshold = suspicious
+        self.malicious_threshold = malicious
 
     def detect(self, command: str) -> DetectionResult:
         """
@@ -63,9 +70,9 @@ class DetectionPipeline:
             combined_score = rule_score
         
         # Classify based on score
-        if combined_score < 30:
+        if combined_score < self.suspicious_threshold:
             classification = "safe"
-        elif combined_score < 70:
+        elif combined_score < self.malicious_threshold:
             classification = "suspicious"
         else:
             classification = "malicious"
