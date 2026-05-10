@@ -26,12 +26,17 @@ class AlertManager:
         if parent_dir:
             os.makedirs(parent_dir, exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
+            # We are dropping the old table to quickly migrate the schema for the new features
+            conn.execute("DROP TABLE IF EXISTS webhooks")
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS webhooks (
                     id TEXT PRIMARY KEY,
                     url TEXT NOT NULL,
                     is_active BOOLEAN DEFAULT 1,
-                    created_at REAL NOT NULL
+                    created_at REAL NOT NULL,
+                    trigger_safe BOOLEAN DEFAULT 0,
+                    trigger_suspicious BOOLEAN DEFAULT 0,
+                    trigger_malicious BOOLEAN DEFAULT 1
                 )
             """)
             conn.execute("""
@@ -45,17 +50,25 @@ class AlertManager:
             """)
             conn.commit()
 
-    def add_webhook(self, url: str) -> WebhookResponse:
+    def add_webhook(self, url: str, trigger_safe: bool = False, trigger_suspicious: bool = False, trigger_malicious: bool = True) -> WebhookResponse:
         webhook_id = f"wh_{uuid.uuid4().hex[:8]}"
         created_at = datetime.now().timestamp()
         
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("INSERT INTO webhooks (id, url, is_active, created_at) VALUES (?, ?, ?, ?)",
-                             (webhook_id, url, 1, created_at))
+                conn.execute("INSERT INTO webhooks (id, url, is_active, created_at, trigger_safe, trigger_suspicious, trigger_malicious) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                             (webhook_id, url, 1, created_at, trigger_safe, trigger_suspicious, trigger_malicious))
                 conn.commit()
                 
-        return WebhookResponse(id=webhook_id, url=url, is_active=True, created_at=created_at)
+        return WebhookResponse(
+            id=webhook_id, 
+            url=url, 
+            is_active=True, 
+            created_at=created_at,
+            trigger_safe=trigger_safe,
+            trigger_suspicious=trigger_suspicious,
+            trigger_malicious=trigger_malicious
+        )
 
     def remove_webhook(self, webhook_id: str):
         with self._lock:
@@ -66,9 +79,19 @@ class AlertManager:
     def get_webhooks(self) -> List[WebhookResponse]:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("SELECT id, url, is_active, created_at FROM webhooks")
+                cursor = conn.execute("SELECT id, url, is_active, created_at, trigger_safe, trigger_suspicious, trigger_malicious FROM webhooks")
                 rows = cursor.fetchall()
-                return [WebhookResponse(id=r[0], url=r[1], is_active=bool(r[2]), created_at=r[3]) for r in rows]
+                return [
+                    WebhookResponse(
+                        id=r[0], 
+                        url=r[1], 
+                        is_active=bool(r[2]), 
+                        created_at=r[3],
+                        trigger_safe=bool(r[4]),
+                        trigger_suspicious=bool(r[5]),
+                        trigger_malicious=bool(r[6])
+                    ) for r in rows
+                ]
 
     def get_alert_history(self, limit: int = 50) -> List[AlertHistoryResponse]:
         with self._lock:
@@ -87,12 +110,21 @@ class AlertManager:
                 conn.commit()
 
     async def dispatch(self, event: SecurityEvent):
-        """Evaluate event and send webhooks asynchronously if malicious."""
-        if event.detection_result.classification != "malicious":
-            return
-            
+        """Evaluate event and send webhooks asynchronously if it matches triggers."""
+        classification = event.detection_result.classification
         webhooks = self.get_webhooks()
-        active_urls = [w.url for w in webhooks if w.is_active]
+        
+        active_urls = []
+        for w in webhooks:
+            if not w.is_active:
+                continue
+            if classification == "safe" and w.trigger_safe:
+                active_urls.append(w.url)
+            elif classification == "suspicious" and w.trigger_suspicious:
+                active_urls.append(w.url)
+            elif classification == "malicious" and w.trigger_malicious:
+                active_urls.append(w.url)
+                
         if not active_urls:
             return
 

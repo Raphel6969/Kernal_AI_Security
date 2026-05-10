@@ -12,12 +12,16 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from fastapi import FastAPI, WebSocket, HTTPException, Query
+from fastapi import FastAPI, WebSocket, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel
 from typing import List, Set
 import asyncio
 import uuid
+import psutil
 from datetime import datetime
 
 from backend.config import get_settings
@@ -48,6 +52,8 @@ class AgentEventRequest(BaseModel):
     argv_str: str | None = None
     comm: str = "agent"
     timestamp: float | None = None
+    process_memory_mb: float = 0.0
+    system_memory_percent: float = 0.0
 
 
 class CommandAnalysisResponse(BaseModel):
@@ -75,6 +81,11 @@ app = FastAPI(
     description="Real-time RCE Prevention System",
     version="0.1.0",
 )
+
+# Rate Limiter setup
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS middleware for frontend (restrict origins via config)
 app.add_middleware(
@@ -108,6 +119,8 @@ def _build_execve_event(
     argv_str: str | None = None,
     comm: str = "api",
     timestamp: float | None = None,
+    process_memory_mb: float = 0.0,
+    system_memory_percent: float = 0.0,
 ) -> ExecveEvent:
     """Build a normalized execve event for both API and agent inputs."""
     return ExecveEvent(
@@ -119,6 +132,8 @@ def _build_execve_event(
         argv_str=argv_str or command,
         timestamp=timestamp or datetime.now().timestamp(),
         comm=comm,
+        process_memory_mb=process_memory_mb,
+        system_memory_percent=system_memory_percent,
     )
 
 
@@ -141,7 +156,11 @@ async def ingest_security_event(
     source: str = "api",
 ) -> SecurityEvent:
     """Run detection, store the event, and broadcast it to the dashboard."""
-    detection_result = pipeline.detect(execve_event.command)
+    detection_result = pipeline.detect(
+        execve_event.command,
+        process_memory_mb=execve_event.process_memory_mb,
+        system_memory_percent=execve_event.system_memory_percent
+    )
     security_event = SecurityEvent(
         id=f"evt_{uuid.uuid4().hex[:8]}",
         execve_event=execve_event,
@@ -187,6 +206,15 @@ async def startup_event():
     def on_kernel_event(execve_event):
         """Handle kernel events from eBPF."""
         try:
+            # Capture memory footprint immediately
+            try:
+                proc = psutil.Process(execve_event.pid)
+                execve_event.process_memory_mb = proc.memory_info().rss / (1024 * 1024)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                execve_event.process_memory_mb = 0.0
+            
+            execve_event.system_memory_percent = psutil.virtual_memory().percent
+
             # Run detection pipeline
             if main_event_loop:
                 asyncio.run_coroutine_threadsafe(
@@ -267,7 +295,8 @@ async def root():
 
 
 @app.post("/analyze", response_model=CommandAnalysisResponse)
-async def analyze_command(request: CommandAnalysisRequest):
+@limiter.limit("30/minute")
+async def analyze_command(request: Request, body: CommandAnalysisRequest):
     """
     Analyze a command for threat level.
     
@@ -277,36 +306,40 @@ async def analyze_command(request: CommandAnalysisRequest):
     Returns:
         CommandAnalysisResponse with detection results
     """
-    if not request.command or not request.command.strip():
+    if not body.command or not body.command.strip():
         raise HTTPException(status_code=400, detail="Command cannot be empty")
     
-    execve_event = _build_execve_event(request.command)
+    execve_event = _build_execve_event(body.command)
     security_event = await ingest_security_event(execve_event, source="api")
     return _build_response(security_event)
 
 
 @app.post("/agent/events", response_model=CommandAnalysisResponse)
-async def ingest_agent_event(request: AgentEventRequest):
+@limiter.limit("60/minute")
+async def ingest_agent_event(request: Request, body: AgentEventRequest):
     """Ingest an event forwarded by the always-on agent."""
-    if not request.command or not request.command.strip():
+    if not body.command or not body.command.strip():
         raise HTTPException(status_code=400, detail="Command cannot be empty")
 
     execve_event = _build_execve_event(
-        request.command,
-        pid=request.pid,
-        ppid=request.ppid,
-        uid=request.uid,
-        gid=request.gid,
-        argv_str=request.argv_str,
-        comm=request.comm,
-        timestamp=request.timestamp,
+        body.command,
+        pid=body.pid,
+        ppid=body.ppid,
+        uid=body.uid,
+        gid=body.gid,
+        argv_str=body.argv_str,
+        comm=body.comm,
+        timestamp=body.timestamp,
+        process_memory_mb=body.process_memory_mb,
+        system_memory_percent=body.system_memory_percent,
     )
     security_event = await ingest_security_event(execve_event, source="agent")
     return _build_response(security_event)
 
 
 @app.get("/events")
-async def get_events(limit: int = Query(default=100, ge=1, le=1000)):
+@limiter.limit("20/minute")
+async def get_events(request: Request, limit: int = Query(default=100, ge=1, le=1000)):
     """
     Get recent security events.
     
@@ -342,7 +375,12 @@ async def create_webhook(request: WebhookCreate):
     """Register a new webhook URL."""
     if not request.url.startswith("http"):
         raise HTTPException(status_code=400, detail="Invalid URL")
-    return alert_manager.add_webhook(request.url)
+    return alert_manager.add_webhook(
+        request.url,
+        trigger_safe=request.trigger_safe,
+        trigger_suspicious=request.trigger_suspicious,
+        trigger_malicious=request.trigger_malicious
+    )
 
 
 @app.delete("/webhooks/{webhook_id}")
@@ -374,6 +412,27 @@ async def update_remediation_settings(body: dict):
     enabled = body.get("enabled", False)
     set_remediation_enabled(bool(enabled))
     return {"enabled": is_remediation_enabled()}
+
+
+@app.get("/settings/thresholds")
+async def get_threshold_settings():
+    """Get current classification thresholds."""
+    return {
+        "suspicious_threshold": pipeline.suspicious_threshold,
+        "malicious_threshold": pipeline.malicious_threshold
+    }
+
+
+@app.post("/settings/thresholds")
+async def update_threshold_settings(body: dict):
+    """Update classification thresholds."""
+    suspicious = float(body.get("suspicious_threshold", 30.0))
+    malicious = float(body.get("malicious_threshold", 70.0))
+    pipeline.update_thresholds(suspicious, malicious)
+    return {
+        "suspicious_threshold": pipeline.suspicious_threshold,
+        "malicious_threshold": pipeline.malicious_threshold
+    }
 
 
 # ==============================================================================

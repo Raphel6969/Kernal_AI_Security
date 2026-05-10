@@ -1,20 +1,88 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* Font Families */
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Inter', system-ui, sans-serif;
+  --font-tech: 'JetBrains Mono', monospace;
 
-  color-scheme: light;
-  color: rgba(31, 41, 55, 1);
-  background-color: #f9fafb;
+  /* Light Theme Variables */
+  --bg-main: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  
+  --border-color: #e2e8f0;
+  
+  --accent-primary: #0ea5e9;
+  --accent-primary-hover: #0284c7;
+  
+  --status-safe: #10b981;
+  --status-safe-bg: #d1fae5;
+  --status-suspicious: #f59e0b;
+  --status-suspicious-bg: #fef3c7;
+  --status-malicious: #ef4444;
+  --status-malicious-bg: #fee2e2;
+  
+  --btn-danger-bg: #b91c1c;
+  --btn-danger-hover: #991b1b;
+  --btn-danger-text: #ffffff;
 }
 
-body {
+[data-theme="dark"] {
+  /* Dark Theme Variables (Hacker/Cyberpunk Navy & Cyan) */
+  --bg-main: #050B14;
+  --bg-sidebar: #08101A;
+  --bg-card: rgba(8, 16, 26, 0.7);
+  --bg-card-hover: rgba(10, 20, 35, 0.9);
+  
+  --text-primary: #E0F2FE;
+  --text-secondary: #7DD3FC;
+  --text-tertiary: #38BDF8;
+  
+  --border-color: rgba(0, 240, 255, 0.2);
+  --border-color-glow: rgba(0, 240, 255, 0.5);
+  
+  --accent-primary: #00F0FF;
+  --accent-primary-hover: #00FFFF;
+  --accent-glow: 0 0 10px rgba(0, 240, 255, 0.5), 0 0 20px rgba(0, 240, 255, 0.3);
+  
+  --status-safe: #00FF9D;
+  --status-safe-bg: rgba(0, 255, 157, 0.1);
+  --status-suspicious: #FFB800;
+  --status-suspicious-bg: rgba(255, 184, 0, 0.1);
+  --status-malicious: #FF003C;
+  --status-malicious-bg: rgba(255, 0, 60, 0.1);
+  --status-malicious-glow: 0 0 10px rgba(255, 0, 60, 0.5);
+  
+  --btn-danger-bg: rgba(255, 0, 60, 0.2);
+  --btn-danger-hover: rgba(255, 0, 60, 0.4);
+  --btn-danger-text: #FF003C;
+}
+
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+html, body {
+  font-family: var(--font-body);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-tech);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
 }

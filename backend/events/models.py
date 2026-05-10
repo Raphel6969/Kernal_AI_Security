@@ -19,6 +19,8 @@ class ExecveEvent:
     argv_str: str
     timestamp: float
     comm: str  # Process name from kernel
+    process_memory_mb: float = 0.0
+    system_memory_percent: float = 0.0
 
 
 @dataclass
@@ -61,6 +63,8 @@ class SecurityEvent:
             "detected_at": self.detected_at,
             "remediation_action": self.remediation_action,
             "remediation_status": self.remediation_status,
+            "process_memory_mb": self.execve_event.process_memory_mb,
+            "system_memory_percent": self.execve_event.system_memory_percent,
         }
 
     def json(self):
