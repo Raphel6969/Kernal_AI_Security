@@ -372,7 +372,7 @@ The project whitepaper provides a detailed breakdown of:
 ## 👥 Team
 
 Built by the **Kernal Security** team.
-
+  - Saswat Sahu
 ---
 
 <div align="center">
