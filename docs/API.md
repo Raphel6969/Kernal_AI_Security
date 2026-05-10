@@ -152,7 +152,9 @@ Content-Type: application/json
   "gid": 1000,
   "argv_str": "string",
   "comm": "string",
-  "timestamp": 1699500000.123
+  "timestamp": 1699500000.123,
+  "process_memory_mb": 0.0,
+  "system_memory_percent": 0.0
 }
 ```
 
@@ -215,6 +217,8 @@ GET /events?limit=100
 - `ml_confidence` (number): 0-1 confidence
 - `timestamp` (number): When command executed (Unix timestamp)
 - `detected_at` (number): When detection ran (Unix timestamp)
+- `process_memory_mb` (number): Process RSS memory in MB at time of intercept (0.0 if process exited too quickly)
+- `system_memory_percent` (number): Total system RAM usage % at time of intercept
 
 **Status Codes**:
 - `200 OK` - Events retrieved
@@ -376,7 +380,9 @@ Events are sent as JSON when:
   "ml_confidence": 0.92,
   "timestamp": 1699500100.123,
   "detected_at": 1699500100.456,
-  "explanation": "..."
+  "explanation": "...",
+  "process_memory_mb": 12.4,
+  "system_memory_percent": 68.2
 }
 ```
 

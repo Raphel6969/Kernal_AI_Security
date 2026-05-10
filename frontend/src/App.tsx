@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import { ThreatMonitor } from './ThreatMonitor';
 import { SystemSettings } from './SystemSettings';
@@ -12,6 +12,7 @@ function App() {
   const [apiStatus, setApiStatus] = useState('connecting');
   const [activePage, setActivePage] = useState<'monitor' | 'settings'>('monitor');
   const [theme, setTheme] = useState<Theme>('system');
+  const [remediationEnabled, setRemediationEnabled] = useState(false);
   const { events, isConnected } = useWebSocket();
 
   // Handle Theme
@@ -21,23 +22,15 @@ function App() {
       if (t === 'system') {
         activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
-      
       if (activeTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
       } else {
         document.documentElement.removeAttribute('data-theme');
       }
     };
-
     applyTheme(theme);
-
-    // Optional: listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        applyTheme('system');
-      }
-    };
+    const handleChange = () => { if (theme === 'system') applyTheme('system'); };
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
@@ -46,10 +39,7 @@ function App() {
   useEffect(() => {
     const checkHealth = () => {
       fetch(`${API_URL}/healthz`)
-        .then((r) => {
-          if(r.ok) setApiStatus('online');
-          else setApiStatus('offline');
-        })
+        .then((r) => { if (r.ok) setApiStatus('online'); else setApiStatus('offline'); })
         .catch(() => setApiStatus('offline'));
     };
     checkHealth();
@@ -57,11 +47,31 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch initial remediation state
+  useEffect(() => {
+    fetch(`${API_URL}/settings/remediation`)
+      .then((r) => r.json())
+      .then((d) => setRemediationEnabled(d.enabled))
+      .catch(console.error);
+  }, []);
+
+  const toggleRemediation = useCallback(() => {
+    const next = !remediationEnabled;
+    fetch(`${API_URL}/settings/remediation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: next }),
+    })
+      .then((r) => r.json())
+      .then((d) => setRemediationEnabled(d.enabled))
+      .catch(console.error);
+  }, [remediationEnabled]);
+
   const toggleDarkMode = () => {
     setTheme(prev => {
       if (prev === 'light') return 'dark';
       if (prev === 'dark') return 'system';
-      return 'light'; // system -> light
+      return 'light';
     });
   };
 
@@ -86,14 +96,14 @@ function App() {
         </div>
 
         <nav className="nav-links">
-          <div 
+          <div
             className={`nav-item ${activePage === 'monitor' ? 'active' : ''}`}
             onClick={() => setActivePage('monitor')}
           >
             <Shield size={18} />
             Threat Monitor
           </div>
-          <div 
+          <div
             className={`nav-item ${activePage === 'settings' ? 'active' : ''}`}
             onClick={() => setActivePage('settings')}
           >
@@ -106,7 +116,6 @@ function App() {
           <button className="kill-switch-btn">
             Emergency Kill Switch
           </button>
-          
           <div className="footer-link">
             <HelpCircle size={18} />
             Help
@@ -125,7 +134,7 @@ function App() {
           <div className="topbar-left">
             <div className="system-id">DEFENSE_CORE_V1</div>
             <nav className="top-nav">
-              <div 
+              <div
                 className={`top-nav-item ${activePage === 'monitor' ? 'active' : ''}`}
                 onClick={() => setActivePage('monitor')}
               >
@@ -139,13 +148,47 @@ function App() {
               <div className="status-dot"></div>
               Nominal Active
             </div>
-            <div className={`status-pill ws`} style={isConnected ? {} : { backgroundColor: 'var(--status-malicious-bg)', color: 'var(--status-malicious)'}}>
+            <div className={`status-pill ws`} style={isConnected ? {} : { backgroundColor: 'var(--status-malicious-bg)', color: 'var(--status-malicious)' }}>
               <div className="status-dot"></div>
               {isConnected ? 'WS Connected' : 'WS Disconnected'}
             </div>
-            
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 8px' }}></div>
-            
+
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 4px' }}></div>
+
+            {/* ── AUTO-REMEDIATION BUTTON ── */}
+            <button
+              onClick={toggleRemediation}
+              title={remediationEnabled ? 'Auto-Remediation is ON — click to disable' : 'Auto-Remediation is OFF — click to enable'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 12px',
+                borderRadius: '4px',
+                border: `1px solid ${remediationEnabled ? 'var(--status-malicious)' : 'var(--border-color)'}`,
+                background: remediationEnabled ? 'var(--status-malicious-bg)' : 'transparent',
+                color: remediationEnabled ? 'var(--status-malicious)' : 'var(--text-secondary)',
+                fontFamily: 'var(--font-tech)',
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.8px',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {/* pulsing dot when active */}
+              <span style={{
+                width: '7px', height: '7px', borderRadius: '50%',
+                backgroundColor: remediationEnabled ? 'var(--status-malicious)' : 'var(--text-tertiary)',
+                boxShadow: remediationEnabled ? '0 0 6px var(--status-malicious)' : 'none',
+                flexShrink: 0,
+              }} />
+              Remediation {remediationEnabled ? 'ON' : 'OFF'}
+            </button>
+
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 4px' }}></div>
+
             <button className="icon-btn" onClick={toggleDarkMode} title={`Current Theme: ${theme}`}>
               {getThemeIcon()}
             </button>
@@ -159,8 +202,8 @@ function App() {
               ⚠️ Backend is offline. Ensure `python backend/app.py` is running.
             </div>
           )}
-          
-          {activePage === 'monitor' && <ThreatMonitor events={events} />}
+
+          {activePage === 'monitor' && <ThreatMonitor events={events} remediationEnabled={remediationEnabled} />}
           {activePage === 'settings' && <SystemSettings theme={theme} setTheme={setTheme} />}
         </div>
       </main>

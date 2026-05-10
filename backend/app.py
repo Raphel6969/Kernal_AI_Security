@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from typing import List, Set
 import asyncio
 import uuid
+import psutil
 from datetime import datetime
 
 from backend.config import get_settings
@@ -51,6 +52,8 @@ class AgentEventRequest(BaseModel):
     argv_str: str | None = None
     comm: str = "agent"
     timestamp: float | None = None
+    process_memory_mb: float = 0.0
+    system_memory_percent: float = 0.0
 
 
 class CommandAnalysisResponse(BaseModel):
@@ -116,6 +119,8 @@ def _build_execve_event(
     argv_str: str | None = None,
     comm: str = "api",
     timestamp: float | None = None,
+    process_memory_mb: float = 0.0,
+    system_memory_percent: float = 0.0,
 ) -> ExecveEvent:
     """Build a normalized execve event for both API and agent inputs."""
     return ExecveEvent(
@@ -127,6 +132,8 @@ def _build_execve_event(
         argv_str=argv_str or command,
         timestamp=timestamp or datetime.now().timestamp(),
         comm=comm,
+        process_memory_mb=process_memory_mb,
+        system_memory_percent=system_memory_percent,
     )
 
 
@@ -149,7 +156,11 @@ async def ingest_security_event(
     source: str = "api",
 ) -> SecurityEvent:
     """Run detection, store the event, and broadcast it to the dashboard."""
-    detection_result = pipeline.detect(execve_event.command)
+    detection_result = pipeline.detect(
+        execve_event.command,
+        process_memory_mb=execve_event.process_memory_mb,
+        system_memory_percent=execve_event.system_memory_percent
+    )
     security_event = SecurityEvent(
         id=f"evt_{uuid.uuid4().hex[:8]}",
         execve_event=execve_event,
@@ -195,6 +206,15 @@ async def startup_event():
     def on_kernel_event(execve_event):
         """Handle kernel events from eBPF."""
         try:
+            # Capture memory footprint immediately
+            try:
+                proc = psutil.Process(execve_event.pid)
+                execve_event.process_memory_mb = proc.memory_info().rss / (1024 * 1024)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                execve_event.process_memory_mb = 0.0
+            
+            execve_event.system_memory_percent = psutil.virtual_memory().percent
+
             # Run detection pipeline
             if main_event_loop:
                 asyncio.run_coroutine_threadsafe(
@@ -310,6 +330,8 @@ async def ingest_agent_event(request: Request, body: AgentEventRequest):
         argv_str=body.argv_str,
         comm=body.comm,
         timestamp=body.timestamp,
+        process_memory_mb=body.process_memory_mb,
+        system_memory_percent=body.system_memory_percent,
     )
     security_event = await ingest_security_event(execve_event, source="agent")
     return _build_response(security_event)

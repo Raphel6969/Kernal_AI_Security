@@ -1,6 +1,17 @@
 // eBPF program for execve syscall monitoring
 // Compiled on-the-fly by BCC - no need for pre-compilation
 // Works on WSL2, native Linux, and all kernel versions 5.4+
+//
+// DESIGN NOTE — Memory Profiling Layer:
+//   Process RSS memory and system RAM% are intentionally NOT captured here.
+//   Reasons:
+//     1. eBPF VM prohibits floating-point arithmetic (bytes→MB conversion).
+//     2. task_mem_info() requires CO-RE BTF support not available on all kernels.
+//     3. Very short-lived processes (e.g. ls) exit before ring-buffer flush.
+//   Memory is sampled by the Python agent/backend using psutil immediately after
+//   this event surfaces from the ring buffer — the standard approach used by
+//   Falco, Sysdig, and other production eBPF security tools.
+//   See: backend/agent/main.py and backend/app.py (on_kernel_event)
 
 BPF_RINGBUF_OUTPUT(events, 256);
 

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import psutil
 import requests
 from backend.agent.runtime import detect_capabilities
 from backend.config import get_settings
@@ -67,6 +68,15 @@ async def agent_event_loop():
             while True:
                 execve_event = await queue.get()
                 try:
+                    # Capture memory footprint immediately
+                    try:
+                        proc = psutil.Process(execve_event.pid)
+                        process_memory_mb = proc.memory_info().rss / (1024 * 1024)
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        process_memory_mb = 0.0
+                    
+                    system_memory_percent = psutil.virtual_memory().percent
+
                     # Send to backend
                     response = requests.post(
                         f"{settings.backend_url}/agent/events",
@@ -78,7 +88,9 @@ async def agent_event_loop():
                             "command": execve_event.command,
                             "argv_str": execve_event.argv_str,
                             "comm": execve_event.comm,
-                            "timestamp": execve_event.timestamp
+                            "timestamp": execve_event.timestamp,
+                            "process_memory_mb": process_memory_mb,
+                            "system_memory_percent": system_memory_percent,
                         },
                         timeout=settings.agent_event_timeout
                     )

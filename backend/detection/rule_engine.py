@@ -58,15 +58,17 @@ class RuleEngine:
         n = len(s)
         return -sum((v / n) * math.log2(v / n) for v in freq.values())
 
-    def score_rules(self, command: str) -> Tuple[float, List[str]]:
+    def score_rules(self, command: str, process_memory_mb: float = 0.0, system_memory_percent: float = 0.0) -> Tuple[float, List[str]]:
         """
-        Score a command based on rule matches, keywords, and entropy.
+        Evaluate a command against predefined rules and entropy checks.
         
         Args:
-            command: The command string to analyze
+            command: The command string to evaluate
+            process_memory_mb: Instantaneous memory allocation of the process (T=0)
+            system_memory_percent: Total system RAM usage percentage
             
         Returns:
-            Tuple of (risk_score: 0-100, matched_rules: list of rule names)
+            Tuple of (total_score (0-100), list of matched rule names)
         """
         score = 0.0
         matched_rules = []
@@ -84,6 +86,7 @@ class RuleEngine:
         for kw, pts in self.keyword_scores.items():
             if kw in cmd_lower:
                 score += pts
+                matched_rules.append(f"keyword_{kw.strip().replace('/', '_')}")  # Include kw matches in report
 
         # Add Entropy Penalty for obfuscation
         ent = self._shannon_entropy(command)
@@ -93,6 +96,17 @@ class RuleEngine:
         elif ent > 3.8:
             score += 10
             matched_rules.append("moderate_entropy")
+
+        # 4. Memory Resource Profiling
+        # Massive initial memory spike (e.g. >50MB at T=0 is highly anomalous for simple scripts)
+        if process_memory_mb > 50.0:
+            score += 30
+            matched_rules.append(f"memory_hog_{int(process_memory_mb)}mb")
+            
+        # System memory exhaustion context (DoS risk)
+        if system_memory_percent > 80.0:
+            score += 10
+            matched_rules.append(f"system_memory_critical_{int(system_memory_percent)}%")
 
         return min(score, 100.0), list(set(matched_rules))
 

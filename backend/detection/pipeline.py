@@ -43,18 +43,24 @@ class DetectionPipeline:
         self.suspicious_threshold = suspicious
         self.malicious_threshold = malicious
 
-    def detect(self, command: str) -> DetectionResult:
+    def detect(self, command: str, process_memory_mb: float = 0.0, system_memory_percent: float = 0.0) -> DetectionResult:
         """
         Analyze a command and return detection result.
         
         Args:
             command: Command string to analyze
+            process_memory_mb: Instantaneous memory allocation
+            system_memory_percent: Total system RAM usage
             
         Returns:
             DetectionResult with risk score and classification
         """
         # Get rule-based score
-        rule_score, matched_rules = self.rule_engine.score_rules(command)
+        rule_score, matched_rules = self.rule_engine.score_rules(
+            command, 
+            process_memory_mb=process_memory_mb, 
+            system_memory_percent=system_memory_percent
+        )
         
         # Get ML score
         ml_score = 0.0
