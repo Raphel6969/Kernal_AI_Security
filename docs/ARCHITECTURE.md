@@ -58,7 +58,9 @@ Ring buffer → User space (Python)
        ↓
 Detection Pipeline receives event
        ↓
-Rule Engine + ML Scorer analyze command
+Psutil enriches event with process RSS memory & system RAM%
+       ↓
+Rule Engine + ML Scorer analyze command + memory metrics
        ↓
 Risk score calculated (0-100)
        ↓
@@ -147,8 +149,9 @@ struct execve_event {
 4. Submits to ring buffer (non-blocking, zero-copy)
 5. Python background thread polls ring buffer (100ms timeout)
 6. Converts binary events to `ExecveEvent` objects
-7. Passes to AI Bouncer detection pipeline (Layer 2)
-8. Stores and broadcasts the resulting `SecurityEvent` to the dashboard
+7. **Python immediately samples `psutil.Process(pid).memory_info().rss`** and `psutil.virtual_memory().percent` — this is the Memory Profiling layer enrichment
+8. Passes enriched event to AI Bouncer detection pipeline (Layer 2)
+9. Stores and broadcasts the resulting `SecurityEvent` to the dashboard
 
 ### Layer 2: AI Bouncer (Detection Pipeline)
 
@@ -185,15 +188,15 @@ rule_score, matched_rules = rule_engine.score_rules(command)
 Machine learning classification using scikit-learn:
 
 **Model**: Logistic Regression
-**Training Data**: 100 labeled commands (50 safe, 50 malicious)
-**Features**: TF-IDF vectorization + token analysis
-**Accuracy**: ~90% on test set
+**Training Data**: ~12,000 sanitized commands (safe + malicious)
+**Features**: 5,000-feature TF-IDF with unigrams + bigrams, sublinear_tf, balanced class weights
+**Accuracy**: 98.83% · MAP: 0.9925 · R²: 0.9060 · RMSE: 0.1208
 
 **Feature Engineering**:
-- Command length
-- Special character count (`;`, `|`, `&`, etc.)
-- Token frequency analysis
-- Presence of suspicious keywords
+- Command token frequency (TF-IDF weighted)
+- N-gram patterns (`|bash`, `-e /bin/sh`, etc.)
+- Sublinear TF dampening (prevents token-spam attacks)
+- Balanced class weights (prevents safe-class bias)
 
 **Code Example**:
 ```python
@@ -201,7 +204,41 @@ ml_score, confidence = ml_scorer.score_ml(command)
 # Returns: (85.3, 0.92) - 85.3/100 malicious probability, 92% confidence
 ```
 
-#### Sub-Layer 2C: Combined Scoring
+#### Sub-Layer 2C: Memory Profiler (post-ring-buffer)
+
+The Memory Profiling layer runs **after** the eBPF event surfaces from the kernel ring buffer, before the command enters the detection pipeline.
+
+**Why not in the eBPF C program?**
+- The eBPF VM verifier prohibits floating-point arithmetic (bytes → MB requires division).
+- `task_mem_info()` requires CO-RE BTF type information not available on all kernel versions.
+- Short-lived processes (e.g. `ls`) exit before the ring buffer is flushed — making in-kernel sampling unreliable.
+
+**Implementation** (`backend/agent/main.py` + `backend/app.py`):
+```python
+# Runs immediately when the event exits the ring buffer (T=0)
+try:
+    proc = psutil.Process(execve_event.pid)
+    process_memory_mb = proc.memory_info().rss / (1024 * 1024)  # bytes → MB
+except (psutil.NoSuchProcess, psutil.AccessDenied):
+    process_memory_mb = 0.0   # Process already exited — default to 0
+
+system_memory_percent = psutil.virtual_memory().percent
+```
+
+**Scoring Rules** (`backend/detection/rule_engine.py`):
+
+| Condition | Rule Name | Penalty |
+|---|---|---|
+| Process RSS > 50 MB at T=0 | `memory_hog_Xmb` | +30 pts |
+| System RAM > 80% at intercept | `system_memory_critical_X%` | +10 pts |
+
+**Why these thresholds?**
+- A legitimately simple shell script should consume < 5 MB at spawn time. 50 MB is the threshold for "this process pre-allocated a suspicious buffer" — consistent with crypto-miners, exploitation payloads, and fork-bombs.
+- 80% system RAM means the server is already under serious memory pressure. Any new process with a pattern match in that context has an elevated DoS risk score.
+
+**Dashboard**: Both metrics are displayed in the Live Events Table (`Mem MB` and `RAM %` columns) and the Latest Detection card. Values exceeding thresholds are highlighted in red/amber.
+
+#### Sub-Layer 2D: Combined Scoring
 
 ```python
 risk_score = 0.6 * rule_score + 0.4 * ml_score
