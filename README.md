@@ -374,6 +374,7 @@ The project whitepaper provides a detailed breakdown of:
 Built by the **Kernal Security** team.
   - Saswat Sahu
   - Yuvika Goel
+  - Shreya Garg
 ---
 
 <div align="center">
