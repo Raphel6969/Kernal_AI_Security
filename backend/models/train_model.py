@@ -108,13 +108,14 @@ def train_model(safe_file: str, malicious_file: str, output_path: str) -> dict:
     print(f"📊 Training set: {len(X_train)} samples")
     print(f"📊 Test set: {len(X_test)} samples")
     
-    # Feature extraction using TF-IDF
+    # Feature extraction using TF-IDF (Upgraded 5000 feature pipeline)
     print("🔤 Extracting features with TF-IDF...")
     vectorizer = TfidfVectorizer(
-        max_features=500,
+        analyzer="word",
+        token_pattern=r"[^\s]+",
         ngram_range=(1, 2),
-        min_df=1,
-        max_df=0.95,
+        max_features=5000,
+        sublinear_tf=True,
     )
     
     X_train_tfidf = vectorizer.fit_transform(X_train)
@@ -168,10 +169,10 @@ def train_model(safe_file: str, malicious_file: str, output_path: str) -> dict:
 
 
 if __name__ == '__main__':
-    # Setup paths
+    # Setup paths to the new 12k datasets
     project_root = Path(__file__).parent.parent.parent
-    safe_file = project_root / 'data' / 'commands_safe.txt'
-    malicious_file = project_root / 'data' / 'commands_malicious.txt'
+    safe_file = project_root / 'data' / 'safe_commands_10k.txt'
+    malicious_file = project_root / 'data' / 'malicious_commands_2k.txt'
     output_path = project_root / 'backend' / 'models' / 'trained_model.pkl'
     
     # Train

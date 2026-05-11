@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 from backend.agent.main import agent_event_loop
 from backend.agent.runtime import AgentCapabilities
 from backend.events.models import ExecveEvent
+from backend.agent.main import settings
 
 @pytest.mark.asyncio
 async def test_agent_main_api_only():
@@ -31,6 +32,9 @@ async def test_agent_main_kernel():
          patch("backend.agent.main.requests.post") as mock_post:
          
         mock_detect.return_value = AgentCapabilities("Linux", "kernel", True, "mock")
+        
+        original_owner = settings.kernel_monitor_owner
+        settings.kernel_monitor_owner = "agent"
         
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -76,3 +80,4 @@ async def test_agent_main_kernel():
         finally:
             # Restore sys.modules
             del sys.modules['backend.kernel.execve_hook']
+            settings.kernel_monitor_owner = original_owner
