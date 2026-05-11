@@ -13,7 +13,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from fastapi import FastAPI, WebSocket, HTTPException, Query, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -476,6 +476,10 @@ async def websocket_endpoint(websocket: WebSocket, agent_id: str | None = Query(
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text("pong")
+
+    except WebSocketDisconnect:
+        # Normal browser refresh/navigation closes the socket with code 1001.
+        pass
 
     except Exception:
         logger.exception("WebSocket error")

@@ -24,8 +24,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY backend/requirements.txt /app/backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Copy backend source and the built frontend bundle from the build stage.
+# Copy backend source and training data before building the trained model artifact.
 COPY backend/ /app/backend/
+COPY data/ /app/data/
+
+# Train the ML model during image build so deployments include the artifact.
+RUN python backend/models/train_model.py
+
+# Copy the built frontend bundle from the build stage.
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 COPY README.md /app/README.md
 
