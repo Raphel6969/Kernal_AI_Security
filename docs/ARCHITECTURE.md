@@ -11,7 +11,9 @@ Aegix is a **four-layer real-time RCE prevention system** that combines an alway
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 3: Dashboard (Visualization & Alerting)             │
-│  - React web UI (http://localhost:5173)                    │
+│  - React web UI                                            │
+│    * Local: http://localhost:5173                          │
+│    * Production: https://kernalaisecurity-...railway.app   │
 │  - Real-time event feed via WebSocket                      │
 │  - Risk visualization & attack analysis                    │
 └──────────────────────┬──────────────────────────────────────┘

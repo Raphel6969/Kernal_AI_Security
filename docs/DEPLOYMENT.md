@@ -4,6 +4,17 @@
     <img src="../frontend/src/assets/aegix-logo.png" alt="Aegix logo" width="180" />
 </p>
 
+## 🚀 Current Deployment Status
+
+✅ **Live on Railway**: https://kernalaisecurity-production.up.railway.app
+
+The Aegix system is currently deployed on Railway with:
+- Single Docker container (frontend + backend combined)
+- Trained ML model baked into the image at build time
+- SQLite persistence
+- WebSocket real-time event streaming
+- Auto-remediation disabled (Railway constraint — no kernel-level privileges)
+
 This guide covers deploying the Aegix system in production, including the backend API and frontend web UI.
 
 ## Architecture Overview
@@ -84,6 +95,7 @@ docker run -d \
 
 ### 4. Test Endpoints
 
+**Local Testing**:
 ```bash
 # Check API health
 curl http://localhost:8000/stats
@@ -97,6 +109,20 @@ curl -i -N -H "Connection: Upgrade" \
   -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
   -H "Sec-WebSocket-Version: 13" \
   http://localhost:8000/ws
+```
+
+**Production Testing**:
+```bash
+# Health check
+curl https://kernalaisecurity-production.up.railway.app/healthz
+
+# Get statistics
+curl https://kernalaisecurity-production.up.railway.app/stats
+
+# Analyze a command
+curl -X POST https://kernalaisecurity-production.up.railway.app/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"command":"curl http://example.com"}'
 ```
 
 ### 5. Stop Test Container

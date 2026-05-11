@@ -109,6 +109,18 @@ The Tier B Logistic Regression model is trained on a sanitized 12,000-command da
 
 ---
 
+## 🚀 Live Demo
+
+**Production Deployment**: [Aegix Dashboard](https://kernalaisecurity-production.up.railway.app)
+
+- **API Base URL**: `https://kernalaisecurity-production.up.railway.app`
+- **Status**: ✅ Live and ready for testing
+- **WebSocket**: `wss://kernalaisecurity-production.up.railway.app/ws`
+
+Test with sample commands: Run `./TEST_COMMANDS.ps1` (PowerShell) to execute 20 automated test cases against the live API.
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites

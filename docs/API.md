@@ -10,7 +10,8 @@ The Aegix API is built with FastAPI and provides both synchronous HTTP endpoints
 
 The normal production flow is agent-driven: the endpoint agent keeps the backend running and forwards events automatically. The `/analyze` endpoint remains useful for manual testing, demos, and standalone analysis.
 
-**Base URL**: `http://localhost:8000`  
+**Production Base URL**: `https://kernalaisecurity-production.up.railway.app`  
+**Local Base URL**: `http://localhost:8000`  
 **Docs**: `http://localhost:8000/docs` (Swagger UI)  
 **ReDoc**: `http://localhost:8000/redoc` (ReDoc UI)
 
@@ -100,7 +101,7 @@ Content-Type: application/json
 
 **Examples**:
 
-Safe command:
+Safe command (local):
 ```bash
 curl -X POST http://localhost:8000/analyze \
   -H "Content-Type: application/json" \
@@ -119,7 +120,14 @@ Response:
 }
 ```
 
-Malicious command:
+Safe command (production):
+```bash
+curl -X POST https://kernalaisecurity-production.up.railway.app/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"command":"ls -la /tmp"}'
+```
+
+Malicious command (local):
 ```bash
 curl -X POST http://localhost:8000/analyze \
   -H "Content-Type: application/json" \
