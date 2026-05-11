@@ -32,9 +32,10 @@ def event_store(temp_db):
     return EventStore(max_events=100, db_path=temp_db)
 
 
-def create_event(pid=1000, command="/bin/cmd", classification="safe", timestamp=1234567890.0):
+def create_event(pid=1000, command="/bin/cmd", classification="safe", timestamp=1234567890.0, agent_id=None):
     """Helper to create a SecurityEvent."""
     execve_event = ExecveEvent(
+        agent_id=agent_id,
         pid=pid,
         ppid=1000,
         uid=1000,
@@ -162,6 +163,23 @@ class TestEventStoreClassification:
         assert event_store.get_safe_count() == 2
         assert event_store.get_suspicious_count() == 1
         assert event_store.get_malicious_count() == 1
+
+    def test_agent_id_filters_recent_and_classification(self, event_store):
+        """Verify tenant-specific queries only return matching agent events."""
+        event_store.append(create_event(pid=1, command="/bin/a", agent_id="agent-a", timestamp=1.0))
+        event_store.append(create_event(pid=2, command="/bin/b", agent_id="agent-b", timestamp=2.0, classification="malicious"))
+        event_store.append(create_event(pid=3, command="/bin/c", agent_id="agent-a", timestamp=3.0, classification="suspicious"))
+
+        recent_a = event_store.get_recent(10, agent_id="agent-a")
+        assert len(recent_a) == 2
+        assert all(event.execve_event.agent_id == "agent-a" for event in recent_a)
+
+        malicious_a = event_store.get_by_classification("malicious", agent_id="agent-a")
+        assert len(malicious_a) == 0
+
+        malicious_b = event_store.get_by_classification("malicious", agent_id="agent-b")
+        assert len(malicious_b) == 1
+        assert malicious_b[0].execve_event.agent_id == "agent-b"
 
 
 class TestEventStoreThreadSafety:

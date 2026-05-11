@@ -1,0 +1,25 @@
+services:
+  backend:
+    build: .
+    image: aegix:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_LOG_LEVEL=info
+      - FRONTEND_ORIGINS=${FRONTEND_ORIGINS}
+      - DB_PATH=/app/data/events.db
+      - EVENT_CACHE_SIZE=${EVENT_CACHE_SIZE:-1000}
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:8000}
+      - AGENT_EVENT_TIMEOUT=${AGENT_EVENT_TIMEOUT:-5}
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    volumes:
+      - ./data:/app/data
+    networks:
+      - aegix_net
+
+networks:
+  aegix_net:
+    driver: bridge

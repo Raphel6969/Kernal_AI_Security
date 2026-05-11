@@ -1,37 +1,61 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from './config';
-import { Download } from 'lucide-react';
+import { Download, Trash2 } from 'lucide-react';
 
 interface ThreatMonitorProps {
   events: any[];
+  onFlush: () => void;
 }
 
-export function ThreatMonitor({ events }: ThreatMonitorProps) {
+export function ThreatMonitor({ events, onFlush }: ThreatMonitorProps) {
   const [stats, setStats] = useState({
     total_events: 0,
     safe: 0,
     suspicious: 0,
     malicious: 0,
   });
+  const [isFlushing, setIsFlushing] = useState(false);
+
+  const fetchStats = () => {
+    fetch(`${API_URL}/stats`)
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(console.error);
+  };
 
   const handleExport = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(events, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `kernel_guard_events_${new Date().toISOString()}.json`);
+    downloadAnchorNode.setAttribute("download", `aegix_security_events_${new Date().toISOString()}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   };
 
-  useEffect(() => {
-    const fetchStats = () => {
-      fetch(`${API_URL}/stats`)
-        .then((r) => r.json())
-        .then(setStats)
-        .catch(console.error);
-    };
+  const handleFlush = async () => {
+    const confirmed = window.confirm('This will permanently delete all stored events. Continue?');
+    if (!confirmed) {
+      return;
+    }
 
+    setIsFlushing(true);
+    try {
+      const response = await fetch(`${API_URL}/events`, { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error(`Flush failed with status ${response.status}`);
+      }
+      onFlush();
+      fetchStats();
+    } catch (error) {
+      console.error(error);
+      window.alert('Failed to flush events. See console for details.');
+    } finally {
+      setIsFlushing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
 
     const interval = setInterval(fetchStats, 3000);
@@ -126,7 +150,7 @@ export function ThreatMonitor({ events }: ThreatMonitorProps) {
               {/* Command terminal line */}
               <div style={{
                 fontFamily: 'var(--font-tech)', fontSize: '14px', fontWeight: 600,
-                background: 'rgba(0,0,0,0.45)', border: '1px solid var(--border-color)',
+                background: 'var(--surface-soft)', border: '1px solid var(--border-color)',
                 borderRadius: '4px', padding: '10px 14px',
                 color: getSeverityColor(latestEvent.classification),
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -240,7 +264,7 @@ export function ThreatMonitor({ events }: ThreatMonitorProps) {
                 <col style={{ width: '60px' }} />
               </colgroup>
               <thead>
-                <tr style={{ background: 'rgba(0,0,0,0.3)' }}>
+                <tr style={{ background: 'var(--surface-table-header)' }}>
                   {['Time','PID','Command','Risk','Sev.','Mem MB','RAM %','Action'].map((h) => (
                     <th key={h} style={{
                       padding: '7px 8px', textAlign: 'left', fontWeight: 700,
@@ -330,6 +354,19 @@ export function ThreatMonitor({ events }: ThreatMonitorProps) {
         <div className="panel-footer-actions">
           <button className="btn-outline" onClick={handleExport}>
             <Download size={14} /> Export Log
+          </button>
+          <button
+            className="btn-outline"
+            onClick={handleFlush}
+            disabled={isFlushing}
+            style={{
+              borderColor: 'var(--status-malicious)',
+              color: 'var(--status-malicious)',
+              opacity: isFlushing ? 0.7 : 1,
+              cursor: isFlushing ? 'wait' : 'pointer',
+            }}
+          >
+            <Trash2 size={14} /> {isFlushing ? 'Flushing...' : 'Flush Log'}
           </button>
         </div>
       </div>

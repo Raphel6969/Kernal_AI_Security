@@ -1,5 +1,5 @@
 """
-Always-on agent runtime for AI Bouncer.
+Always-on agent runtime for Aegix.
 
 The agent is the background process users keep running on an endpoint. On
 Linux it can enable kernel capture through the existing backend bootstrap.
@@ -63,7 +63,7 @@ def format_startup_message() -> str:
     """Return a human-readable startup summary for the agent."""
     capabilities = detect_capabilities()
     return (
-        f"AI Bouncer agent on {capabilities.os_name}: "
+        f"Aegix agent on {capabilities.os_name}: "
         f"mode={capabilities.run_mode}, "
         f"kernel_capture={capabilities.kernel_capture_supported}. "
         f"{capabilities.notes}"

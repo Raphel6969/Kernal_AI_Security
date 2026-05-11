@@ -8,10 +8,28 @@ import sqlite3
 import json
 import threading
 import uuid
+import logging
 from typing import List, Optional, OrderedDict
 from collections import OrderedDict as ODict
 from backend.events.models import SecurityEvent, DetectionResult, ExecveEvent
 from backend.config import get_settings
+
+
+def _row_get(row, key, default=None):
+    """Safely get a column value from a row which may be a dict or sqlite3.Row.
+
+    Returns `default` when the key is missing or access fails.
+    """
+    if isinstance(row, dict):
+        return row.get(key, default)
+    try:
+        return row[key]
+    except Exception:
+        try:
+            return getattr(row, key, default)
+        except Exception:
+            return default
+
 
 
 class EventStore:
@@ -48,6 +66,7 @@ class EventStore:
                 CREATE TABLE IF NOT EXISTS security_events (
                     id TEXT PRIMARY KEY,
                     event_id TEXT NOT NULL,
+                    agent_id TEXT,
                     timestamp REAL NOT NULL,
                     detected_at REAL NOT NULL,
                     pid INTEGER,
@@ -68,6 +87,10 @@ class EventStore:
                 )
             """)
             # Migrate existing DBs that don't have the remediation columns yet
+            try:
+                conn.execute("ALTER TABLE security_events ADD COLUMN agent_id TEXT")
+            except Exception:
+                pass  # Column already exists
             for col, coltype in [("remediation_action", "TEXT"), ("remediation_status", "TEXT")]:
                 try:
                     conn.execute(f"ALTER TABLE security_events ADD COLUMN {col} {coltype}")
@@ -76,6 +99,10 @@ class EventStore:
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_timestamp 
                 ON security_events(timestamp DESC)
+            """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_agent_timestamp 
+                ON security_events(agent_id, timestamp DESC)
             """)
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_classification 
@@ -88,6 +115,7 @@ class EventStore:
         return {
             'id': str(uuid.uuid4()),
             'event_id': event.id,
+            'agent_id': event.execve_event.agent_id,
             'timestamp': event.execve_event.timestamp,
             'detected_at': event.detected_at,
             'pid': event.execve_event.pid,
@@ -108,7 +136,7 @@ class EventStore:
     
     # Canonical SELECT used everywhere — explicit names defeat column-order bugs on migrated DBs
     _SELECT_COLS = """
-        id, event_id, timestamp, detected_at,
+        id, event_id, agent_id, timestamp, detected_at,
         pid, ppid, uid, gid,
         command, argv_str, comm,
         classification, risk_score, ml_confidence,
@@ -121,6 +149,7 @@ class EventStore:
         """Reconstruct SecurityEvent from a sqlite3.Row (named-column access)."""
         try:
             execve_event = ExecveEvent(
+                agent_id=row['agent_id'],
                 pid=row['pid'] or 0,
                 ppid=row['ppid'] or 0,
                 uid=row['uid'] or 0,
@@ -130,7 +159,15 @@ class EventStore:
                 timestamp=row['timestamp'],
                 comm=row['comm'] or '',
             )
-            matched_rules_list = json.loads(row['matched_rules']) if row['matched_rules'] else []
+            # Handle matched_rules: could be JSON string, empty string, or None
+            matched_rules_str = _row_get(row, 'matched_rules') or ''
+            matched_rules_list = []
+            if matched_rules_str and matched_rules_str.strip():
+                try:
+                    matched_rules_list = json.loads(matched_rules_str)
+                except (json.JSONDecodeError, TypeError):
+                    matched_rules_list = []
+            
             detection_result = DetectionResult(
                 classification=row['classification'],
                 risk_score=row['risk_score'],
@@ -147,7 +184,8 @@ class EventStore:
                 remediation_status=row['remediation_status'],
             )
         except Exception as e:
-            print(f"Error reconstructing event from database row: {e}")
+            import logging
+            logging.getLogger(__name__).exception(f"Error reconstructing event from database row: {e}")
             return None
 
 
@@ -164,11 +202,11 @@ class EventStore:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
                     INSERT INTO security_events 
-                    (id, event_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm,
+                    (id, event_id, agent_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm,
                      classification, risk_score, ml_confidence, matched_rules, explanation,
                      remediation_action, remediation_status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (row_data['id'], row_data['event_id'], row_data['timestamp'], row_data['detected_at'], 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (row_data['id'], row_data['event_id'], row_data['agent_id'], row_data['timestamp'], row_data['detected_at'], 
                       row_data['pid'], row_data['ppid'], row_data['uid'], row_data['gid'],
                       row_data['command'], row_data['argv_str'], row_data['comm'],
                       row_data['classification'], row_data['risk_score'], row_data['ml_confidence'],
@@ -184,7 +222,7 @@ class EventStore:
             while len(self._cache) > self.max_events:
                 self._cache.popitem(last=False)
 
-    def get_recent(self, n: int = 100) -> List[SecurityEvent]:
+    def get_recent(self, n: int = 100, agent_id: Optional[str] = None) -> List[SecurityEvent]:
         """
         Get the N most recent events from database.
         
@@ -200,16 +238,22 @@ class EventStore:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                cursor = conn.execute(
-                    f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp DESC LIMIT ?",
-                    (n,)
-                )
+                if agent_id is None:
+                    cursor = conn.execute(
+                        f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp DESC LIMIT ?",
+                        (n,)
+                    )
+                else:
+                    cursor = conn.execute(
+                        f"SELECT {self._SELECT_COLS} FROM security_events WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?",
+                        (agent_id, n)
+                    )
                 rows = cursor.fetchall()
             events = [self._row_to_event(row) for row in rows]
             # Return newest-first (DESC from query)
             return [e for e in events if e is not None]
 
-    def get_all(self) -> List[SecurityEvent]:
+    def get_all(self, agent_id: Optional[str] = None) -> List[SecurityEvent]:
         """
         Get all events from database.
         
@@ -219,9 +263,15 @@ class EventStore:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                cursor = conn.execute(
-                    f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp ASC"
-                )
+                if agent_id is None:
+                    cursor = conn.execute(
+                        f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp ASC"
+                    )
+                else:
+                    cursor = conn.execute(
+                        f"SELECT {self._SELECT_COLS} FROM security_events WHERE agent_id = ? ORDER BY timestamp ASC",
+                        (agent_id,)
+                    )
                 rows = cursor.fetchall()
             events = [self._row_to_event(row) for row in rows]
             return [e for e in events if e is not None]
@@ -242,7 +292,7 @@ class EventStore:
                 count = cursor.fetchone()[0]
             return count
 
-    def get_by_classification(self, classification: str) -> List[SecurityEvent]:
+    def get_by_classification(self, classification: str, agent_id: Optional[str] = None) -> List[SecurityEvent]:
         """
         Get all events of a specific classification from database.
         
@@ -255,11 +305,18 @@ class EventStore:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                cursor = conn.execute(f"""
-                    SELECT {self._SELECT_COLS} FROM security_events 
-                    WHERE classification = ?
-                    ORDER BY timestamp ASC
-                """, (classification,))
+                if agent_id is None:
+                    cursor = conn.execute(f"""
+                        SELECT {self._SELECT_COLS} FROM security_events 
+                        WHERE classification = ?
+                        ORDER BY timestamp ASC
+                    """, (classification,))
+                else:
+                    cursor = conn.execute(f"""
+                        SELECT {self._SELECT_COLS} FROM security_events 
+                        WHERE classification = ? AND agent_id = ?
+                        ORDER BY timestamp ASC
+                    """, (classification, agent_id))
                 rows = cursor.fetchall()
             
             events = [self._row_to_event(row) for row in rows]

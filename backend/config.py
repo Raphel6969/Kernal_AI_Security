@@ -1,11 +1,14 @@
 """
-Centralized configuration for AI Bouncer backend.
+Centralized configuration for Aegix backend.
 All environment variables and settings are defined here using pydantic.
 """
 
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     """
@@ -40,11 +43,13 @@ class Settings(BaseSettings):
     # Agent settings
     backend_url: str = "http://localhost:8000"
     agent_event_timeout: int = 5
+    
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     def __init__(self, **data):
@@ -60,19 +65,20 @@ class Settings(BaseSettings):
             # Ensure it is an absolute path to survive restarts across different working directories
             self.db_path = os.path.abspath(os.path.join(project_root, self.db_path))
 
+
     @property
     def parsed_frontend_origins(self) -> list[str]:
         """Parse comma-separated frontend origins into a list."""
         origins = [origin.strip() for origin in self.frontend_origins.split(",") if origin.strip()]
         if "*" in origins:
-            print("⚠️ WARNING: Wildcard '*' found in FRONTEND_ORIGINS. This is insecure for production.")
+            logger.warning("Wildcard '*' found in FRONTEND_ORIGINS. This is insecure for production.")
         return origins
 
     def validate_owner(self) -> str:
         """Validate and normalize kernel_monitor_owner."""
         owner = self.kernel_monitor_owner.lower()
         if owner not in ("backend", "agent", "disabled"):
-            print(f"⚠️  Invalid KERNEL_MONITOR_OWNER='{owner}', falling back to 'backend'")
+            logger.warning(f"Invalid KERNEL_MONITOR_OWNER='{owner}', falling back to 'backend'")
             return "backend"
         return owner
 

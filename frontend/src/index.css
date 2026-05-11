@@ -9,6 +9,10 @@
   --bg-sidebar: #ffffff;
   --bg-card: #ffffff;
   --bg-card-hover: #f1f5f9;
+  --surface-soft: #eef4fb;
+  --surface-elevated: #f8fbff;
+  --surface-code: #edf4fb;
+  --surface-table-header: #e8f0f8;
   
   --text-primary: #0f172a;
   --text-secondary: #64748b;
@@ -37,6 +41,10 @@
   --bg-sidebar: #08101A;
   --bg-card: rgba(8, 16, 26, 0.7);
   --bg-card-hover: rgba(10, 20, 35, 0.9);
+  --surface-soft: rgba(8, 16, 26, 0.72);
+  --surface-elevated: rgba(10, 20, 35, 0.92);
+  --surface-code: rgba(6, 12, 20, 0.92);
+  --surface-table-header: rgba(8, 16, 26, 0.82);
   
   --text-primary: #E0F2FE;
   --text-secondary: #7DD3FC;

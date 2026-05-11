@@ -42,7 +42,7 @@ COMMANDS = [
 ]
 
 def run_simulation():
-    print("🚀 Starting AI Bouncer Traffic Simulation...\n")
+    print("🚀 Starting Aegix Traffic Simulation...\n")
     
     # Shuffle commands so it feels like real random traffic
     random.shuffle(COMMANDS)

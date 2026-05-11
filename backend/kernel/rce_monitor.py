@@ -11,6 +11,9 @@ import struct
 import platform
 from ctypes import c_uint, c_int
 from backend.events.models import ExecveEvent
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Try to import BCC (only available on Linux)
 try:
@@ -40,8 +43,8 @@ class RCEMonitor:
                               If None, will compile from C source inline
         """
         if not HAS_BCC:
-            print("⚠️  BCC not available - eBPF monitoring will be disabled")
-            print("   Install: pip install bcc (requires Linux + kernel headers)")
+            logger.warning("BCC not available - eBPF monitoring will be disabled")
+            logger.info("Install: pip install bcc (requires Linux + kernel headers)")
         
         self.ebpf_program_path = ebpf_program_path
         self.bpf = None
@@ -62,19 +65,19 @@ class RCEMonitor:
         if self.running:
             return
         
-        print("🔧 Starting RCE Monitor...")
+        logger.info("Starting RCE Monitor")
         
         # Check platform
         if self.system != "Linux":
-            print(f"⚠️  eBPF monitoring requires Linux (running on {self.system})")
-            print("   API and Dashboard will still work without kernel monitoring")
+            logger.warning(f"eBPF monitoring requires Linux (running on {self.system})")
+            logger.info("API and Dashboard will still work without kernel monitoring")
             self.event_callback = event_callback
             return
         
         # Check BCC availability
         if not HAS_BCC:
-            print("❌ BCC not installed - cannot load eBPF program")
-            print("   Install: sudo apt install python3-bcc")
+            logger.error("BCC not installed - cannot load eBPF program")
+            logger.info("Install: sudo apt install python3-bcc")
             return
         
         # Set callback
@@ -89,9 +92,9 @@ class RCEMonitor:
             self.thread = threading.Thread(target=self._poll_ring_buffer, daemon=True)
             self.thread.start()
             
-            print("✅ RCE Monitor started - monitoring execve syscalls")
-        except Exception as e:
-            print(f"❌ Failed to start RCE Monitor: {e}")
+            logger.info("RCE Monitor started - monitoring execve syscalls")
+        except Exception:
+            logger.exception("Failed to start RCE Monitor")
             self.running = False
             self.bpf = None
 
@@ -108,7 +111,7 @@ class RCEMonitor:
             self.bpf.cleanup()
             self.bpf = None
         
-        print("✅ RCE Monitor stopped")
+        logger.info("RCE Monitor stopped")
 
     def _load_ebpf_program(self) -> None:
         """
@@ -176,17 +179,17 @@ TRACEPOINT_PROBE(syscalls, sys_enter_execve) {
 }
 """
         
-        print("  Loading eBPF program...")
+        logger.info("Loading eBPF program...")
         try:
             self.bpf = BPF(text=ebpf_source)
-            print("  ✓ eBPF program loaded")
+            logger.info("eBPF program loaded")
         except Exception as e:
             raise RuntimeError(f"Failed to load eBPF program: {e}")
         
         # Get ring buffer reference
         try:
             self.ring_buffer = self.bpf["events"]
-            print("  ✓ Ring buffer initialized")
+            logger.info("Ring buffer initialized")
         except Exception as e:
             raise RuntimeError(f"Failed to initialize ring buffer: {e}")
 
@@ -198,7 +201,7 @@ TRACEPOINT_PROBE(syscalls, sys_enter_execve) {
         if not self.bpf or not self.ring_buffer:
             return
         
-        print("  📡 Ring buffer polling started")
+        logger.info("Ring buffer polling started")
         
         def handle_ring_buffer_event(ctx, data, size):
             """Callback when eBPF ringbuf has data."""
@@ -239,12 +242,12 @@ TRACEPOINT_PROBE(syscalls, sys_enter_execve) {
                 if self.event_callback:
                     try:
                         self.event_callback(event)
-                    except Exception as e:
-                        print(f"⚠️  Callback error: {e}")
+                    except Exception:
+                        logger.exception("Callback error processing ring buffer event")
                         
-            except Exception as e:
+            except Exception:
                 if self.running:
-                    print(f"⚠️  Event parsing error: {e}")
+                    logger.exception("Event parsing error")
         
         while self.running:
             try:
@@ -253,9 +256,9 @@ TRACEPOINT_PROBE(syscalls, sys_enter_execve) {
                 
             except KeyboardInterrupt:
                 break
-            except Exception as e:
+            except Exception:
                 if self.running:
-                    print(f"⚠️  Ring buffer error: {e}")
+                    logger.exception("Ring buffer error")
                 import time
                 time.sleep(1)
 

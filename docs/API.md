@@ -1,8 +1,12 @@
 # API Reference
 
+<p align="center">
+  <img src="../frontend/src/assets/aegix-logo.png" alt="Aegix logo" width="180" />
+</p>
+
 ## Overview
 
-The AI Bouncer API is built with FastAPI and provides both synchronous HTTP endpoints and real-time WebSocket streaming for threat analysis.
+The Aegix API is built with FastAPI and provides both synchronous HTTP endpoints and real-time WebSocket streaming for threat analysis.
 
 The normal production flow is agent-driven: the endpoint agent keeps the backend running and forwards events automatically. The `/analyze` endpoint remains useful for manual testing, demos, and standalone analysis.
 
@@ -41,7 +45,7 @@ GET /
 ```json
 {
   "status": "online",
-  "name": "AI Bouncer + Kernel Guard",
+  "name": "Aegix Security",
   "version": "0.1.0",
   "events_stored": 42
 }

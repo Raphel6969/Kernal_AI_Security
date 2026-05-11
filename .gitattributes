@@ -1,0 +1,15 @@
+# Keep shell scripts LF for WSL/Linux execution
+*.sh text eol=lf
+
+# Keep Windows-native scripts CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+# Python and config files should be LF
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.env text eol=lf

@@ -1,4 +1,4 @@
-# Kernel AI Bouncer - Future Log & Architecture Documentation
+# Aegix - Future Log & Architecture Documentation
 
 **Project Start Date:** May 6, 2026  
 **Current Phase:** 7 (Auto-Remediation - Complete)  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Kernel AI Bouncer is a real-time security threat detection system that monitors process execution at the OS kernel level (Linux via eBPF), detects malicious commands using a hybrid rule-engine + ML-based detection pipeline, and provides real-time visualization and alerting via a React dashboard.
+Aegix is a real-time security threat detection system that monitors process execution at the OS kernel level (Linux via eBPF), detects malicious commands using a hybrid rule-engine + ML-based detection pipeline, and provides real-time visualization and alerting via a React dashboard.
 
 The system is designed to scale from single-machine monitoring to enterprise-wide threat detection with automated remediation.
 

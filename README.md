@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="frontend/src/assets/aegix-logo.png" alt="Aegix logo" width="180" />
+
 <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" />
 <img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
 <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
@@ -9,11 +11,11 @@
 
 <br /><br />
 
-# 🛡️ AI Bouncer + Kernel Guard
+# 🛡️ Aegix
 
 ### *A Hybrid Architecture for Real-Time RCE Prevention*
 
-**AI Bouncer + Kernel Guard** is a production-grade security system that intercepts every process spawn at the kernel level, runs it through a cascading AI pipeline, and surfaces the result — with a human-readable explanation — on a live dashboard in milliseconds.
+**Aegix** is a production-grade security system that intercepts every process spawn at the kernel level, runs it through a cascading AI pipeline, and surfaces the result — with a human-readable explanation — on a live dashboard in milliseconds.
 
 No new process runs without an intelligent **"OK"** from the AI.
 
@@ -31,7 +33,7 @@ Remote Code Execution (RCE) is the **"holy grail" for attackers** — once an at
 | **Contextless Enforcement** | A firewall says *"Blocked"* — it can't tell you *why*, or what the attacker was trying to do |
 | **Kernel Blind Trust** | Linux trusts any request from an authorized app — if an app is tricked, the kernel obeys |
 
-**AI Bouncer solves all three** — using eBPF at the kernel level for enforcement and cascading AI logic for intelligence and explanation.
+**Aegix solves all three** — using eBPF at the kernel level for enforcement and cascading AI logic for intelligence and explanation.
 
 ---
 
@@ -45,7 +47,7 @@ Remote Code Execution (RCE) is the **"holy grail" for attackers** — once an at
                          │ WebSocket (ws://)
                          ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  🧠 Layer 2: AI Bouncer (The Brain)                             │
+│  🧠 Layer 2: Aegix (The Brain)                                  │
 │      FastAPI · SQLite persistence · WebSocket broadcast         │
 │                                                                 │
 │      ┌─────────────────────────────────────────────────┐        │
@@ -62,7 +64,7 @@ Remote Code Execution (RCE) is the **"holy grail" for attackers** — once an at
 └────────────────────────┬────────────────────────────────────────┘
                          │
 ┌─────────────────────────────────────────────────────────────────┐
-│  💪 Layer 1: Kernel Guard (The Muscle)                          │
+│  💪 Layer 1: Aegix (The Muscle)                                 │
 │      eBPF tracepoint on execve syscall                          │
 │      → Captures: PID, PPID, UID, command, args                  │
 │      → Streams to user-space via ring buffer                    │
@@ -135,8 +137,8 @@ cd kernal_ai_bouncer
 
 ```bash
 # Using conda (recommended — isolates dependencies cleanly)
-conda create -n aibouncer python=3.11 -y
-conda activate aibouncer
+conda create -n aegix python=3.11 -y
+conda activate aegix
 
 # OR using standard venv
 python -m venv .venv
@@ -159,8 +161,8 @@ pip install -r requirements.txt
 ### ⚙️ Step 4 — Configure Environment
 
 ```bash
-# Copy the example config (defaults work for local dev)
-cp .env.example .env
+# Edit the local config directly
+# (the repo now uses a single .env file)
 ```
 
 The defaults are ready to go. Only edit `.env` if you need to change a port or set up a public deployment. See [Configuration Reference](#%EF%B8%8F-configuration-reference) below.
@@ -183,14 +185,14 @@ You need **two terminals** running simultaneously.
 
 **Terminal 1 — Backend**
 ```bash
-conda activate aibouncer
+conda activate aegix
 python -m uvicorn backend.app:app --host 0.0.0.0 --port 8000
 ```
 
 You should see the startup banner:
 ```
 ==================================================
-🚀 Starting AI Bouncer backend...
+🚀 Starting Aegix backend...
    Platform:      linux
    Owner Mode:    backend
    API URL:       http://0.0.0.0:8000

@@ -1,4 +1,4 @@
-# Backend dependencies for AI Bouncer + Kernel Guard system
+# Backend dependencies for Aegix security system
 
 # Web Framework
 fastapi==0.104.1

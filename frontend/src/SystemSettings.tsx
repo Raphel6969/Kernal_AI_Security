@@ -139,11 +139,11 @@ export function SystemSettings({ theme, setTheme }: SystemSettingsProps) {
           </div>
         </div>
 
-        {/* KERNEL GUARD CONFIG */}
+        {/* AEGIX CONFIG */}
         <div className="panel-card">
           <div className="panel-header" style={{ color: 'var(--accent-primary)', padding: '16px 24px' }}>
             <div className="panel-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px' }}>
-              <Shield size={18} /> Kernel Guard Config
+              <Shield size={18} /> Aegix Config
             </div>
           </div>
           <div style={{ padding: '24px' }}>
@@ -185,7 +185,7 @@ export function SystemSettings({ theme, setTheme }: SystemSettingsProps) {
             <div style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px', display: 'flex', gap: '12px', marginTop: '32px' }}>
               <Info size={20} color="var(--accent-primary)" style={{ flexShrink: 0 }} />
               <div>
-                <h4 style={{ fontSize: '13px', marginBottom: '4px', fontWeight: 600 }}>Defense Matrix Info</h4>
+                <h4 style={{ fontSize: '13px', marginBottom: '4px', fontWeight: 600 }}>Aegix Control Center</h4>
                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '12px' }}>
                   The AI Sensitivity Slider controls the strictness of the heuristic engine. A higher sensitivity (Aggressive) lowers the required risk score, allowing the engine to block potential threats faster but increasing the risk of false positives. The recommended optimum level is <b>30%</b> for standard production environments, balancing robust security with normal system operations.
                 </p>
