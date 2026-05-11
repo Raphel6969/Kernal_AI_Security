@@ -27,7 +27,7 @@ No new process runs without an intelligent **"OK"** from the AI.
 
 Remote Code Execution (RCE) is the **"holy grail" for attackers** — once an attacker executes their own commands on your server, they own the system. Traditional defenses have three critical blind spots:
 
-| Blind Spot | Why It Fails |
+| Blind Spot | Why It Fails? |
 |---|---|
 | **Static Rule Evasion** | Attackers bypass filters using Base64, command chaining, and obfuscation |
 | **Contextless Enforcement** | A firewall says *"Blocked"* — it can't tell you *why*, or what the attacker was trying to do |
