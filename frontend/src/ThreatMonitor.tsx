@@ -126,7 +126,7 @@ export function ThreatMonitor({ events }: ThreatMonitorProps) {
               {/* Command terminal line */}
               <div style={{
                 fontFamily: 'var(--font-tech)', fontSize: '14px', fontWeight: 600,
-                background: 'rgba(0,0,0,0.45)', border: '1px solid var(--border-color)',
+                background: 'var(--surface-soft)', border: '1px solid var(--border-color)',
                 borderRadius: '4px', padding: '10px 14px',
                 color: getSeverityColor(latestEvent.classification),
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -240,7 +240,7 @@ export function ThreatMonitor({ events }: ThreatMonitorProps) {
                 <col style={{ width: '60px' }} />
               </colgroup>
               <thead>
-                <tr style={{ background: 'rgba(0,0,0,0.3)' }}>
+                <tr style={{ background: 'var(--surface-table-header)' }}>
                   {['Time','PID','Command','Risk','Sev.','Mem MB','RAM %','Action'].map((h) => (
                     <th key={h} style={{
                       padding: '7px 8px', textAlign: 'left', fontWeight: 700,

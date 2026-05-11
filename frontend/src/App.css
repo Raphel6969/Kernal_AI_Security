@@ -631,7 +631,7 @@
   padding: 10px 12px;
   border: 1px solid var(--border-color);
   border-radius: 2px;
-  background-color: rgba(0,0,0,0.3);
+  background-color: var(--surface-elevated);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 14px;
