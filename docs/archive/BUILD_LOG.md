@@ -1,6 +1,6 @@
 # Build Log
 
-Project: AI Bouncer + Kernel Guard: Real-time RCE Prevention System
+Project: Aegix: Real-time RCE Prevention System
 Date: May 5, 2026
 
 ## What has been built so far
@@ -79,13 +79,13 @@ Current state: phases 1-7 are complete in the codebase, and the next roadmap ite
 
 ---
 
-## Session 2: Phase 2 - Kernel Guard (eBPF) Implementation
+## Session 2: Phase 2 - Aegix (eBPF) Implementation
 
 ### Date: May 6, 2026
 
 ### Summary
 
-Completed **Phase 2: Kernel Guard** and **Phase 3: Real-time integration**.
+Completed **Phase 2: Aegix** and **Phase 3: Real-time integration**.
 
 The system can now hook into the Linux kernel's `execve` tracepoint, capture process execution events with zero-copy efficiency, and stream them to userspace via BPF ring buffer.
 

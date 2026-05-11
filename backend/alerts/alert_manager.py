@@ -135,7 +135,7 @@ class AlertManager:
             "text": msg_text,  # Slack
             "content": "",     # Discord
             "embeds": [{       # Rich formatting for Discord
-                "title": "🚨 Kernel Guard: Malicious Activity Detected",
+                "title": "🚨 Aegix: Malicious Activity Detected",
                 "color": 16711680, # Red
                 "fields": [
                     {"name": "Process ID", "value": str(event.execve_event.pid), "inline": True},
@@ -143,7 +143,7 @@ class AlertManager:
                     {"name": "Command", "value": f"```bash\n{event.execve_event.command}\n```", "inline": False},
                     {"name": "Matched Rules", "value": ", ".join(event.detection_result.matched_rules) or "None", "inline": False}
                 ],
-                "footer": {"text": "AI Bouncer Automated Detection"}
+                "footer": {"text": "Aegix Automated Detection"}
             }]
         }
 

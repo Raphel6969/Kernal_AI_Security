@@ -5,6 +5,7 @@ import { SystemSettings } from './SystemSettings';
 import { API_URL } from './config';
 import { useWebSocket } from './useWebSocket';
 import { Shield, Settings, HelpCircle, LogOut, Moon, Sun, Monitor } from 'lucide-react';
+import aegixLogo from './assets/aegix-logo.png';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -13,7 +14,7 @@ function App() {
   const [activePage, setActivePage] = useState<'monitor' | 'settings'>('monitor');
   const [theme, setTheme] = useState<Theme>('system');
   const [remediationEnabled, setRemediationEnabled] = useState(false);
-  const { events, isConnected } = useWebSocket();
+  const { events, isConnected, clearEvents } = useWebSocket();
 
   // Handle Theme
   useEffect(() => {
@@ -87,11 +88,11 @@ function App() {
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">
-            <Shield size={24} strokeWidth={2.5} />
+            <img src={aegixLogo} alt="Aegix Logo" className="brand-logo" />
           </div>
           <div className="brand-text">
-            <span className="brand-title">AI Bouncer</span>
-            <span className="brand-subtitle">Kernel Guard Active</span>
+            <span className="brand-title">Aegix</span>
+            <span className="brand-subtitle">Aegix Platform</span>
           </div>
         </div>
 
@@ -132,13 +133,13 @@ function App() {
         {/* TOP NAVIGATION BAR */}
         <header className="topbar">
           <div className="topbar-left">
-            <div className="system-id">DEFENSE_CORE_V1</div>
+            <div className="system-id">AEGIX</div>
             <nav className="top-nav">
               <div
                 className={`top-nav-item ${activePage === 'monitor' ? 'active' : ''}`}
                 onClick={() => setActivePage('monitor')}
               >
-                Dashboard
+                Aegix Dashboard
               </div>
             </nav>
           </div>
@@ -199,11 +200,11 @@ function App() {
         <div className="content-container">
           {apiStatus === 'offline' && (
             <div style={{ backgroundColor: 'var(--status-malicious-bg)', color: 'var(--status-malicious)', padding: '16px', borderRadius: '8px', marginBottom: '24px', fontWeight: 600 }}>
-              ⚠️ Backend is offline. Ensure `python backend/app.py` is running.
+              ⚠️ Aegix backend is offline. Ensure `python backend/app.py` is running.
             </div>
           )}
 
-          {activePage === 'monitor' && <ThreatMonitor events={events} />}
+          {activePage === 'monitor' && <ThreatMonitor events={events} onFlush={clearEvents} />}
           {activePage === 'settings' && <SystemSettings theme={theme} setTheme={setTheme} />}
         </div>
       </main>

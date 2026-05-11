@@ -7,7 +7,7 @@ HOW TO RUN MANUALLY (Step-by-step demo):
 -----------------------------------------
 
 Step 1 — Start the backend (in a NEW terminal):
-    conda activate aibouncer
+    conda activate aegix
     cd C:\\Users\\raphe\\Webdev\\Projects\\kernal_ai_bouncer
     uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload --reload-dir backend
 

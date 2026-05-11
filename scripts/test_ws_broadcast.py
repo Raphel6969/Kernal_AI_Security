@@ -28,7 +28,7 @@ try:
 except Exception as e:
     print("Missing dependency or import error:", e)
     print("Ensure your venv is activated and you've installed backend requirements:")
-    print("  conda activate aibouncer")
+    print("  conda activate aegix")
     print("  pip install -r backend/requirements.txt")
     sys.exit(1)
 

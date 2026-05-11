@@ -1,8 +1,12 @@
 # System Architecture
 
+<p align="center">
+   <img src="../frontend/src/assets/aegix-logo.png" alt="Aegix logo" width="180" />
+</p>
+
 ## Overview
 
-AI Bouncer + Kernel Guard is a **four-layer real-time RCE prevention system** that combines an always-on agent, kernel-level monitoring, intelligent threat detection, and a live dashboard.
+Aegix is a **four-layer real-time RCE prevention system** that combines an always-on agent, kernel-level monitoring, intelligent threat detection, and a live dashboard.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -14,7 +18,7 @@ AI Bouncer + Kernel Guard is a **four-layer real-time RCE prevention system** th
                        │ WebSocket
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Layer 2: AI Bouncer (Intelligence & Decision)             │
+│  Layer 2: Aegix (Intelligence & Decision)                 │
 │  - Rule Engine (60% weight)                                │
 │    * Pattern matching (injection, shells, reverse shells)  │
 │    * Keyword detection (curl, wget, bash, etc.)            │
@@ -26,7 +30,7 @@ AI Bouncer + Kernel Guard is a **four-layer real-time RCE prevention system** th
 └──────────────────────┬──────────────────────────────────────┘
                        │
 ┌─────────────────────────────────────────────────────────────┐
-│  Layer 1: Kernel Guard (Enforcement)                       │
+│  Layer 1: Aegix (Enforcement)                              │
 │  - eBPF tracepoint hook on execve syscall                  │
 │  - Captures: pid, ppid, uid, command, args                 │
 │  - Streams events to user space via ring buffer            │
@@ -52,7 +56,7 @@ User/Process attempts execution
        ↓
 Agent runtime keeps backend alive
    ↓
-Kernel Guard (eBPF) intercepts execve (Linux only)
+Aegix (eBPF) intercepts execve (Linux only)
        ↓
 Ring buffer → User space (Python)
        ↓
@@ -101,7 +105,7 @@ Client receives JSON response
 
 ## Component Details
 
-### Layer 1: Kernel Guard (eBPF)
+### Layer 1: Aegix (eBPF)
 
 **File**: `kernel/execve_hook.c`, `backend/kernel/rce_monitor.py`
 
@@ -150,10 +154,10 @@ struct execve_event {
 5. Python background thread polls ring buffer (100ms timeout)
 6. Converts binary events to `ExecveEvent` objects
 7. **Python immediately samples `psutil.Process(pid).memory_info().rss`** and `psutil.virtual_memory().percent` — this is the Memory Profiling layer enrichment
-8. Passes enriched event to AI Bouncer detection pipeline (Layer 2)
+8. Passes enriched event to Aegix detection pipeline (Layer 2)
 9. Stores and broadcasts the resulting `SecurityEvent` to the dashboard
 
-### Layer 2: AI Bouncer (Detection Pipeline)
+### Layer 2: Aegix (Detection Pipeline)
 
 **Files**: 
 - `backend/detection/rule_engine.py` - Pattern matching
@@ -302,7 +306,7 @@ GET /
 ```json
 {
   "status": "online",
-  "name": "AI Bouncer + Kernel Guard",
+  "name": "Aegix Security",
   "version": "0.1.0",
   "events_stored": 42
 }

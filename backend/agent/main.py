@@ -42,7 +42,11 @@ async def agent_event_loop():
         # If the monitor is already running in another process, prefer to set the callback only.
         # If this process is the owner, start the monitor; if disabled, do nothing.
         try:
-            monitor_running = bool(getattr(manager.monitor, "running", False))
+            # Only treat the monitor as running when the attribute explicitly equals True.
+            monitor = getattr(manager, "monitor", None)
+            monitor_running = False
+            if monitor is not None and hasattr(monitor, "running"):
+                monitor_running = getattr(monitor, "running") is True
         except Exception:
             monitor_running = False
 
@@ -81,6 +85,7 @@ async def agent_event_loop():
                     response = requests.post(
                         f"{settings.backend_url}/agent/events",
                         json={
+                            "agent_id": os.getenv("AI_BOUNCER_AGENT_ID") or None,
                             "pid": execve_event.pid,
                             "ppid": execve_event.ppid,
                             "uid": execve_event.uid,

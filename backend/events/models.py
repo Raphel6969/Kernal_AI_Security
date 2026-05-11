@@ -21,6 +21,7 @@ class ExecveEvent:
     comm: str  # Process name from kernel
     process_memory_mb: float = 0.0
     system_memory_percent: float = 0.0
+    agent_id: Optional[str] = None
 
 
 @dataclass
@@ -47,6 +48,7 @@ class SecurityEvent:
         """Convert to dict for JSON serialization."""
         return {
             "id": self.id,
+            "agent_id": self.execve_event.agent_id,
             "pid": self.execve_event.pid,
             "ppid": self.execve_event.ppid,
             "uid": self.execve_event.uid,

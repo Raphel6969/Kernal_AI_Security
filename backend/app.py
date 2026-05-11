@@ -1,10 +1,11 @@
 """
-Main FastAPI application for AI Bouncer backend.
+Main FastAPI application for Aegix backend.
 Handles command analysis via API and WebSocket event streaming.
 """
 
 import os
 import sys
+import logging
 
 # Ensure project root is on sys.path so running `python app.py` from
 # the `backend/` folder can still import the `backend` package.
@@ -14,11 +15,12 @@ if PROJECT_ROOT not in sys.path:
 
 from fastapi import FastAPI, WebSocket, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel
-from typing import List, Set
+from typing import Dict, List, Optional
 import asyncio
 import uuid
 import psutil
@@ -44,6 +46,7 @@ class CommandAnalysisRequest(BaseModel):
 
 class AgentEventRequest(BaseModel):
     """Event forwarded by the always-on agent."""
+    agent_id: str | None = None
     command: str
     pid: int = 0
     ppid: int = 0
@@ -75,9 +78,10 @@ class CommandAnalysisResponse(BaseModel):
 # ==============================================================================
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="AI Bouncer + Kernel Guard",
+    title="Aegix Security",
     description="Real-time RCE Prevention System",
     version="0.1.0",
 )
@@ -104,7 +108,7 @@ pipeline = get_detection_pipeline()
 event_store = get_event_store(max_events=settings.event_cache_size)
 hook_manager = get_hook_manager()
 alert_manager = get_alert_manager()
-active_websockets: Set[WebSocket] = set()
+active_websockets: Dict[WebSocket, Optional[str]] = {}
 active_websockets_lock = asyncio.Lock()
 main_event_loop = None
 
@@ -112,6 +116,7 @@ main_event_loop = None
 def _build_execve_event(
     command: str,
     *,
+    agent_id: str | None = None,
     pid: int = 0,
     ppid: int = 0,
     uid: int = 0,
@@ -124,6 +129,7 @@ def _build_execve_event(
 ) -> ExecveEvent:
     """Build a normalized execve event for both API and agent inputs."""
     return ExecveEvent(
+        agent_id=agent_id,
         pid=pid,
         ppid=ppid,
         uid=uid,
@@ -175,15 +181,15 @@ async def ingest_security_event(
             security_event.remediation_action = rem_result["action"]
             security_event.remediation_status = rem_result["status"]
         else:
-            print(f"⚠️  Malicious event detected (PID {execve_event.pid}) but Auto-Remediation is DISABLED. Skipping kill.")
+            logger.warning(f"Malicious event detected (PID {execve_event.pid}) but Auto-Remediation is DISABLED. Skipping kill.")
 
     event_store.append(security_event)
     asyncio.create_task(alert_manager.dispatch(security_event))
 
     emoji = "🟢" if security_event.detection_result.classification == "safe" else \
-            "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
-    rem_info = f" | 🛑 {security_event.remediation_status}" if security_event.remediation_status else ""
-    print(
+        "🟡" if security_event.detection_result.classification == "suspicious" else "🔴"
+    rem_info = f" | remediation={security_event.remediation_status}" if security_event.remediation_status else ""
+    logger.info(
         f"{emoji} {source.upper()} event: {execve_event.command[:50]} "
         f"(PID {execve_event.pid}) -> {security_event.detection_result.classification.upper()}{rem_info}"
     )
@@ -222,44 +228,44 @@ async def startup_event():
                     main_event_loop,
                 )
         except Exception as e:
-            print(f"⚠️  Kernel event processing error: {e}")
+            logger.exception("Kernel event processing error")
     
     # Kernel monitor ownership policy
     owner = settings.validate_owner()
     kernel_active = False
 
-    print("==================================================")
-    print("🚀 Starting AI Bouncer backend...")
-    print(f"   Platform:      {sys.platform}")
-    print(f"   Owner Mode:    {owner}")
-    print(f"   API URL:       http://{settings.api_host}:{settings.api_port}")
-    print(f"   WebSocket URL: ws://{settings.api_host}:{settings.api_port}/ws")
+    logger.info("==================================================")
+    logger.info("Starting Aegix backend")
+    logger.info(f"Platform: {sys.platform}")
+    logger.info(f"Owner Mode: {owner}")
+    logger.info(f"API URL: http://{settings.api_host}:{settings.api_port}")
+    logger.info(f"WebSocket URL: ws://{settings.api_host}:{settings.api_port}/ws")
 
     if owner == "backend":
         # Start kernel monitoring with callback
         try:
             hook_manager.start(event_callback=on_kernel_event)
             kernel_active = getattr(hook_manager.monitor, "running", False)
-            print("✅ Kernel Guard initialized (owned by backend)")
+            logger.info("Aegix security module initialized (owned by backend)")
+            store_type = type(event_store).__name__ if event_store is not None else "<none>"
+            logger.info(f"Startup: DB path={settings.db_path} | EventStore={store_type}")
         except Exception as e:
-            print(f"⚠️  Kernel Guard initialization failed: {e}")
-            print("   System will operate in API-only mode")
+            logger.exception("Aegix security module initialization failed; operating in API-only mode")
     elif owner == "agent":
-        print("ℹ️  Kernel monitor ownership set to 'agent' — backend will not attach eBPF hooks")
+        logger.info("Kernel monitor ownership set to 'agent' — backend will not attach eBPF hooks")
     else:
-        print("ℹ️  Kernel monitoring disabled by configuration (KERNEL_MONITOR_OWNER=disabled)")
+        logger.info("Kernel monitoring disabled by configuration (KERNEL_MONITOR_OWNER=disabled)")
     
-    print(f"   Kernel Active: {'YES' if kernel_active else 'NO'}")
-    print("==================================================")
-    print("✅ Backend ready!")
+    logger.info(f"Kernel Active: {'YES' if kernel_active else 'NO'}")
+    logger.info("Backend ready")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown."""
-    print("🛑 Shutting down...")
+    logger.info("Shutting down...")
     hook_manager.stop()
-    print("✅ Shutdown complete")
+    logger.info("Shutdown complete")
 
 
 # ==============================================================================
@@ -282,16 +288,6 @@ async def readyz():
         return {"status": "ready"}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Not ready: {e}")
-
-@app.get("/")
-async def root():
-    """Health check endpoint."""
-    return {
-        "status": "online",
-        "name": "AI Bouncer + Kernel Guard",
-        "version": "0.1.0",
-        "events_stored": event_store.size(),
-    }
 
 
 @app.post("/analyze", response_model=CommandAnalysisResponse)
@@ -316,22 +312,23 @@ async def analyze_command(request: Request, body: CommandAnalysisRequest):
 
 @app.post("/agent/events", response_model=CommandAnalysisResponse)
 @limiter.limit("60/minute")
-async def ingest_agent_event(request: Request, body: AgentEventRequest):
+async def ingest_agent_event(request: Request, event: AgentEventRequest):
     """Ingest an event forwarded by the always-on agent."""
-    if not body.command or not body.command.strip():
+    if not event.command or not event.command.strip():
         raise HTTPException(status_code=400, detail="Command cannot be empty")
 
     execve_event = _build_execve_event(
-        body.command,
-        pid=body.pid,
-        ppid=body.ppid,
-        uid=body.uid,
-        gid=body.gid,
-        argv_str=body.argv_str,
-        comm=body.comm,
-        timestamp=body.timestamp,
-        process_memory_mb=body.process_memory_mb,
-        system_memory_percent=body.system_memory_percent,
+        event.command,
+        agent_id=event.agent_id,
+        pid=event.pid,
+        ppid=event.ppid,
+        uid=event.uid,
+        gid=event.gid,
+        argv_str=event.argv_str,
+        comm=event.comm,
+        timestamp=event.timestamp,
+        process_memory_mb=event.process_memory_mb,
+        system_memory_percent=event.system_memory_percent,
     )
     security_event = await ingest_security_event(execve_event, source="agent")
     return _build_response(security_event)
@@ -339,7 +336,11 @@ async def ingest_agent_event(request: Request, body: AgentEventRequest):
 
 @app.get("/events")
 @limiter.limit("20/minute")
-async def get_events(request: Request, limit: int = Query(default=100, ge=1, le=1000)):
+async def get_events(
+    request: Request,
+    limit: int = Query(default=100, ge=1, le=1000),
+    agent_id: str | None = Query(default=None),
+):
     """
     Get recent security events.
     
@@ -349,18 +350,26 @@ async def get_events(request: Request, limit: int = Query(default=100, ge=1, le=
     Returns:
         List of recent SecurityEvent objects as dicts
     """
-    events = event_store.get_recent(limit)
+    events = event_store.get_recent(limit, agent_id=agent_id)
     return [e.dict() for e in events]
 
 
+@app.delete("/events")
+async def clear_events():
+    """Delete all stored security events and clear the in-memory cache."""
+    deleted_events = event_store.size()
+    event_store.clear()
+    return {"status": "ok", "deleted_events": deleted_events}
+
+
 @app.get("/stats")
-async def get_stats():
+async def get_stats(agent_id: str | None = Query(default=None)):
     """Get statistics about detected events."""
     return {
-        "total_events": event_store.size(),
-        "safe": event_store.get_safe_count(),
-        "suspicious": event_store.get_suspicious_count(),
-        "malicious": event_store.get_malicious_count(),
+        "total_events": len(event_store.get_all(agent_id=agent_id)),
+        "safe": len(event_store.get_by_classification("safe", agent_id=agent_id)),
+        "suspicious": len(event_store.get_by_classification("suspicious", agent_id=agent_id)),
+        "malicious": len(event_store.get_by_classification("malicious", agent_id=agent_id)),
     }
 
 
@@ -440,42 +449,42 @@ async def update_threshold_settings(body: dict):
 # ==============================================================================
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, agent_id: str | None = Query(default=None)):
     """
     WebSocket endpoint for real-time event streaming.
-    Broadcasts security events to all connected clients.
+    Broadcasts security events to connected clients filtered by agent_id when provided.
     """
     await websocket.accept()
     async with active_websockets_lock:
-        active_websockets.add(websocket)
+        active_websockets[websocket] = agent_id
         active_count = len(active_websockets)
-    
+
     try:
-        print(f"📡 WebSocket client connected ({active_count} active)")
-        
+        logger.info(f"WebSocket client connected ({active_count} active)")
+
         # Send recent events to new client
-        recent_events = event_store.get_recent(100)
+        recent_events = event_store.get_recent(100, agent_id=agent_id)
         for event in recent_events:
             try:
                 await websocket.send_json(event.dict())
-            except Exception as e:
-                print(f"⚠️  Failed to send recent event: {e}")
-        
+            except Exception:
+                logger.exception("Failed to send recent event to new websocket client")
+
         # Keep connection alive
         while True:
             # Client can send ping to stay alive
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text("pong")
-    
-    except Exception as e:
-        print(f"❌ WebSocket error: {e}")
-    
+
+    except Exception:
+        logger.exception("WebSocket error")
+
     finally:
         async with active_websockets_lock:
-            active_websockets.discard(websocket)
+            active_websockets.pop(websocket, None)
             active_count = len(active_websockets)
-        print(f"📡 WebSocket client disconnected ({active_count} active)")
+        logger.info(f"WebSocket client disconnected ({active_count} active)")
 
 
 async def broadcast_event(event: SecurityEvent):
@@ -489,20 +498,24 @@ async def broadcast_event(event: SecurityEvent):
 
     # Snapshot avoids set-size-change errors during iteration.
     async with active_websockets_lock:
-        websockets_snapshot = list(active_websockets)
+        websockets_snapshot = list(active_websockets.items())
 
-    for websocket in websockets_snapshot:
+    for websocket, websocket_agent_id in websockets_snapshot:
+        if websocket_agent_id is not None and websocket_agent_id != event.execve_event.agent_id:
+            continue
+        if websocket_agent_id is None and event.execve_event.agent_id is not None:
+            continue
         try:
             await websocket.send_json(event.dict())
-        except Exception as e:
-            print(f"⚠️  Failed to send event to client: {e}")
+        except Exception:
+            logger.exception("Failed to send event to client")
             dead_connections.add(websocket)
     
     # Cleanup dead connections
     if dead_connections:
         async with active_websockets_lock:
             for ws in dead_connections:
-                active_websockets.discard(ws)
+                active_websockets.pop(ws, None)
 
 
 # ==============================================================================
@@ -521,16 +534,29 @@ async def process_execve_event(execve_event: ExecveEvent):
 
 
 # ==============================================================================
+# Static Files (Frontend)
+# ==============================================================================
+
+# Serve React frontend build as static files.
+# Mount at the very end so API routes take precedence.
+frontend_dist = os.path.join(PROJECT_ROOT, "frontend", "dist")
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+else:
+    logger.warning(f"Frontend dist directory not found at {frontend_dist}. Frontend assets will not be served.")
+
+
+# ==============================================================================
 # Main Entry Point
 # ==============================================================================
 
 if __name__ == "__main__":
     import uvicorn
     
-    print("🚀 Starting AI Bouncer backend server...")
-    print(f"   API: http://{settings.api_host}:{settings.api_port}")
-    print(f"   Docs: http://{settings.api_host}:{settings.api_port}/docs")
-    print(f"   WebSocket: ws://{settings.api_host}:{settings.api_port}/ws")
+    logger.info("Starting Aegix backend server")
+    logger.info(f"API: http://{settings.api_host}:{settings.api_port}")
+    logger.info(f"Docs: http://{settings.api_host}:{settings.api_port}/docs")
+    logger.info(f"WebSocket: ws://{settings.api_host}:{settings.api_port}/ws")
     
     uvicorn.run(
         app,

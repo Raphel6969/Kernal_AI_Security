@@ -32,7 +32,7 @@ def setup_test_db_dir():
     yield
     # Clean up entire directory after all tests complete
     if TEST_DB_DIR.exists():
-        shutil.rmtree(TEST_DB_DIR)
+        shutil.rmtree(TEST_DB_DIR, ignore_errors=True)
 
 
 @pytest.fixture

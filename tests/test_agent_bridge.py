@@ -7,10 +7,11 @@ from fastapi import Request
 
 
 def test_agent_payload_serialization():
-    payload = AgentEventPayload(command="echo hello", pid=10, comm="bash")
+    payload = AgentEventPayload(command="echo hello", pid=10, comm="bash", agent_id="agent-1")
 
     data = payload.to_dict()
 
+    assert data["agent_id"] == "agent-1"
     assert data["command"] == "echo hello"
     assert data["argv_str"] == "echo hello"
     assert data["pid"] == 10
@@ -31,9 +32,11 @@ def test_agent_event_ingest_endpoint(monkeypatch, isolated_event_store):
     response = asyncio.run(
         ingest_agent_event(
             request=mock_request,
-            event=AgentEventRequest(command="echo hello", pid=10, comm="bash")
+            event=AgentEventRequest(command="echo hello", pid=10, comm="bash", agent_id="agent-1")
         )
     )
 
     assert response.command == "echo hello"
     assert isolated_event_store.size() == 1
+    stored_event = isolated_event_store.get_recent(1)[0]
+    assert stored_event.execve_event.agent_id == "agent-1"

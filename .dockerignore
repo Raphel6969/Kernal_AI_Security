@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.local
+.build/
+.dist/
+node_modules/
+*.sqlite3
+data/events.db

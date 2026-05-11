@@ -132,5 +132,10 @@ export function useWebSocket() {
     };
   }, []);
 
-  return { events, isConnected, ws };
+  const clearEvents = () => {
+    seenEventIdsRef.current.clear();
+    setEvents([]);
+  };
+
+  return { events, isConnected, ws, clearEvents };
 }

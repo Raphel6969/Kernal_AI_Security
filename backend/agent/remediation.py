@@ -1,5 +1,5 @@
 """
-Remediation Manager for AI Bouncer.
+Remediation Manager for Aegix.
 Handles automatic process termination when malicious activity is detected.
 
 NOTE: Auto-Remediation is only meaningful on Linux where the eBPF kernel hook

@@ -6,9 +6,19 @@ import pickle
 
 def test_extra_metrics():
     project_root = Path(__file__).parent
+    # Prefer test-local data, but fall back to repository-level `data/` and `backend/models/`.
     safe_file = project_root / 'data' / 'safe_commands_10k.txt'
     malicious_file = project_root / 'data' / 'malicious_commands_2k.txt'
     model_path = project_root / 'backend' / 'models' / 'trained_model.pkl'
+    if not safe_file.exists():
+        repo_root = project_root.parent
+        safe_file = repo_root / 'data' / 'safe_commands_10k.txt'
+    if not malicious_file.exists():
+        repo_root = project_root.parent
+        malicious_file = repo_root / 'data' / 'malicious_commands_2k.txt'
+    if not model_path.exists():
+        repo_root = project_root.parent
+        model_path = repo_root / 'backend' / 'models' / 'trained_model.pkl'
 
     # Load data
     with open(safe_file, 'r', encoding='utf-8') as f:

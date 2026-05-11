@@ -19,9 +19,11 @@ class AgentEventPayload:
     argv_str: Optional[str] = None
     comm: str = "agent"
     timestamp: Optional[float] = None
+    agent_id: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "agent_id": self.agent_id,
             "command": self.command,
             "pid": self.pid,
             "ppid": self.ppid,
