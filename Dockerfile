@@ -3,6 +3,8 @@
 FROM node:20-slim AS frontend-builder
 
 WORKDIR /app/frontend
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 
 # Build the React frontend inside the image so clean checkouts work everywhere.
 COPY frontend/package*.json ./
