@@ -26,8 +26,6 @@ class AlertManager:
         if parent_dir:
             os.makedirs(parent_dir, exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
-            # We are dropping the old table to quickly migrate the schema for the new features
-            conn.execute("DROP TABLE IF EXISTS webhooks")
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS webhooks (
                     id TEXT PRIMARY KEY,

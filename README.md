@@ -1,3 +1,12 @@
+---
+title: Aegix
+emoji: 🛡️
+colorFrom: red
+colorTo: gray
+sdk: docker
+app_port: 7860
+---
+
 <div align="center">
 
 <img src="frontend/src/assets/aegix-logo.png" alt="Aegix logo" width="180" />
