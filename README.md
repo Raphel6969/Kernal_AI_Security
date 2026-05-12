@@ -1,12 +1,3 @@
----
-title: Aegix
-emoji: 🛡️
-colorFrom: red
-colorTo: gray
-sdk: docker
-app_port: 7860
----
-
 <div align="center">
 
 <img src="frontend/src/assets/aegix-logo.png" alt="Aegix logo" width="180" />
@@ -120,11 +111,10 @@ The Tier B Logistic Regression model is trained on a sanitized 12,000-command da
 
 ## 🚀 Live Demo
 
-**Production Deployment**: [Aegix Dashboard](https://kernalaisecurity-production.up.railway.app)
+**Hugging Face Space**: [Aegix Security](https://huggingface.co/spaces/Raphel3116/aegix_security)
 
-- **API Base URL**: `https://kernalaisecurity-production.up.railway.app`
+- **Hugging Face Demo**: `https://huggingface.co/spaces/Raphel3116/aegix_security`
 - **Status**: ✅ Live and ready for testing
-- **WebSocket**: `wss://kernalaisecurity-production.up.railway.app/ws`
 
 Test with sample commands: Run `./TEST_COMMANDS.ps1` (PowerShell) to execute 20 automated test cases against the live API.
 

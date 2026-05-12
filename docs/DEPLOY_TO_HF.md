@@ -2,6 +2,8 @@
 
 This guide deploys the public API and dashboard demo to a Hugging Face Docker Space.
 
+Current public Space: https://huggingface.co/spaces/Raphel3116/aegix_security
+
 What this deployment includes:
 
 - FastAPI backend
@@ -58,6 +60,12 @@ Open:
 https://<your-space-subdomain>.hf.space
 ```
 
+Project Space page:
+
+```text
+https://huggingface.co/spaces/Raphel3116/aegix_security
+```
+
 Health checks:
 
 ```text
@@ -85,4 +93,3 @@ curl -X POST https://<your-space-subdomain>.hf.space/analyze \
 - The default disk is not persistent across rebuilds/restarts.
 - This is suitable for a student demo and public API/dashboard.
 - The Linux agent should be handled later on a real Linux machine and configured to forward to `/agent/events`.
-

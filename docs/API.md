@@ -10,7 +10,7 @@ The Aegix API is built with FastAPI and provides both synchronous HTTP endpoints
 
 The normal production flow is agent-driven: the endpoint agent keeps the backend running and forwards events automatically. The `/analyze` endpoint remains useful for manual testing, demos, and standalone analysis.
 
-**Production Base URL**: `https://kernalaisecurity-production.up.railway.app`  
+**Hugging Face Space**: `https://huggingface.co/spaces/Raphel3116/aegix_security`  
 **Local Base URL**: `http://localhost:8000`  
 **Docs**: `http://localhost:8000/docs` (Swagger UI)  
 **ReDoc**: `http://localhost:8000/redoc` (ReDoc UI)
@@ -120,9 +120,9 @@ Response:
 }
 ```
 
-Safe command (production):
+Safe command (deployed Space):
 ```bash
-curl -X POST https://kernalaisecurity-production.up.railway.app/analyze \
+curl -X POST https://<your-space-subdomain>.hf.space/analyze \
   -H "Content-Type: application/json" \
   -d '{"command":"ls -la /tmp"}'
 ```

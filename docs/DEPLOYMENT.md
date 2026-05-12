@@ -6,14 +6,14 @@
 
 ## 🚀 Current Deployment Status
 
-✅ **Live on Railway**: https://kernalaisecurity-production.up.railway.app
+✅ **Live on Hugging Face Spaces**: https://huggingface.co/spaces/Raphel3116/aegix_security
 
-The Aegix system is currently deployed on Railway with:
+The Aegix system is currently deployed on Hugging Face Spaces with:
 - Single Docker container (frontend + backend combined)
 - Trained ML model baked into the image at build time
 - SQLite persistence
 - WebSocket real-time event streaming
-- Auto-remediation disabled (Railway constraint — no kernel-level privileges)
+- Auto-remediation disabled (hosted container constraint — no kernel-level privileges)
 
 This guide covers deploying the Aegix system in production, including the backend API and frontend web UI.
 
@@ -114,13 +114,13 @@ curl -i -N -H "Connection: Upgrade" \
 **Production Testing**:
 ```bash
 # Health check
-curl https://kernalaisecurity-production.up.railway.app/healthz
+curl https://<your-space-subdomain>.hf.space/healthz
 
 # Get statistics
-curl https://kernalaisecurity-production.up.railway.app/stats
+curl https://<your-space-subdomain>.hf.space/stats
 
 # Analyze a command
-curl -X POST https://kernalaisecurity-production.up.railway.app/analyze \
+curl -X POST https://<your-space-subdomain>.hf.space/analyze \
   -H "Content-Type: application/json" \
   -d '{"command":"curl http://example.com"}'
 ```
@@ -274,6 +274,8 @@ open https://your-domain.com
 ---
 
 ### Option B: HuggingFace Spaces (Free, Easy)
+
+Current public Space: https://huggingface.co/spaces/Raphel3116/aegix_security
 
 #### 1. Create Spaces Repository
 
