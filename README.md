@@ -111,9 +111,9 @@ The Tier B Logistic Regression model is trained on a sanitized 12,000-command da
 
 ## 🚀 Live Demo
 
-**Hugging Face Space**: [Aegix Security](https://huggingface.co/spaces/Raphel3116/aegix_security)
+**Live Link**: [Aegix Security](https://aegix-security.onrender.com/)
 
-- **Hugging Face Demo**: `https://huggingface.co/spaces/Raphel3116/aegix_security`
+- **Live Demo**: `https://aegix-security.onrender.com/`
 - **Status**: ✅ Live and ready for testing
 
 Test with sample commands: Run `./TEST_COMMANDS.ps1` (PowerShell) to execute 20 automated test cases against the live API.
