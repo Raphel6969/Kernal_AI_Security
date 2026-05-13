@@ -2,7 +2,7 @@
 test_03_event_store.py — Unit tests for backend/events/event_store.py
 
 Tests circular buffer eviction, classification counts, get_recent edge cases,
-clear(), and thread-safety under concurrent writes.
+clear(), thread-safety, SQLite persistence, and ordering contract.
 
 Run:
     pytest large_test_set/test_03_event_store.py -v
@@ -11,6 +11,8 @@ Run:
 import pytest
 import threading
 import time
+import tempfile
+import os
 from backend.events.event_store import EventStore
 from backend.events.models import ExecveEvent, DetectionResult, SecurityEvent
 
@@ -35,6 +37,18 @@ def _make_event(classification="safe", idx=0):
         detection_result=result,
         detected_at=time.time(),
     )
+
+
+@pytest.fixture
+def temp_db():
+    """Temporary SQLite file, cleaned up after each test."""
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as f:
+        path = f.name
+    yield path
+    try:
+        os.remove(path)
+    except OSError:
+        pass
 
 
 # ===========================================================================
@@ -116,7 +130,6 @@ def test_get_recent_returns_newest_last():
 def test_get_recent_negative_returns_empty():
     store = EventStore(max_events=100)
     store.append(_make_event())
-    # Anything <= 0 should return empty list without crashing
     assert store.get_recent(-1) == []
 
 
@@ -383,3 +396,167 @@ class TestEventStoreEdgeCasesExtended:
 
         assert errors == [], f"Errors during concurrent clear/append: {errors}"
         assert store.size() <= 200
+
+
+# ===========================================================================
+# 10. SQLite Persistence  [NEW]
+# test_03 previously only exercised in-memory behavior. These tests verify
+# the SQLite layer: events survive a new EventStore instance on the same
+# db_path, and field values are faithfully reconstructed from the database.
+# ===========================================================================
+
+class TestSQLitePersistence:
+
+    def test_event_survives_new_store_instance(self, temp_db):
+        """An event appended to store A must be readable from store B
+        pointing at the same db_path."""
+        store_a = EventStore(max_events=100, db_path=temp_db)
+        store_a.append(_make_event(classification="malicious", idx=42))
+
+        store_b = EventStore(max_events=100, db_path=temp_db)
+        assert store_b.size() == 1
+
+    def test_classification_persisted_correctly(self, temp_db):
+        store_a = EventStore(max_events=100, db_path=temp_db)
+        store_a.append(_make_event(classification="malicious", idx=1))
+
+        store_b = EventStore(max_events=100, db_path=temp_db)
+        event = store_b.get_all()[0]
+        assert event.detection_result.classification == "malicious"
+
+    def test_pid_persisted_correctly(self, temp_db):
+        store_a = EventStore(max_events=100, db_path=temp_db)
+        store_a.append(_make_event(idx=7777))
+
+        store_b = EventStore(max_events=100, db_path=temp_db)
+        event = store_b.get_all()[0]
+        assert event.execve_event.pid == 7777
+
+    def test_multiple_events_all_persisted(self, temp_db):
+        store_a = EventStore(max_events=100, db_path=temp_db)
+        for i in range(5):
+            store_a.append(_make_event(idx=i))
+
+        store_b = EventStore(max_events=100, db_path=temp_db)
+        assert store_b.size() == 5
+
+    def test_clear_also_clears_database(self, temp_db):
+        """clear() must remove rows from SQLite, not just the in-memory cache."""
+        store_a = EventStore(max_events=100, db_path=temp_db)
+        for i in range(3):
+            store_a.append(_make_event(idx=i))
+        store_a.clear()
+
+        store_b = EventStore(max_events=100, db_path=temp_db)
+        assert store_b.size() == 0, \
+            "clear() did not remove events from the SQLite database"
+
+    def test_counts_correct_after_reload(self, temp_db):
+        """Classification counts must be correct on a freshly loaded store."""
+        store_a = EventStore(max_events=100, db_path=temp_db)
+        store_a.append(_make_event("safe", idx=0))
+        store_a.append(_make_event("malicious", idx=1))
+        store_a.append(_make_event("suspicious", idx=2))
+
+        store_b = EventStore(max_events=100, db_path=temp_db)
+        assert store_b.get_safe_count() == 1
+        assert store_b.get_malicious_count() == 1
+        assert store_b.get_suspicious_count() == 1
+
+
+# ===========================================================================
+# 11. size() vs get_all() / get_recent() Consistency Invariant  [NEW]
+# Documents and enforces that size() == len(get_all()) == len(get_recent(size()))
+# at all times — critical for the WebSocket history replay limit.
+# ===========================================================================
+
+class TestSizeConsistencyInvariant:
+
+    def test_size_equals_len_get_all(self):
+        store = EventStore(max_events=100)
+        for i in range(15):
+            store.append(_make_event(idx=i))
+        assert store.size() == len(store.get_all())
+
+    def test_size_equals_len_get_recent_of_size(self):
+        store = EventStore(max_events=100)
+        for i in range(15):
+            store.append(_make_event(idx=i))
+        s = store.size()
+        assert len(store.get_recent(s)) == s
+
+    def test_size_consistent_after_buffer_wrap(self):
+        """After the circular buffer evicts entries, size() must still
+        equal len(get_all())."""
+        store = EventStore(max_events=5)
+        for i in range(10):
+            store.append(_make_event(idx=i))
+        assert store.size() == len(store.get_all())
+        assert store.size() == 5
+
+    def test_size_and_get_all_agree_under_concurrent_writes(self):
+        """Under concurrent writes, size() must never exceed max_events and
+        must agree with the length of get_all()."""
+        store = EventStore(max_events=50)
+        errors = []
+        lock = threading.Lock()
+
+        def writer(t_id):
+            for i in range(20):
+                try:
+                    store.append(_make_event(idx=t_id * 20 + i))
+                except Exception as e:
+                    with lock:
+                        errors.append(str(e))
+
+        threads = [threading.Thread(target=writer, args=(t,)) for t in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == [], f"Errors during concurrent writes: {errors}"
+        assert store.size() <= 50
+        # size() and get_all() must agree after all writes settle
+        assert store.size() == len(store.get_all())
+
+
+# ===========================================================================
+# 12. get_recent() Ordering Contract Verification  [NEW]
+# Explicitly pins that get_recent() returns events in ascending (oldest→newest)
+# order, consistent with how the WebSocket sends history to new clients.
+# ===========================================================================
+
+class TestGetRecentOrderingContract:
+
+    def test_get_recent_is_ascending_order(self):
+        """get_recent(n) must return events oldest-first (ascending by insertion)."""
+        store = EventStore(max_events=100)
+        for i in range(10):
+            store.append(_make_event(idx=i))
+        events = store.get_recent(10)
+        ids = [e.id for e in events]
+        assert ids == [f"evt_{i}" for i in range(10)], \
+            f"get_recent() not ascending: {ids}"
+
+    def test_get_recent_subset_is_newest_n_ascending(self):
+        """get_recent(3) when 10 events exist must return the 3 newest
+        in ascending order (evt_7, evt_8, evt_9 — not reversed)."""
+        store = EventStore(max_events=100)
+        for i in range(10):
+            store.append(_make_event(idx=i))
+        events = store.get_recent(3)
+        ids = [e.id for e in events]
+        assert ids == ["evt_7", "evt_8", "evt_9"], \
+            f"get_recent(3) returned wrong slice or wrong order: {ids}"
+
+    def test_get_recent_consistent_with_get_all_ordering(self):
+        """The last n elements of get_all() must match get_recent(n)."""
+        store = EventStore(max_events=100)
+        for i in range(8):
+            store.append(_make_event(idx=i))
+        n = 4
+        all_events   = store.get_all()
+        recent_events = store.get_recent(n)
+        assert [e.id for e in all_events[-n:]] == [e.id for e in recent_events], \
+            "get_recent(n) is inconsistent with get_all()[-n:]"
