@@ -1,0 +1,25 @@
+app = "aegix-security"
+primary_region = "bom"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "7860"
+  API_HOST = "0.0.0.0"
+  API_PORT = "7860"
+  KERNEL_MONITOR_OWNER = "disabled"
+  DB_PATH = "/data/events.db"
+  EVENT_CACHE_SIZE = "1000"
+
+[[mounts]]
+  source = "aegix_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 7860
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
