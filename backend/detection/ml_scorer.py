@@ -57,7 +57,7 @@ class MLScorer:
         if self.model is None or self.vectorizer is None:
             return 0.0, 0.0
         
-        # Vectorize command
+        # Vectorize commandP
         command_tfidf = self.vectorizer.transform([command])
         
         # Get probability predictions

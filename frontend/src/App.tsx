@@ -14,7 +14,28 @@ function App() {
   const [activePage, setActivePage] = useState<'monitor' | 'settings'>('monitor');
   const [theme, setTheme] = useState<Theme>('system');
   const [remediationEnabled, setRemediationEnabled] = useState(false);
-  const { events, isConnected, clearEvents } = useWebSocket();
+  const [sessionToken, setSessionToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem('aegix_session_token');
+  });
+  const { events, isConnected, clearEvents } = useWebSocket(sessionToken ?? undefined);
+
+  const requestSessionToken = async () => {
+    const r = await fetch(`${API_URL}/session`);
+    if (!r.ok) {
+      throw new Error(`Failed to create session token: ${r.status}`);
+    }
+    const d = await r.json();
+    setSessionToken(d.session_token);
+    window.localStorage.setItem('aegix_session_token', d.session_token);
+    return d.session_token as string;
+  };
+
+  const rotateSessionToken = async () => {
+    const nextToken = await requestSessionToken();
+    clearEvents();
+    return nextToken;
+  };
 
   // Handle Theme
   useEffect(() => {
@@ -47,6 +68,40 @@ function App() {
     const interval = setInterval(checkHealth, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Create a session token for demo sessions
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        if (!sessionToken) {
+          await requestSessionToken();
+          return;
+        }
+
+        const probe = await fetch(`${API_URL}/stats?session_token=${encodeURIComponent(sessionToken)}`);
+        if (probe.ok) {
+          window.localStorage.setItem('aegix_session_token', sessionToken);
+          return;
+        }
+
+        // If the backend restarted, the token signature may no longer be valid.
+        // Fall back to a fresh session token and replace the stale one.
+        await requestSessionToken();
+      } catch (e) {
+        console.error('Failed to initialize session token', e);
+        try {
+          await requestSessionToken();
+        } catch (fallbackError) {
+          console.error('Failed to recover session token', fallbackError);
+        }
+      }
+    };
+    initSession();
+  }, [sessionToken]);
+
+  useEffect(() => {
+    clearEvents();
+  }, [sessionToken, clearEvents]);
 
   // Fetch initial remediation state
   useEffect(() => {
@@ -204,8 +259,15 @@ function App() {
             </div>
           )}
 
-          {activePage === 'monitor' && <ThreatMonitor events={events} onFlush={clearEvents} />}
-          {activePage === 'settings' && <SystemSettings theme={theme} setTheme={setTheme} />}
+          {activePage === 'monitor' && <ThreatMonitor events={events} onFlush={clearEvents} sessionToken={sessionToken} />}
+          {activePage === 'settings' && (
+            <SystemSettings
+              theme={theme}
+              setTheme={setTheme}
+              sessionToken={sessionToken}
+              onRotateSession={rotateSessionToken}
+            />
+          )}
         </div>
       </main>
     </div>

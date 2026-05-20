@@ -278,6 +278,70 @@ Expected response:
 
 ---
 
+## 🔑 Session Tokens and Multi-Machine Demos
+
+Aegix uses session-scoped tokens so one browser or one Postman environment only sees its own event history.
+
+### How the token is created
+
+- The frontend requests `GET /session` from the backend.
+- The backend returns a signed `session_token`.
+- The frontend stores it in browser `localStorage` as `aegix_session_token`.
+- WebSocket and API calls reuse that token so the dashboard and requests stay on the same session.
+
+### How to copy the token from the UI
+
+1. Open the frontend dashboard and go to **System Settings**.
+2. Under **Session Token**, click **Copy Token**.
+3. Paste that token into Postman, curl, or another machine's browser/session.
+4. If you want a clean session, click **New Session** to rotate the token and clear the visible history.
+
+### How to use the same session on another machine
+
+1. Open the deployment on machine A and copy the session token from Settings.
+2. Open the same deployment on machine B.
+3. Paste the token into Postman's `session_token` variable or into browser storage on machine B.
+4. Use the same backend URL on both machines.
+
+### How to keep machine B completely separate
+
+1. Leave machine A's token alone.
+2. On machine B, create a new token by clicking **New Session** or let the frontend mint one automatically.
+3. Do not reuse A's token on B.
+4. Each token has isolated event history in the backend store.
+
+### Download the Postman collection
+
+- [Download the Postman collection](docs/postman_collection.json)
+- The collection includes ready-made requests for `session`, `analyze`, `events`, `stats`, and WebSocket testing.
+- In Postman, set `API_URL` to your deployment URL.
+- Set `session_token` manually, or set `AUTO_FETCH_SESSION=true` if you want Postman to mint a fresh token automatically.
+
+### Postman setup steps
+
+1. Import [docs/postman_collection.json](docs/postman_collection.json) into Postman.
+2. Set `API_URL` to the backend URL, for example `http://localhost:8000` or your deployed host.
+3. Copy a session token from the frontend settings page.
+4. Paste that token into the collection variable `session_token`.
+5. If you want Postman to create its own token, set `AUTO_FETCH_SESSION` to `true`.
+6. Send `Analyze`, `Events`, or `Stats` requests and verify they match the same session.
+
+---
+
+## 🧱 Current Architecture
+
+The current deployment is split into three coordinated pieces:
+
+- **Kernel layer**: an eBPF execve hook captures process launches when the backend owns the monitor.
+- **Backend layer**: FastAPI receives commands, scores them with the rule engine plus ML model, stores events, and broadcasts updates over WebSocket.
+- **Frontend layer**: React + Vite renders the live dashboard, persists the active session token, and reconnects to the right WebSocket session automatically.
+
+Session isolation is enforced by the signed session token. That token is attached to API requests, WebSocket subscriptions, and the event store so one demo session does not inherit another session's history.
+
+For a shared demo across two machines, both machines must use the same `session_token`. For separate demos, each machine should use a different token.
+
+---
+
 ## ⚙️ Configuration Reference
 
 All configuration lives in **one file**: `.env` at the project root.

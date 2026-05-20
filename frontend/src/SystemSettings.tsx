@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from './config';
 import { Theme } from './App';
-import { Info, Sliders, Globe, Shield } from 'lucide-react';
+import { Info, Sliders, Globe, Shield, Copy, RefreshCw, KeyRound } from 'lucide-react';
 
 interface SystemSettingsProps {
   theme: Theme;
   setTheme: React.Dispatch<React.SetStateAction<Theme>>;
+  sessionToken: string | null;
+  onRotateSession: () => Promise<string | void>;
 }
 
 interface Webhook {
@@ -18,12 +20,13 @@ interface Webhook {
   trigger_malicious: boolean;
 }
 
-export function SystemSettings({ theme, setTheme }: SystemSettingsProps) {
+export function SystemSettings({ theme, setTheme, sessionToken, onRotateSession }: SystemSettingsProps) {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [newWebhookUrl, setNewWebhookUrl] = useState("");
   const [triggerSafe, setTriggerSafe] = useState(false);
   const [triggerSuspicious, setTriggerSuspicious] = useState(false);
   const [triggerMalicious, setTriggerMalicious] = useState(true);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   
   const [sensitivity, setSensitivity] = useState(30); // 100 - malicious_threshold
 
@@ -101,6 +104,27 @@ export function SystemSettings({ theme, setTheme }: SystemSettingsProps) {
       .catch(console.error);
   };
 
+  const handleCopySessionToken = async () => {
+    if (!sessionToken) {
+      setCopyState('error');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(sessionToken);
+      setCopyState('copied');
+      window.setTimeout(() => setCopyState('idle'), 1800);
+    } catch (error) {
+      console.error('Failed to copy session token:', error);
+      setCopyState('error');
+    }
+  };
+
+  const handleRotateSession = async () => {
+    setCopyState('idle');
+    await onRotateSession();
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -133,6 +157,73 @@ export function SystemSettings({ theme, setTheme }: SystemSettingsProps) {
                 <div className={`theme-btn ${theme === 'system' ? 'active' : ''}`} onClick={() => setTheme('system')}>
                   <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: '2px solid currentColor' }}></div>
                   <span style={{ fontSize: '13px', fontWeight: 600 }}>System</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label className="form-label" style={{ marginBottom: 0 }}>SESSION TOKEN</label>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                  {sessionToken ? 'Active session' : 'No token'}
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                padding: '16px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                  <KeyRound size={16} color="var(--accent-primary)" />
+                  <span>Use the same token on another machine or in Postman to join the same live session.</span>
+                </div>
+
+                <div style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--bg-main)',
+                  border: '1px solid var(--border-color)',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                  color: sessionToken ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  wordBreak: 'break-all',
+                  minHeight: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}>
+                  {sessionToken || 'A token will appear here after the backend issues one.'}
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={handleCopySessionToken}
+                    disabled={!sessionToken}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px' }}
+                  >
+                    <Copy size={14} />
+                    {copyState === 'copied' ? 'Copied' : 'Copy Token'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={handleRotateSession}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px' }}
+                  >
+                    <RefreshCw size={14} />
+                    New Session
+                  </button>
+                </div>
+
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  Machine B should use a different token if you want a totally separate history. Click <b>New Session</b> to rotate the token and start clean.
                 </div>
               </div>
             </div>

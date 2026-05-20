@@ -32,7 +32,7 @@ def _row_get(row, key, default=None):
 
 
 
-class EventStore:
+class SQLiteEventStore:
     """
     Thread-safe persistent event storage using SQLite with in-memory LRU cache.
     Recent events are cached in memory for fast access; all events persisted to disk.
@@ -67,6 +67,7 @@ class EventStore:
                     id TEXT PRIMARY KEY,
                     event_id TEXT NOT NULL,
                     agent_id TEXT,
+                    session_id TEXT,
                     timestamp REAL NOT NULL,
                     detected_at REAL NOT NULL,
                     pid INTEGER,
@@ -91,6 +92,10 @@ class EventStore:
                 conn.execute("ALTER TABLE security_events ADD COLUMN agent_id TEXT")
             except Exception:
                 pass  # Column already exists
+            try:
+                conn.execute("ALTER TABLE security_events ADD COLUMN session_id TEXT")
+            except Exception:
+                pass
             for col, coltype in [("remediation_action", "TEXT"), ("remediation_status", "TEXT")]:
                 try:
                     conn.execute(f"ALTER TABLE security_events ADD COLUMN {col} {coltype}")
@@ -116,6 +121,7 @@ class EventStore:
             'id': str(uuid.uuid4()),
             'event_id': event.id,
             'agent_id': event.execve_event.agent_id,
+            'session_id': getattr(event.execve_event, 'session_id', None),
             'timestamp': event.execve_event.timestamp,
             'detected_at': event.detected_at,
             'pid': event.execve_event.pid,
@@ -136,7 +142,7 @@ class EventStore:
     
     # Canonical SELECT used everywhere — explicit names defeat column-order bugs on migrated DBs
     _SELECT_COLS = """
-        id, event_id, agent_id, timestamp, detected_at,
+        id, event_id, agent_id, session_id, timestamp, detected_at,
         pid, ppid, uid, gid,
         command, argv_str, comm,
         classification, risk_score, ml_confidence,
@@ -150,6 +156,7 @@ class EventStore:
         try:
             execve_event = ExecveEvent(
                 agent_id=row['agent_id'],
+                session_id=_row_get(row, 'session_id', None),
                 pid=row['pid'] or 0,
                 ppid=row['ppid'] or 0,
                 uid=row['uid'] or 0,
@@ -167,7 +174,7 @@ class EventStore:
                     matched_rules_list = json.loads(matched_rules_str)
                 except (json.JSONDecodeError, TypeError):
                     matched_rules_list = []
-            
+
             detection_result = DetectionResult(
                 classification=row['classification'],
                 risk_score=row['risk_score'],
@@ -202,11 +209,11 @@ class EventStore:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
                     INSERT INTO security_events 
-                    (id, event_id, agent_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm,
+                    (id, event_id, agent_id, session_id, timestamp, detected_at, pid, ppid, uid, gid, command, argv_str, comm,
                      classification, risk_score, ml_confidence, matched_rules, explanation,
                      remediation_action, remediation_status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (row_data['id'], row_data['event_id'], row_data['agent_id'], row_data['timestamp'], row_data['detected_at'], 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (row_data['id'], row_data['event_id'], row_data['agent_id'], row_data['session_id'], row_data['timestamp'], row_data['detected_at'], 
                       row_data['pid'], row_data['ppid'], row_data['uid'], row_data['gid'],
                       row_data['command'], row_data['argv_str'], row_data['comm'],
                       row_data['classification'], row_data['risk_score'], row_data['ml_confidence'],
@@ -222,7 +229,7 @@ class EventStore:
             while len(self._cache) > self.max_events:
                 self._cache.popitem(last=False)
 
-    def get_recent(self, n: int = 100, agent_id: Optional[str] = None) -> List[SecurityEvent]:
+    def get_recent(self, n: int = 100, agent_id: Optional[str] = None, session_id: Optional[str] = None) -> List[SecurityEvent]:
         """
         Get the N most recent events from database.
         
@@ -238,22 +245,34 @@ class EventStore:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                if agent_id is None:
-                    cursor = conn.execute(
-                        f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp DESC LIMIT ?",
-                        (n,)
-                    )
+                if session_id is not None:
+                    if agent_id is None:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events WHERE session_id = ? ORDER BY timestamp DESC LIMIT ?",
+                            (session_id, n)
+                        )
+                    else:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events WHERE session_id = ? AND agent_id = ? ORDER BY timestamp DESC LIMIT ?",
+                            (session_id, agent_id, n)
+                        )
                 else:
-                    cursor = conn.execute(
-                        f"SELECT {self._SELECT_COLS} FROM security_events WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?",
-                        (agent_id, n)
-                    )
+                    if agent_id is None:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp DESC LIMIT ?",
+                            (n,)
+                        )
+                    else:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?",
+                            (agent_id, n)
+                        )
                 rows = cursor.fetchall()
             events = [self._row_to_event(row) for row in rows]
             # Return newest-first (DESC from query)
             return [e for e in events if e is not None]
 
-    def get_all(self, agent_id: Optional[str] = None) -> List[SecurityEvent]:
+    def get_all(self, agent_id: Optional[str] = None, session_id: Optional[str] = None) -> List[SecurityEvent]:
         """
         Get all events from database.
         
@@ -263,36 +282,60 @@ class EventStore:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                if agent_id is None:
-                    cursor = conn.execute(
-                        f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp ASC"
-                    )
+                if session_id is not None:
+                    if agent_id is None:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events WHERE session_id = ? ORDER BY timestamp ASC",
+                            (session_id,)
+                        )
+                    else:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events WHERE session_id = ? AND agent_id = ? ORDER BY timestamp ASC",
+                            (session_id, agent_id)
+                        )
                 else:
-                    cursor = conn.execute(
-                        f"SELECT {self._SELECT_COLS} FROM security_events WHERE agent_id = ? ORDER BY timestamp ASC",
-                        (agent_id,)
-                    )
+                    if agent_id is None:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events ORDER BY timestamp ASC"
+                        )
+                    else:
+                        cursor = conn.execute(
+                            f"SELECT {self._SELECT_COLS} FROM security_events WHERE agent_id = ? ORDER BY timestamp ASC",
+                            (agent_id,)
+                        )
                 rows = cursor.fetchall()
             events = [self._row_to_event(row) for row in rows]
             return [e for e in events if e is not None]
 
-    def clear(self) -> None:
-        """Clear all events from database and cache."""
+    def clear(self, session_id: Optional[str] = None) -> None:
+        """Clear events from database and cache. If `session_id` is provided, only clear that session."""
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("DELETE FROM security_events")
+                if session_id is None:
+                    conn.execute("DELETE FROM security_events")
+                else:
+                    conn.execute("DELETE FROM security_events WHERE session_id = ?", (session_id,))
                 conn.commit()
-            self._cache.clear()
+            # Clear cache entries for matching session
+            if session_id is None:
+                self._cache.clear()
+            else:
+                keys_to_delete = [k for k, v in list(self._cache.items()) if getattr(v.execve_event, 'session_id', None) == session_id]
+                for k in keys_to_delete:
+                    self._cache.pop(k, None)
 
-    def size(self) -> int:
-        """Get the total number of events in persistent storage."""
+    def size(self, session_id: Optional[str] = None) -> int:
+        """Get the total number of events in persistent storage. Optionally filter by `session_id`."""
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("SELECT COUNT(*) FROM security_events")
+                if session_id is None:
+                    cursor = conn.execute("SELECT COUNT(*) FROM security_events")
+                else:
+                    cursor = conn.execute("SELECT COUNT(*) FROM security_events WHERE session_id = ?", (session_id,))
                 count = cursor.fetchone()[0]
             return count
 
-    def get_by_classification(self, classification: str, agent_id: Optional[str] = None) -> List[SecurityEvent]:
+    def get_by_classification(self, classification: str, agent_id: Optional[str] = None, session_id: Optional[str] = None) -> List[SecurityEvent]:
         """
         Get all events of a specific classification from database.
         
@@ -305,18 +348,32 @@ class EventStore:
         with self._lock:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                if agent_id is None:
-                    cursor = conn.execute(f"""
-                        SELECT {self._SELECT_COLS} FROM security_events 
-                        WHERE classification = ?
-                        ORDER BY timestamp ASC
-                    """, (classification,))
+                if session_id is not None:
+                    if agent_id is None:
+                        cursor = conn.execute(f"""
+                            SELECT {self._SELECT_COLS} FROM security_events 
+                            WHERE classification = ? AND session_id = ?
+                            ORDER BY timestamp ASC
+                        """, (classification, session_id))
+                    else:
+                        cursor = conn.execute(f"""
+                            SELECT {self._SELECT_COLS} FROM security_events 
+                            WHERE classification = ? AND session_id = ? AND agent_id = ?
+                            ORDER BY timestamp ASC
+                        """, (classification, session_id, agent_id))
                 else:
-                    cursor = conn.execute(f"""
-                        SELECT {self._SELECT_COLS} FROM security_events 
-                        WHERE classification = ? AND agent_id = ?
-                        ORDER BY timestamp ASC
-                    """, (classification, agent_id))
+                    if agent_id is None:
+                        cursor = conn.execute(f"""
+                            SELECT {self._SELECT_COLS} FROM security_events 
+                            WHERE classification = ?
+                            ORDER BY timestamp ASC
+                        """, (classification,))
+                    else:
+                        cursor = conn.execute(f"""
+                            SELECT {self._SELECT_COLS} FROM security_events 
+                            WHERE classification = ? AND agent_id = ?
+                            ORDER BY timestamp ASC
+                        """, (classification, agent_id))
                 rows = cursor.fetchall()
             
             events = [self._row_to_event(row) for row in rows]
@@ -340,17 +397,36 @@ class EventStore:
 _event_store = None
 
 
-def get_event_store(max_events: int = None) -> EventStore:
+def get_event_store(max_events: int = None):
     """
-    Get or create the global event store.
-    
-    Args:
-        max_events: Max events to keep in cache (uses config if None, only used on first call)
-        
-    Returns:
-        The global EventStore instance
+    Factory: Get or create the global event store.
+
+    If `DATABASE_URL` is provided via settings, attempt to instantiate a
+    Postgres-backed store (scaffold). Otherwise fall back to the bundled
+    SQLiteEventStore.
     """
     global _event_store
     if _event_store is None:
-        _event_store = EventStore(max_events=max_events)
+        settings = get_settings()
+        # If session mode is active, use the in-memory SessionEventStore
+        if getattr(settings, "session_mode", False):
+            try:
+                from backend.events.session_event_store import SessionEventStore
+                _event_store = SessionEventStore(ttl_seconds=settings.session_ttl)
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception("Failed to initialize SessionEventStore; falling back to SQLiteEventStore")
+                _event_store = SQLiteEventStore(max_events=max_events, db_path=settings.db_path)
+        elif getattr(settings, "database_url", None):
+            # Lazy import of PostgresEventStore to avoid adding DB deps for local dev
+            try:
+                from backend.events.postgres_event_store import PostgresEventStore
+                _event_store = PostgresEventStore(max_events=max_events, database_url=settings.database_url)
+            except Exception:
+                # If Postgres store cannot be created, fallback to SQLite and log
+                import logging
+                logging.getLogger(__name__).exception("Failed to initialize PostgresEventStore; falling back to SQLiteEventStore")
+                _event_store = SQLiteEventStore(max_events=max_events, db_path=settings.db_path)
+        else:
+            _event_store = SQLiteEventStore(max_events=max_events, db_path=settings.db_path)
     return _event_store

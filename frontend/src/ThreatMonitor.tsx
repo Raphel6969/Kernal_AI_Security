@@ -5,9 +5,10 @@ import { Download, Trash2 } from 'lucide-react';
 interface ThreatMonitorProps {
   events: any[];
   onFlush: () => void;
+  sessionToken?: string | null;
 }
 
-export function ThreatMonitor({ events, onFlush }: ThreatMonitorProps) {
+export function ThreatMonitor({ events, onFlush, sessionToken }: ThreatMonitorProps) {
   const [stats, setStats] = useState({
     total_events: 0,
     safe: 0,
@@ -17,7 +18,9 @@ export function ThreatMonitor({ events, onFlush }: ThreatMonitorProps) {
   const [isFlushing, setIsFlushing] = useState(false);
 
   const fetchStats = () => {
-    fetch(`${API_URL}/stats`)
+    const url = new URL(`${API_URL}/stats`);
+    if (sessionToken) url.searchParams.set('session_token', sessionToken);
+    fetch(url.toString())
       .then((r) => r.json())
       .then(setStats)
       .catch(console.error);
@@ -41,7 +44,9 @@ export function ThreatMonitor({ events, onFlush }: ThreatMonitorProps) {
 
     setIsFlushing(true);
     try {
-      const response = await fetch(`${API_URL}/events`, { method: 'DELETE' });
+      const url = new URL(`${API_URL}/events`);
+      if (sessionToken) url.searchParams.set('session_token', sessionToken);
+      const response = await fetch(url.toString(), { method: 'DELETE' });
       if (!response.ok) {
         throw new Error(`Flush failed with status ${response.status}`);
       }
@@ -56,11 +61,12 @@ export function ThreatMonitor({ events, onFlush }: ThreatMonitorProps) {
   };
 
   useEffect(() => {
+    // Rebind polling whenever the session token changes so stats match the visible session.
     fetchStats();
 
     const interval = setInterval(fetchStats, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [sessionToken]);
 
   const getSeverityLabel = (classification: string) => {
     switch (classification) {

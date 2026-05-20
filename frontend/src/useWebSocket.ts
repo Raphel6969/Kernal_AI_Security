@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL, WS_URL } from './config';
 
 interface SecurityEvent {
@@ -21,10 +21,11 @@ interface SecurityEvent {
   remediation_status?: string | null;
 }
 
-export function useWebSocket() {
+export function useWebSocket(sessionToken?: string) {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(0);
   const reconnectTimerRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
@@ -43,7 +44,10 @@ export function useWebSocket() {
     // Defined first so connect()'s onopen closure can reference it safely
     const hydrateEvents = async () => {
       try {
-        const response = await fetch(`${API_URL}/events?limit=100`);
+        const url = new URL(`${API_URL}/events`);
+        url.searchParams.set('limit', '100');
+        if (sessionToken) url.searchParams.set('session_token', sessionToken);
+        const response = await fetch(url.toString());
         if (!response.ok) return;
         const history = (await response.json()) as SecurityEvent[];
         if (!mountedRef.current || history.length === 0) return;
@@ -67,7 +71,13 @@ export function useWebSocket() {
     };
 
     const connect = () => {
-      const socket = new WebSocket(WS_URL);
+      if (!sessionToken) {
+        return;
+      }
+      const wsUrl = new URL(WS_URL);
+      if (sessionToken) wsUrl.searchParams.set('session_token', sessionToken);
+      const socket = new WebSocket(wsUrl.toString());
+      socketRef.current = socket;
       setWs(socket);
 
       socket.onopen = () => {
@@ -127,15 +137,19 @@ export function useWebSocket() {
       mountedRef.current = false;
       clearReconnectTimer();
       setIsConnected(false);
+      if (socketRef.current) {
+        try { socketRef.current.close(); } catch (e) {}
+        socketRef.current = null;
+      }
       setWs(null);
       seenEventIdsRef.current.clear();
     };
-  }, []);
+  }, [sessionToken]);
 
-  const clearEvents = () => {
+  const clearEvents = useCallback(() => {
     seenEventIdsRef.current.clear();
     setEvents([]);
-  };
+  }, []);
 
   return { events, isConnected, ws, clearEvents };
 }

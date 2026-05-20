@@ -4,6 +4,7 @@ All environment variables and settings are defined here using pydantic.
 """
 
 import os
+import secrets
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import logging
@@ -38,7 +39,14 @@ class Settings(BaseSettings):
 
     # Event storage
     db_path: str = ""  # Will default to project_root/data/events.db if empty
+    # Optional database URL (Postgres). If set, backend will use this instead of SQLite.
+    database_url: str = ""
     event_cache_size: int = 1000
+    # Session (ephemeral) mode for demos
+    session_mode: bool = False
+    session_ttl: int = 3600  # seconds
+    # Secret used to sign session tokens (HMAC). If empty, a random value is generated at startup.
+    secret_key: str = ""
 
     # Agent settings
     backend_url: str = "http://localhost:8000"
@@ -64,6 +72,28 @@ class Settings(BaseSettings):
         elif not os.path.isabs(self.db_path):
             # Ensure it is an absolute path to survive restarts across different working directories
             self.db_path = os.path.abspath(os.path.join(project_root, self.db_path))
+
+        # Normalize database_url to empty string if not provided
+        if not getattr(self, "database_url", None):
+            self.database_url = ""
+
+        # Ensure we have a secret key for signing session tokens
+        if not getattr(self, "secret_key", None):
+            secret_path = os.path.join(project_root, "data", ".session_secret")
+            try:
+                os.makedirs(os.path.dirname(secret_path), exist_ok=True)
+                if os.path.exists(secret_path):
+                    with open(secret_path, "r", encoding="utf-8") as f:
+                        stored_secret = f.read().strip()
+                    if stored_secret:
+                        self.secret_key = stored_secret
+                if not getattr(self, "secret_key", None):
+                    self.secret_key = secrets.token_urlsafe(32)
+                    with open(secret_path, "w", encoding="utf-8") as f:
+                        f.write(self.secret_key)
+            except Exception:
+                logger.exception("Failed to load or persist session secret; generating ephemeral secret")
+                self.secret_key = secrets.token_urlsafe(32)
 
 
     @property

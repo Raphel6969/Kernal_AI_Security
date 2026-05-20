@@ -22,6 +22,7 @@ class ExecveEvent:
     process_memory_mb: float = 0.0
     system_memory_percent: float = 0.0
     agent_id: Optional[str] = None
+    session_id: Optional[str] = None
 
 
 @dataclass
@@ -49,6 +50,7 @@ class SecurityEvent:
         return {
             "id": self.id,
             "agent_id": self.execve_event.agent_id,
+            "session_id": self.execve_event.session_id,
             "pid": self.execve_event.pid,
             "ppid": self.execve_event.ppid,
             "uid": self.execve_event.uid,

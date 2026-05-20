@@ -27,6 +27,7 @@ import psutil
 from datetime import datetime
 
 from backend.config import get_settings
+from backend.auth.session_tokens import create_session_token, verify_session_token
 from backend.detection.pipeline import get_detection_pipeline
 from backend.events.event_store import get_event_store
 from backend.events.models import ExecveEvent, SecurityEvent
@@ -108,7 +109,7 @@ pipeline = get_detection_pipeline()
 event_store = get_event_store(max_events=settings.event_cache_size)
 hook_manager = get_hook_manager()
 alert_manager = get_alert_manager()
-active_websockets: Dict[WebSocket, Optional[str]] = {}
+active_websockets: Dict[WebSocket, dict] = {}
 active_websockets_lock = asyncio.Lock()
 main_event_loop = None
 
@@ -126,6 +127,7 @@ def _build_execve_event(
     timestamp: float | None = None,
     process_memory_mb: float = 0.0,
     system_memory_percent: float = 0.0,
+    session_id: str | None = None,
 ) -> ExecveEvent:
     """Build a normalized execve event for both API and agent inputs."""
     return ExecveEvent(
@@ -140,6 +142,7 @@ def _build_execve_event(
         comm=comm,
         process_memory_mb=process_memory_mb,
         system_memory_percent=system_memory_percent,
+        session_id=session_id,
     )
 
 
@@ -160,8 +163,13 @@ async def ingest_security_event(
     execve_event: ExecveEvent,
     *,
     source: str = "api",
+    session_id: str | None = None,
 ) -> SecurityEvent:
     """Run detection, store the event, and broadcast it to the dashboard."""
+    # Attach session_id to the execve_event (if provided)
+    if session_id is not None:
+        execve_event.session_id = session_id
+
     detection_result = pipeline.detect(
         execve_event.command,
         process_memory_mb=execve_event.process_memory_mb,
@@ -183,6 +191,8 @@ async def ingest_security_event(
         else:
             logger.warning(f"Malicious event detected (PID {execve_event.pid}) but Auto-Remediation is DISABLED. Skipping kill.")
 
+    # Append to the configured event store. Session-aware stores will
+    # use `security_event.execve_event.session_id` to keep events isolated.
     event_store.append(security_event)
     asyncio.create_task(alert_manager.dispatch(security_event))
 
@@ -292,7 +302,7 @@ async def readyz():
 
 @app.post("/analyze", response_model=CommandAnalysisResponse)
 @limiter.limit("30/minute")
-async def analyze_command(request: Request, body: CommandAnalysisRequest):
+async def analyze_command(request: Request, body: CommandAnalysisRequest, session_token: str | None = Query(default=None)):
     """
     Analyze a command for threat level.
     
@@ -305,17 +315,29 @@ async def analyze_command(request: Request, body: CommandAnalysisRequest):
     if not body.command or not body.command.strip():
         raise HTTPException(status_code=400, detail="Command cannot be empty")
     
-    execve_event = _build_execve_event(body.command)
-    security_event = await ingest_security_event(execve_event, source="api")
+    session_id = None
+    if session_token:
+        session_id = verify_session_token(session_token)
+        if session_token and session_id is None:
+            raise HTTPException(status_code=400, detail="Invalid session_token")
+
+    execve_event = _build_execve_event(body.command, session_id=session_id)
+    security_event = await ingest_security_event(execve_event, source="api", session_id=session_id)
     return _build_response(security_event)
 
 
 @app.post("/agent/events", response_model=CommandAnalysisResponse)
 @limiter.limit("60/minute")
-async def ingest_agent_event(request: Request, event: AgentEventRequest):
+async def ingest_agent_event(request: Request, event: AgentEventRequest, session_token: str | None = Query(default=None)):
     """Ingest an event forwarded by the always-on agent."""
     if not event.command or not event.command.strip():
         raise HTTPException(status_code=400, detail="Command cannot be empty")
+
+    session_id = None
+    if session_token:
+        session_id = verify_session_token(session_token)
+        if session_token and session_id is None:
+            raise HTTPException(status_code=400, detail="Invalid session_token")
 
     execve_event = _build_execve_event(
         event.command,
@@ -329,8 +351,9 @@ async def ingest_agent_event(request: Request, event: AgentEventRequest):
         timestamp=event.timestamp,
         process_memory_mb=event.process_memory_mb,
         system_memory_percent=event.system_memory_percent,
+        session_id=session_id,
     )
-    security_event = await ingest_security_event(execve_event, source="agent")
+    security_event = await ingest_security_event(execve_event, source="agent", session_id=session_id)
     return _build_response(security_event)
 
 
@@ -340,6 +363,7 @@ async def get_events(
     request: Request,
     limit: int = Query(default=100, ge=1, le=1000),
     agent_id: str | None = Query(default=None),
+    session_token: str | None = Query(default=None),
 ):
     """
     Get recent security events.
@@ -350,26 +374,51 @@ async def get_events(
     Returns:
         List of recent SecurityEvent objects as dicts
     """
-    events = event_store.get_recent(limit, agent_id=agent_id)
+    session_id = None
+    if session_token:
+        session_id = verify_session_token(session_token)
+        if session_token and session_id is None:
+            raise HTTPException(status_code=400, detail="Invalid session_token")
+
+    events = event_store.get_recent(limit, agent_id=agent_id, session_id=session_id)
     return [e.dict() for e in events]
 
 
 @app.delete("/events")
-async def clear_events():
-    """Delete all stored security events and clear the in-memory cache."""
-    deleted_events = event_store.size()
-    event_store.clear()
-    return {"status": "ok", "deleted_events": deleted_events}
+async def clear_events(session_token: str | None = Query(default=None)):
+    """Delete all stored security events and clear the in-memory cache.
+
+    If `SESSION_MODE` is active, `session_token` is required and only that session will be cleared.
+    Otherwise a global clear is performed.
+    """
+    if settings.session_mode:
+        if not session_token:
+            raise HTTPException(status_code=400, detail="session_token required in SESSION_MODE")
+        session_id = verify_session_token(session_token)
+        if session_id is None:
+            raise HTTPException(status_code=400, detail="Invalid session_token")
+        deleted = event_store.size(session_id)
+        event_store.clear(session_id)
+        return {"status": "ok", "deleted_events": deleted}
+    else:
+        deleted_events = event_store.size()
+        event_store.clear()
+        return {"status": "ok", "deleted_events": deleted_events}
 
 
 @app.get("/stats")
-async def get_stats(agent_id: str | None = Query(default=None)):
+async def get_stats(agent_id: str | None = Query(default=None), session_token: str | None = Query(default=None)):
     """Get statistics about detected events."""
+    session_id = None
+    if session_token:
+        session_id = verify_session_token(session_token)
+        if session_token and session_id is None:
+            raise HTTPException(status_code=400, detail="Invalid session_token")
     return {
-        "total_events": len(event_store.get_all(agent_id=agent_id)),
-        "safe": len(event_store.get_by_classification("safe", agent_id=agent_id)),
-        "suspicious": len(event_store.get_by_classification("suspicious", agent_id=agent_id)),
-        "malicious": len(event_store.get_by_classification("malicious", agent_id=agent_id)),
+        "total_events": len(event_store.get_all(agent_id=agent_id, session_id=session_id)),
+        "safe": len(event_store.get_by_classification("safe", agent_id=agent_id, session_id=session_id)),
+        "suspicious": len(event_store.get_by_classification("suspicious", agent_id=agent_id, session_id=session_id)),
+        "malicious": len(event_store.get_by_classification("malicious", agent_id=agent_id, session_id=session_id)),
     }
 
 
@@ -377,6 +426,18 @@ async def get_stats(agent_id: str | None = Query(default=None)):
 async def list_webhooks():
     """List all registered webhooks."""
     return alert_manager.get_webhooks()
+
+
+@app.get("/session")
+async def create_session():
+    """Create a new signed session token for demo sessions.
+
+    Returns a JSON object: {"session_token": "..."}
+    """
+    import uuid as _uuid
+    sid = _uuid.uuid4().hex
+    token = create_session_token(sid)
+    return {"session_token": token}
 
 
 @app.post("/webhooks", response_model=WebhookResponse)
@@ -449,21 +510,29 @@ async def update_threshold_settings(body: dict):
 # ==============================================================================
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, agent_id: str | None = Query(default=None)):
+async def websocket_endpoint(websocket: WebSocket, agent_id: str | None = Query(default=None), session_token: str | None = Query(default=None)):
     """
     WebSocket endpoint for real-time event streaming.
     Broadcasts security events to connected clients filtered by agent_id when provided.
     """
     await websocket.accept()
+    # Validate session token if supplied
+    session_id = None
+    if session_token:
+        session_id = verify_session_token(session_token)
+        if session_token and session_id is None:
+            await websocket.close(code=4001)
+            return
+
     async with active_websockets_lock:
-        active_websockets[websocket] = agent_id
+        active_websockets[websocket] = {"agent_id": agent_id, "session_id": session_id}
         active_count = len(active_websockets)
 
     try:
         logger.info(f"WebSocket client connected ({active_count} active)")
 
         # Send recent events to new client
-        recent_events = event_store.get_recent(100, agent_id=agent_id)
+        recent_events = event_store.get_recent(100, agent_id=agent_id, session_id=session_id)
         for event in recent_events:
             try:
                 await websocket.send_json(event.dict())
@@ -504,11 +573,22 @@ async def broadcast_event(event: SecurityEvent):
     async with active_websockets_lock:
         websockets_snapshot = list(active_websockets.items())
 
-    for websocket, websocket_agent_id in websockets_snapshot:
-        if websocket_agent_id is not None and websocket_agent_id != event.execve_event.agent_id:
-            continue
-        if websocket_agent_id is None and event.execve_event.agent_id is not None:
-            continue
+    for websocket, meta in websockets_snapshot:
+        websocket_agent_id = meta.get("agent_id") if isinstance(meta, dict) else None
+        websocket_session_id = meta.get("session_id") if isinstance(meta, dict) else None
+
+        # If the client subscribed to a session, only send events matching that session
+        if websocket_session_id is not None:
+            if event.execve_event.session_id != websocket_session_id:
+                continue
+        elif websocket_agent_id is not None:
+            # If client subscribed to an agent, require agent match
+            if event.execve_event.agent_id != websocket_agent_id:
+                continue
+        else:
+            # Global subscriber: do not leak session-scoped events
+            if getattr(event.execve_event, "session_id", None) is not None:
+                continue
         try:
             await websocket.send_json(event.dict())
         except Exception:

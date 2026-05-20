@@ -1,3 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.Python
+.venv/
+venv/
+env/
+envs/
+
+# Conda
+.conda/
+
+# SQLite DB
+data/*.db
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+
+# Test caches
+.pytest_cache/
 node_modules/
 .env
 .env.local
