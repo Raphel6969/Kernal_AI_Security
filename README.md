@@ -111,9 +111,9 @@ The Tier B Logistic Regression model is trained on a sanitized 12,000-command da
 
 ## 🚀 Live Demo
 
-**Live Link**: [Aegix Security](https://aegix-security.onrender.com/)
+**Live Frontend**: [Aegix Security](https://kernal-ai-security-y4ia.onrender.com/)
 
-- **Live Demo**: `https://aegix-security.onrender.com/`
+-- **Live Demo (frontend)**: `https://kernal-ai-security-y4ia.onrender.com/`
 - **Status**: ✅ Live and ready for testing
 
 Test with sample commands: Run `./TEST_COMMANDS.ps1` (PowerShell) to execute 20 automated test cases against the live API.
@@ -310,12 +310,30 @@ Aegix uses session-scoped tokens so one browser or one Postman environment only 
 3. Do not reuse A's token on B.
 4. Each token has isolated event history in the backend store.
 
+**Session Token Logic (Demo Mode)**
+
+- **Token generation:** `GET /session` returns `{ "session_token": "..." }`. Tokens are HMAC-signed using the server secret (persisted to `data/.session_secret` by default). See [backend/auth/session_tokens.py](backend/auth/session_tokens.py) and [backend/config.py](backend/config.py).
+- **Format & verification:** Tokens are ` <session_id>.<signature>` (HMAC-SHA256). The backend validates tokens with `verify_session_token()` on each request.
+- **Frontend storage & UI:** The active token is stored in `localStorage` under `aegix_session_token`. The Settings page exposes **Copy Token** and **New Session** (see [frontend/src/SystemSettings.tsx](frontend/src/SystemSettings.tsx)). Rotating the token clears the dashboard history for that client.
+- **API & WebSocket usage:** Attach the token as `session_token` query param (e.g. `POST /analyze?session_token=...`, `wss://.../ws?session_token=...`). The client connects only after a valid token and reconnects/clears history on rotation; see [frontend/src/useWebSocket.ts](frontend/src/useWebSocket.ts).
+- **Backend event handling:** Events are stamped with `session_id` and stored in a session-aware store. Demo uses `SessionEventStore` (in-memory TTL) while persistent mode uses the session-aware `SQLiteEventStore`. See [backend/events/session_event_store.py](backend/events/session_event_store.py) and [backend/events/event_store.py](backend/events/event_store.py).
+- **Postman behavior:** The collection (`docs/postman_collection.json`) preserves a manually pasted `session_token` by default (`AUTO_FETCH_SESSION=false`). Set `AUTO_FETCH_SESSION=true` to let Postman request a fresh token automatically.
+- **Share vs isolate:** To share a session, copy the token from Settings (or `curl -s https://<BACKEND>/session | jq -r .session_token`) and paste into the other client. To isolate, generate a new token with **New Session**.
+
+Quick copy (browser console):
+
+```javascript
+copy(localStorage.getItem('aegix_session_token'))
+```
+
 ### Download the Postman collection
 
 - [Download the Postman collection](docs/postman_collection.json)
 - The collection includes ready-made requests for `session`, `analyze`, `events`, `stats`, and WebSocket testing.
 - In Postman, set `API_URL` to your deployment URL.
 - Set `session_token` manually, or set `AUTO_FETCH_SESSION=true` if you want Postman to mint a fresh token automatically.
+
+Backend API (deployed): https://kernal-ai-security.onrender.com
 
 ### Postman setup steps
 

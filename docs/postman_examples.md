@@ -4,6 +4,14 @@ This document shows how to obtain a session token, use it in Postman (pre-reques
 
 If you want the current browser session token, open the frontend, go to Settings, and use the copy button under Session Token. That token is the one to paste into Postman or another machine when you want to share the same live demo session.
 
+Deployed demo (Render):
+
+- Backend API: https://kernal-ai-security.onrender.com
+- Frontend (dashboard): https://kernal-ai-security-y4ia.onrender.com
+- WebSocket URL (wss): wss://kernal-ai-security.onrender.com/ws
+
+When importing the Postman collection, set `API_URL` to the Backend API above and `WS_URL` to the WebSocket URL.
+
 **Create a session token (GET /session)**
 
 - Request: `GET /session`

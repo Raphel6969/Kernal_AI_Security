@@ -185,24 +185,24 @@
       "listen": "prerequest",
       "script": {
         "exec": [
-          "// Only auto-fetch a session token when AUTO_FETCH_SESSION is 'true'",
-          "var auto = pm.collectionVariables.get('AUTO_FETCH_SESSION') || 'false';",
-          "if (auto.toLowerCase() !== 'true') {",
-          "  // Auto-fetch disabled; do nothing",
-          "  console.log('AUTO_FETCH_SESSION is false — not fetching session');",
-          "} else {",
+          "// Preserve a manually pasted token unless AUTO_FETCH_SESSION is explicitly enabled.",
+          "var auto = String(pm.collectionVariables.get('AUTO_FETCH_SESSION') || 'false').toLowerCase();",
+          "var token = pm.environment.get('session_token') || pm.collectionVariables.get('session_token') || pm.globals.get('session_token');",
+          "if (auto === 'true' && !token) {",
           "  pm.sendRequest({",
           "    url: (pm.environment.get('API_URL') || pm.variables.get('API_URL') || pm.globals.get('API_URL')) + '/session',",
           "    method: 'GET'",
           "  }, function (err, res) {",
           "    if (!err && res && res.json) {",
-          "      var token = res.json().session_token;",
-          "      try { pm.environment.set('session_token', token); } catch(e) {}",
-          "      try { pm.globals.set('session_token', token); } catch(e) {}",
-          "      try { pm.collectionVariables.set('session_token', token); } catch(e) {}",
-          "      console.log('Fetched session token via collection auto-fetch');",
+          "      var freshToken = res.json().session_token;",
+          "      try { pm.environment.set('session_token', freshToken); } catch(e) {}",
+          "      console.log('AUTO_FETCH_SESSION fetched a new token into the active environment');",
           "    }",
           "  });",
+          "} else if (token) {",
+          "  console.log('Using existing session_token from the active environment or variables');",
+          "} else {",
+          "  console.log('No session_token set and AUTO_FETCH_SESSION is false');",
           "}"
         ],
         "type": "text/javascript"
@@ -212,15 +212,19 @@
   "variable": [
     {
       "key": "API_URL",
-      "value": "http://localhost:8000"
+      "value": "https://kernal-ai-security.onrender.com"
     },
     {
       "key": "WS_URL",
-      "value": "ws://localhost:8000/ws"
+      "value": "wss://kernal-ai-security.onrender.com/ws"
     },
     {
       "key": "AUTO_FETCH_SESSION",
       "value": "false"
+    },
+    {
+      "key": "session_token",
+      "value": ""
     }
   ]
 }
