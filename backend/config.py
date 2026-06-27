@@ -55,6 +55,15 @@ class Settings(BaseSettings):
     backend_url: str = "http://localhost:8000"
     agent_event_timeout: int = 5
 
+    # Gmail SMTP (reports & department routing)
+    gmail_user: str = ""
+    gmail_app_password: str = ""
+    gmail_from_email: str = ""
+    gmail_smtp_host: str = "smtp.gmail.com"
+    gmail_smtp_port: int = 587
+    # JSON map: {"SOC Operations":"soc@company.com","Security Engineering":"security@company.com"}
+    department_emails: str = ""
+
     # Tier C — Groq LLM Settings
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"

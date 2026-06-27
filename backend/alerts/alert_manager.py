@@ -211,6 +211,16 @@ class AlertManager:
                 status = f"failed: {str(e)[:50]}"
 
             self._log_alert(event.id, url, status)
+            try:
+                from backend.notifications.notification_store import get_notification_store
+
+                get_notification_store().add(
+                    category="webhook",
+                    title="Webhook dispatch",
+                    message=f"{url[:55]}… → {status}",
+                )
+            except Exception:
+                pass
 
         async with httpx.AsyncClient(timeout=10.0) as client:
             tasks = [send_webhook(url, client) for url in active_urls]

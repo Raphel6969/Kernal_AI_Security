@@ -57,12 +57,26 @@ export function ThreatMonitor({ events, onFlush, sessionToken }: ThreatMonitorPr
   const fmt24 = (ts: number) =>
     new Date(ts * 1000).toLocaleTimeString('en-GB', { hour12: false });
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(events, null, 2));
     const a = document.createElement('a');
     a.href = dataStr;
     a.download = `aegix_events_${new Date().toISOString()}.json`;
     a.click();
+    try {
+      const url = new URL(`${API_URL}/notifications/activity`);
+      if (sessionToken) url.searchParams.set('session_token', sessionToken);
+      await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'logs_exported',
+          detail: `${events.length} event(s) exported to JSON.`,
+        }),
+      });
+    } catch {
+      /* non-blocking */
+    }
   };
 
   const handleFlush = async () => {

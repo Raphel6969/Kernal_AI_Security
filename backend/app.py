@@ -51,6 +51,19 @@ from backend.detection.groq_explainer import (
     get_cached_llm_explanation,
 )
 from backend.detection.groq_chat import gemini_chat
+from backend.notifications.notification_store import get_notification_store
+from backend.notifications.models import (
+    NotificationResponse,
+    ActivityNotificationRequest,
+    EmailReportRequest,
+    EmailReportResponse,
+    DepartmentEmailsResponse,
+)
+from backend.notifications.email_service import (
+    send_gmail_report,
+    build_report_summary,
+    get_department_map,
+)
 
 
 def _resolve_session_id(session_token: str | None) -> str | None:
@@ -60,6 +73,23 @@ def _resolve_session_id(session_token: str | None) -> str | None:
             raise HTTPException(status_code=400, detail="Invalid session_token")
         return session_id
     return None
+
+
+def _notify(
+    category: str,
+    title: str,
+    message: str,
+    session_id: str | None = None,
+) -> None:
+    try:
+        get_notification_store().add(
+            category=category,
+            title=title,
+            message=message,
+            session_id=session_id,
+        )
+    except Exception:
+        logger.exception("Failed to record notification")
 
 
 # ==============================================================================
@@ -180,6 +210,7 @@ pipeline = get_detection_pipeline()
 event_store = get_event_store(max_events=settings.event_cache_size)
 hook_manager = get_hook_manager()
 alert_manager = get_alert_manager()
+notification_store = get_notification_store()
 active_websockets: Dict[WebSocket, dict] = {}
 active_websockets_lock = asyncio.Lock()
 main_event_loop = None
@@ -694,10 +725,21 @@ async def clear_events(session_token: str | None = Query(default=None)):
         session_id = _resolve_session_id(session_token)
         deleted = event_store.size(session_id)
         event_store.clear(session_id)
+        _notify(
+            "logs",
+            "Logs moved to bin",
+            f"{deleted} security event(s) permanently deleted from the store.",
+            session_id=session_id,
+        )
         return {"status": "ok", "deleted_events": deleted}
     else:
         deleted_events = event_store.size()
         event_store.clear()
+        _notify(
+            "logs",
+            "Logs moved to bin",
+            f"{deleted_events} security event(s) permanently deleted from the store.",
+        )
         return {"status": "ok", "deleted_events": deleted_events}
 
 
@@ -746,18 +788,39 @@ async def create_webhook(request: WebhookCreate):
     """Register a new webhook URL."""
     if not request.url.startswith("http"):
         raise HTTPException(status_code=400, detail="Invalid URL")
-    return alert_manager.add_webhook(
+    wh = alert_manager.add_webhook(
         request.url,
         trigger_safe=request.trigger_safe,
         trigger_suspicious=request.trigger_suspicious,
         trigger_malicious=request.trigger_malicious,
     )
+    triggers = []
+    if request.trigger_safe:
+        triggers.append("SAFE")
+    if request.trigger_suspicious:
+        triggers.append("SUSPICIOUS")
+    if request.trigger_malicious:
+        triggers.append("MALICIOUS")
+    _notify(
+        "webhook",
+        "Webhook registered",
+        f"New endpoint {request.url[:60]}… · triggers: {', '.join(triggers) or 'none'}",
+    )
+    return wh
 
 
 @app.delete("/webhooks/{webhook_id}")
 async def delete_webhook(webhook_id: str):
     """Remove a webhook."""
+    webhooks = alert_manager.get_webhooks()
+    target = next((w for w in webhooks if w.id == webhook_id), None)
     alert_manager.remove_webhook(webhook_id)
+    if target:
+        _notify(
+            "webhook",
+            "Webhook removed",
+            f"Endpoint {target.url[:60]}… was deactivated and deleted.",
+        )
     return {"status": "success"}
 
 
@@ -800,11 +863,166 @@ async def update_threshold_settings(body: dict):
     """Update classification thresholds."""
     suspicious = float(body.get("suspicious_threshold", 30.0))
     malicious = float(body.get("malicious_threshold", 70.0))
+    old_mal = pipeline.malicious_threshold
     pipeline.update_thresholds(suspicious, malicious)
+    sensitivity_pct = round(100 - malicious, 1)
+    _notify(
+        "settings",
+        "AI sensitivity changed",
+        f"Malicious threshold {old_mal:.0f} → {malicious:.0f} "
+        f"(aggressiveness ~{sensitivity_pct}%).",
+    )
     return {
         "suspicious_threshold": pipeline.suspicious_threshold,
         "malicious_threshold": pipeline.malicious_threshold,
     }
+
+
+# ==============================================================================
+# Notifications & Email Reports
+# ==============================================================================
+
+
+@app.get("/notifications", response_model=List[NotificationResponse])
+async def list_notifications(
+    limit: int = Query(default=50, ge=1, le=200),
+    session_token: str | None = Query(default=None),
+    unread_only: bool = Query(default=False),
+):
+    session_id = _resolve_session_id(session_token)
+    return notification_store.list_recent(
+        limit=limit, session_id=session_id, unread_only=unread_only
+    )
+
+
+@app.get("/notifications/unread-count")
+async def notifications_unread_count(session_token: str | None = Query(default=None)):
+    session_id = _resolve_session_id(session_token)
+    return {"count": notification_store.unread_count(session_id=session_id)}
+
+
+@app.post("/notifications/{notif_id}/read")
+async def mark_notification_read(notif_id: str):
+    if not notification_store.mark_read(notif_id):
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"status": "ok"}
+
+
+@app.post("/notifications/read-all")
+async def mark_all_notifications_read(session_token: str | None = Query(default=None)):
+    session_id = _resolve_session_id(session_token)
+    updated = notification_store.mark_all_read(session_id=session_id)
+    return {"status": "ok", "marked_read": updated}
+
+
+@app.delete("/notifications")
+async def clear_notifications(session_token: str | None = Query(default=None)):
+    session_id = _resolve_session_id(session_token)
+    deleted = notification_store.clear_all(session_id=session_id)
+    return {"status": "ok", "deleted": deleted}
+
+
+@app.post("/notifications/activity", response_model=NotificationResponse)
+async def record_activity_notification(
+    body: ActivityNotificationRequest,
+    session_token: str | None = Query(default=None),
+):
+    session_id = _resolve_session_id(session_token)
+    mapping = {
+        "logs_exported": ("logs", "Logs exported", body.detail or "Event log downloaded as JSON."),
+        "logs_binned": ("logs", "Logs moved to bin", body.detail or "Events cleared from store."),
+    }
+    if body.type not in mapping:
+        raise HTTPException(status_code=400, detail=f"Unknown activity type: {body.type}")
+    cat, title, msg = mapping[body.type]
+    return notification_store.add(
+        category=cat, title=title, message=msg, session_id=session_id
+    )
+
+
+@app.get("/reports/departments", response_model=DepartmentEmailsResponse)
+async def list_department_emails():
+    return DepartmentEmailsResponse(departments=get_department_map())
+
+
+@app.post("/reports/email", response_model=EmailReportResponse)
+@limiter.limit("10/hour")
+async def send_email_report(request: Request, body: EmailReportRequest):
+    if "@" not in body.to_email or "." not in body.to_email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+
+    session_id = None
+    if body.session_token:
+        session_id = _resolve_session_id(body.session_token)
+
+    events = event_store.get_recent(1000, session_id=session_id)
+    event_dicts = [e.dict() for e in events]
+    stats = {
+        "total_events": event_store.size(session_id=session_id),
+        "safe": event_store.count_by_classification("safe", session_id=session_id),
+        "suspicious": event_store.count_by_classification(
+            "suspicious", session_id=session_id
+        ),
+        "malicious": event_store.count_by_classification(
+            "malicious", session_id=session_id
+        ),
+    }
+
+    summary = build_report_summary(stats, event_dicts)
+    recipients = [body.to_email.strip()]
+    cc: list[str] = []
+
+    if body.department:
+        dept_map = get_department_map()
+        dept_email = dept_map.get(body.department)
+        if dept_email:
+            cc.append(dept_email)
+
+    provider = (body.provider or "gmail").lower()
+    if provider != "gmail":
+        raise HTTPException(status_code=400, detail="Only Gmail SMTP is supported currently")
+
+    try:
+        send_gmail_report(
+            to_emails=recipients,
+            cc_emails=cc or None,
+            subject="AEGIX Security — Session Log Report",
+            body_text=summary,
+            json_payload={
+                "generated_at": datetime.now().isoformat(),
+                "stats": stats,
+                "events": event_dicts,
+            },
+        )
+        _notify(
+            "email",
+            "Report email sent",
+            f"Log report emailed to {body.to_email}"
+            + (f" (CC: {body.department})" if body.department else ""),
+            session_id=session_id,
+        )
+        return EmailReportResponse(
+            status="success",
+            message="Report sent via Gmail SMTP.",
+            recipients=recipients + cc,
+        )
+    except ValueError as exc:
+        _notify(
+            "email",
+            "Email delivery failed",
+            str(exc),
+            session_id=session_id,
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Email send failed")
+        _notify(
+            "email",
+            "Email delivery failed",
+            str(exc)[:200],
+            session_id=session_id,
+        )
+        raise HTTPException(status_code=502, detail="Failed to send email report") from exc
 
 
 # ==============================================================================

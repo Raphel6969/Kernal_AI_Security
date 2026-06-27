@@ -12,6 +12,7 @@ interface HomePageProps {
   wsConnected: boolean;
   theme: Theme;
   utcTime: string;
+  sessionToken?: string | null;
   onToggleTheme: () => void;
   onNavigate: (page: Page) => void;
 }
@@ -65,6 +66,7 @@ export function HomePage({
   wsConnected,
   theme,
   utcTime,
+  sessionToken,
   onToggleTheme,
   onNavigate,
 }: HomePageProps) {
@@ -105,6 +107,7 @@ export function HomePage({
         theme={theme}
         onToggleTheme={onToggleTheme}
         utcTime={utcTime}
+        sessionToken={sessionToken}
       />
 
       <div className="home-hero-grid">

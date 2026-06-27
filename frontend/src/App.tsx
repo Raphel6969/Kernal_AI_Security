@@ -243,6 +243,7 @@ function App() {
               theme={theme}
               onToggleTheme={toggleTheme}
               utcTime={utcTime}
+              sessionToken={sessionToken}
             />
           )}
 
@@ -259,6 +260,7 @@ function App() {
               wsConnected={isConnected}
               theme={theme}
               utcTime={utcTime}
+              sessionToken={sessionToken}
               onToggleTheme={toggleTheme}
               onNavigate={setActivePage}
             />

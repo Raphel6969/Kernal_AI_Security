@@ -25,7 +25,6 @@ export function AlertsIntegrations() {
   const [webhooks, setWebhooks] = useState<WebhookRecord[]>([]);
   const [alertHistory, setAlertHistory] = useState<AlertHistory[]>([]);
   const [url, setUrl] = useState('');
-  const [secretToken, setSecretToken] = useState('');
   const [error, setError] = useState('');
   const [triggerSafe, setTriggerSafe] = useState(false);
   const [triggerSuspicious, setTriggerSuspicious] = useState(true);
@@ -78,7 +77,6 @@ export function AlertsIntegrations() {
       });
       if (!res.ok) throw new Error('Failed to register webhook');
       setUrl('');
-      setSecretToken('');
       await loadWebhooks();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed');

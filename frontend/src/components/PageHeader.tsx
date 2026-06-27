@@ -1,5 +1,6 @@
-import { Bell, Moon, Sun, Monitor } from 'lucide-react';
+import { Moon, Sun, Monitor } from 'lucide-react';
 import type { Theme } from '../types';
+import { NotificationCenter } from './NotificationCenter';
 
 interface PageHeaderProps {
   title: string;
@@ -9,6 +10,7 @@ interface PageHeaderProps {
   theme: Theme;
   onToggleTheme: () => void;
   utcTime: string;
+  sessionToken?: string | null;
 }
 
 export function PageHeader({
@@ -19,6 +21,7 @@ export function PageHeader({
   theme,
   onToggleTheme,
   utcTime,
+  sessionToken,
 }: PageHeaderProps) {
   const themeLabel = theme === 'dark' ? 'DARK' : theme === 'light' ? 'LIGHT' : 'AUTO';
   const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
@@ -46,10 +49,7 @@ export function PageHeader({
           <ThemeIcon size={14} />
           {themeLabel}
         </button>
-        <button type="button" className="bell-btn" aria-label="Notifications">
-          <Bell size={18} />
-          <span className="bell-btn__dot" />
-        </button>
+        <NotificationCenter sessionToken={sessionToken} />
       </div>
     </header>
   );
