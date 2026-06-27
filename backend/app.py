@@ -6,6 +6,7 @@ Handles command analysis via API and WebSocket event streaming.
 import os
 import sys
 import logging
+import json
 
 # Ensure project root is on sys.path so running `python app.py` from
 # the `backend/` folder can still import the `backend` package.
@@ -58,11 +59,14 @@ from backend.notifications.models import (
     EmailReportRequest,
     EmailReportResponse,
     DepartmentEmailsResponse,
+    DepartmentCreateRequest,
 )
 from backend.notifications.email_service import (
     send_gmail_report,
     build_report_summary,
     get_department_map,
+    build_csv_attachment,
+    build_html_email_summary,
 )
 
 
@@ -506,6 +510,7 @@ async def _generate_and_attach_llm(
     return LlmExplainResponse(llm_explanation=llm_text, cached=False)
 
 
+@app.post("/chat", response_model=ChatResponse)
 @app.post("/api/chat", response_model=ChatResponse)
 @limiter.limit("30/minute")
 async def chat_endpoint(
@@ -884,6 +889,7 @@ async def update_threshold_settings(body: dict):
 
 
 @app.get("/notifications", response_model=List[NotificationResponse])
+@app.get("/api/notifications", response_model=List[NotificationResponse])
 async def list_notifications(
     limit: int = Query(default=50, ge=1, le=200),
     session_token: str | None = Query(default=None),
@@ -896,12 +902,14 @@ async def list_notifications(
 
 
 @app.get("/notifications/unread-count")
+@app.get("/api/notifications/unread-count")
 async def notifications_unread_count(session_token: str | None = Query(default=None)):
     session_id = _resolve_session_id(session_token)
     return {"count": notification_store.unread_count(session_id=session_id)}
 
 
 @app.post("/notifications/{notif_id}/read")
+@app.post("/api/notifications/{notif_id}/read")
 async def mark_notification_read(notif_id: str):
     if not notification_store.mark_read(notif_id):
         raise HTTPException(status_code=404, detail="Notification not found")
@@ -909,6 +917,7 @@ async def mark_notification_read(notif_id: str):
 
 
 @app.post("/notifications/read-all")
+@app.post("/api/notifications/read-all")
 async def mark_all_notifications_read(session_token: str | None = Query(default=None)):
     session_id = _resolve_session_id(session_token)
     updated = notification_store.mark_all_read(session_id=session_id)
@@ -916,6 +925,7 @@ async def mark_all_notifications_read(session_token: str | None = Query(default=
 
 
 @app.delete("/notifications")
+@app.delete("/api/notifications")
 async def clear_notifications(session_token: str | None = Query(default=None)):
     session_id = _resolve_session_id(session_token)
     deleted = notification_store.clear_all(session_id=session_id)
@@ -923,6 +933,7 @@ async def clear_notifications(session_token: str | None = Query(default=None)):
 
 
 @app.post("/notifications/activity", response_model=NotificationResponse)
+@app.post("/api/notifications/activity", response_model=NotificationResponse)
 async def record_activity_notification(
     body: ActivityNotificationRequest,
     session_token: str | None = Query(default=None),
@@ -941,11 +952,37 @@ async def record_activity_notification(
 
 
 @app.get("/reports/departments", response_model=DepartmentEmailsResponse)
+@app.get("/api/reports/departments", response_model=DepartmentEmailsResponse)
 async def list_department_emails():
     return DepartmentEmailsResponse(departments=get_department_map())
 
 
+@app.post("/reports/departments")
+@app.post("/api/reports/departments")
+async def add_department_endpoint(body: DepartmentCreateRequest):
+    name = body.name.strip()
+    email = body.email.strip()
+    if not name or not email:
+        raise HTTPException(status_code=400, detail="Name and email cannot be empty")
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    get_notification_store().add_department(name, email)
+    return {"status": "ok"}
+
+
+@app.delete("/reports/departments/{name}")
+@app.delete("/api/reports/departments/{name}")
+async def delete_department_endpoint(name: str):
+    name = name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty")
+    if not get_notification_store().delete_department(name):
+        raise HTTPException(status_code=404, detail="Department not found")
+    return {"status": "ok"}
+
+
 @app.post("/reports/email", response_model=EmailReportResponse)
+@app.post("/api/reports/email", response_model=EmailReportResponse)
 @limiter.limit("10/hour")
 async def send_email_report(request: Request, body: EmailReportRequest):
     if "@" not in body.to_email or "." not in body.to_email.split("@")[-1]:
@@ -982,28 +1019,47 @@ async def send_email_report(request: Request, body: EmailReportRequest):
     if provider != "gmail":
         raise HTTPException(status_code=400, detail="Only Gmail SMTP is supported currently")
 
+    # Handle multi-format attachment & html email
+    body_html = None
+    attachment_content = None
+    attachment_filename = None
+    report_format = (body.format or "json").lower()
+
+    if report_format == "csv":
+        csv_data = build_csv_attachment(event_dicts)
+        attachment_content = csv_data.encode("utf-8")
+        attachment_filename = f"aegix_events_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    elif report_format == "html":
+        body_html = build_html_email_summary(stats, event_dicts)
+    else:  # json
+        json_data = {
+            "generated_at": datetime.now().isoformat(),
+            "stats": stats,
+            "events": event_dicts,
+        }
+        attachment_content = json.dumps(json_data, indent=2, default=str).encode("utf-8")
+        attachment_filename = f"aegix_events_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
     try:
         send_gmail_report(
             to_emails=recipients,
             cc_emails=cc or None,
-            subject="AEGIX Security — Session Log Report",
+            subject=f"AEGIX Security — Session Log Report ({report_format.upper()})",
             body_text=summary,
-            json_payload={
-                "generated_at": datetime.now().isoformat(),
-                "stats": stats,
-                "events": event_dicts,
-            },
+            body_html=body_html,
+            attachment_content=attachment_content,
+            attachment_filename=attachment_filename,
         )
         _notify(
             "email",
             "Report email sent",
-            f"Log report emailed to {body.to_email}"
+            f"Log report ({report_format.upper()}) emailed to {body.to_email}"
             + (f" (CC: {body.department})" if body.department else ""),
             session_id=session_id,
         )
         return EmailReportResponse(
             status="success",
-            message="Report sent via Gmail SMTP.",
+            message=f"Report sent successfully in {report_format.upper()} format.",
             recipients=recipients + cc,
         )
     except ValueError as exc:

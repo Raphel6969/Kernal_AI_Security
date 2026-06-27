@@ -37,6 +37,25 @@ class NotificationStore:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS departments (
+                    name TEXT PRIMARY KEY,
+                    email TEXT NOT NULL
+                )
+                """
+            )
+            # Seed defaults if empty
+            cursor = conn.execute("SELECT COUNT(*) FROM departments")
+            if cursor.fetchone()[0] == 0:
+                conn.executemany(
+                    "INSERT INTO departments (name, email) VALUES (?, ?)",
+                    [
+                        ("SOC Operations", "soc@yourcompany.com"),
+                        ("Security Engineering", "security@yourcompany.com"),
+                        ("Incident Response", "ir@yourcompany.com"),
+                    ],
+                )
             conn.commit()
 
     def add(
@@ -159,6 +178,33 @@ class NotificationStore:
                 cur = conn.execute(sql, params)
                 conn.commit()
                 return cur.rowcount
+
+    def list_departments(self) -> dict[str, str]:
+        with self._lock:
+            with sqlite3.connect(self.db_path) as conn:
+                rows = conn.execute(
+                    "SELECT name, email FROM departments ORDER BY name ASC"
+                ).fetchall()
+        return {r[0]: r[1] for r in rows}
+
+    def add_department(self, name: str, email: str) -> None:
+        with self._lock:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute(
+                    "INSERT OR REPLACE INTO departments (name, email) VALUES (?, ?)",
+                    (name.strip(), email.strip()),
+                )
+                conn.commit()
+
+    def delete_department(self, name: str) -> bool:
+        with self._lock:
+            with sqlite3.connect(self.db_path) as conn:
+                cur = conn.execute(
+                    "DELETE FROM departments WHERE name = ?",
+                    (name.strip(),),
+                )
+                conn.commit()
+                return cur.rowcount > 0
 
 
 _store: Optional[NotificationStore] = None

@@ -21,8 +21,13 @@ class EmailReportRequest(BaseModel):
     to_email: str
     provider: str = "gmail"
     department: Optional[str] = None
-    include_json_attachment: bool = True
+    format: str = "json"  # "json", "csv", or "html"
     session_token: Optional[str] = None
+
+
+class DepartmentCreateRequest(BaseModel):
+    name: str
+    email: str
 
 
 class EmailReportResponse(BaseModel):

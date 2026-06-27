@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bell, X, Mail, Trash2, CheckCheck, Webhook, FileDown, Settings2,
   Send, Building2,
@@ -50,9 +50,17 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
   const [departments, setDepartments] = useState<Record<string, string>>({});
   const [email, setEmail] = useState('');
   const [department, setDepartment] = useState('');
+  const [format, setFormat] = useState('json');
   const [sending, setSending] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Department Management States
+  const [manageDepts, setManageDepts] = useState(false);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [newDeptEmail, setNewDeptEmail] = useState('');
+  const [addingDept, setAddingDept] = useState(false);
+  const [deptError, setDeptError] = useState('');
 
   const withSession = useCallback(
     (url: URL) => {
@@ -64,9 +72,9 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
 
   const refresh = useCallback(async () => {
     try {
-      const listUrl = withSession(new URL(`${API_URL}/notifications`));
+      const listUrl = withSession(new URL(`${API_URL}/api/notifications`));
       listUrl.searchParams.set('limit', '40');
-      const countUrl = withSession(new URL(`${API_URL}/notifications/unread-count`));
+      const countUrl = withSession(new URL(`${API_URL}/api/notifications/unread-count`));
       const [listRes, countRes] = await Promise.all([
         fetch(listUrl.toString()),
         fetch(countUrl.toString()),
@@ -81,6 +89,13 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
     }
   }, [withSession]);
 
+  const fetchDepartments = useCallback(() => {
+    fetch(`${API_URL}/api/reports/departments`)
+      .then((r) => r.json())
+      .then((d) => setDepartments(d.departments ?? {}))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     void refresh();
     const id = setInterval(() => void refresh(), 8000);
@@ -88,12 +103,10 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
   }, [refresh]);
 
   useEffect(() => {
-    if (!open) return;
-    fetch(`${API_URL}/reports/departments`)
-      .then((r) => r.json())
-      .then((d) => setDepartments(d.departments ?? {}))
-      .catch(() => {});
-  }, [open]);
+    if (open) {
+      fetchDepartments();
+    }
+  }, [open, fetchDepartments]);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -106,15 +119,51 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
   }, [open]);
 
   const markAllRead = async () => {
-    const url = withSession(new URL(`${API_URL}/notifications/read-all`));
+    const url = withSession(new URL(`${API_URL}/api/notifications/read-all`));
     await fetch(url.toString(), { method: 'POST' });
     void refresh();
   };
 
   const clearAll = async () => {
-    const url = withSession(new URL(`${API_URL}/notifications`));
+    const url = withSession(new URL(`${API_URL}/api/notifications`));
     await fetch(url.toString(), { method: 'DELETE' });
     void refresh();
+  };
+
+  const addDept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDeptName.trim() || !newDeptEmail.trim()) return;
+    setAddingDept(true);
+    setDeptError('');
+    try {
+      const res = await fetch(`${API_URL}/api/reports/departments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newDeptName.trim(), email: newDeptEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to add');
+      setNewDeptName('');
+      setNewDeptEmail('');
+      fetchDepartments();
+    } catch (err) {
+      setDeptError(err instanceof Error ? err.message : 'Error adding');
+    } finally {
+      setAddingDept(false);
+    }
+  };
+
+  const deleteDept = async (name: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/reports/departments/${encodeURIComponent(name)}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchDepartments();
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const sendReport = async () => {
@@ -122,14 +171,14 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
     setSending(true);
     setEmailStatus('');
     try {
-      const res = await fetch(`${API_URL}/reports/email`, {
+      const res = await fetch(`${API_URL}/api/reports/email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to_email: email.trim(),
           provider: 'gmail',
           department: department || null,
-          include_json_attachment: true,
+          format: format,
           session_token: sessionToken,
         }),
       });
@@ -169,7 +218,10 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
             <button
               type="button"
               className={tab === 'feed' ? 'active' : ''}
-              onClick={() => setTab('feed')}
+              onClick={() => {
+                setTab('feed');
+                setManageDepts(false);
+              }}
             >
               Activity
             </button>
@@ -211,10 +263,71 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
                 )}
               </div>
             </>
+          ) : manageDepts ? (
+            <div className="email-report-form">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <strong style={{ fontSize: 13, color: '#ffffff' }}>Manage Departments</strong>
+                <button
+                  type="button"
+                  className="btn-link"
+                  style={{ fontSize: 11, padding: 0, background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer' }}
+                  onClick={() => setManageDepts(false)}
+                >
+                  Back to Report
+                </button>
+              </div>
+
+              {/* Add form */}
+              <form onSubmit={(e) => void addDept(e)} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder="Department Name (e.g. SOC)"
+                  value={newDeptName}
+                  onChange={(e) => setNewDeptName(e.target.value)}
+                  required
+                />
+                <input
+                  className="form-input"
+                  type="email"
+                  placeholder="email@company.com"
+                  value={newDeptEmail}
+                  onChange={(e) => setNewDeptEmail(e.target.value)}
+                  required
+                />
+                <button type="submit" className="btn-cyan" style={{ justifyContent: 'center' }} disabled={addingDept}>
+                  Add Department
+                </button>
+                {deptError && <p className="email-report-status err">{deptError}</p>}
+              </form>
+
+              {/* List */}
+              <div className="dept-list" style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                {Object.keys(departments).length === 0 ? (
+                  <p className="notification-empty" style={{ margin: 0, padding: 10 }}>No departments added yet.</p>
+                ) : (
+                  Object.entries(departments).map(([name, addr]) => (
+                    <div key={name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'rgba(255,255,255,0.03)', borderRadius: 4, border: '1px solid var(--border-color)', fontSize: 12 }}>
+                      <div style={{ minWidth: 0, flex: 1, paddingRight: 8 }}>
+                        <strong style={{ display: 'block', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{name}</strong>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'block' }}>{addr}</span>
+                      </div>
+                      <button
+                        type="button"
+                        style={{ background: 'none', border: 'none', color: 'var(--neon-red)', cursor: 'pointer', padding: 4 }}
+                        onClick={() => deleteDept(name)}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           ) : (
             <div className="email-report-form">
               <p className="email-report-form__hint">
-                Sends a summary of scores, counts, and top threats via Gmail SMTP, with full logs attached as JSON.
+                Sends event audits using Gmail SMTP. Attachments are configured below.
               </p>
               <label className="form-label">Your email</label>
               <input
@@ -224,14 +337,37 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <label className="form-label" style={{ marginTop: 12 }}>
-                <Building2 size={12} style={{ display: 'inline', marginRight: 4 }} />
-                Department (Gmail CC — internal routing)
-              </label>
+
+              <label className="form-label" style={{ marginTop: 12 }}>Report Format</label>
+              <select
+                className="form-input"
+                value={format}
+                onChange={(e) => setFormat(e.target.value)}
+              >
+                <option value="json">JSON Log Attachment</option>
+                <option value="csv">CSV Spreadsheet Attachment</option>
+                <option value="html">Rich HTML Email Summary</option>
+              </select>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                <label className="form-label" style={{ margin: 0 }}>
+                  <Building2 size={12} style={{ display: 'inline', marginRight: 4 }} />
+                  Department (Gmail CC — internal routing)
+                </label>
+                <button
+                  type="button"
+                  className="btn-link"
+                  style={{ fontSize: 11, padding: 0, background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer' }}
+                  onClick={() => setManageDepts(true)}
+                >
+                  Manage
+                </button>
+              </div>
               <select
                 className="form-input"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
+                style={{ marginTop: 6 }}
               >
                 <option value="">None — send only to me</option>
                 {Object.entries(departments).map(([name, addr]) => (
@@ -240,7 +376,8 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
                   </option>
                 ))}
               </select>
-              <div className="email-provider-pill">
+
+              <div className="email-provider-pill" style={{ marginTop: 12 }}>
                 <Mail size={14} /> Gmail SMTP
               </div>
               <button
@@ -258,10 +395,6 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
                   {emailStatus}
                 </p>
               )}
-              <p className="email-report-form__footer">
-                Configure <code>GMAIL_USER</code> and <code>GMAIL_APP_PASSWORD</code> in backend <code>.env</code>.
-                Set <code>DEPARTMENT_EMAILS</code> JSON for company distribution lists.
-              </p>
             </div>
           )}
         </div>
