@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    image: aegix:latest
+    container_name: aegix-secure-ebpf
+    restart: unless-stopped
+    privileged: true
+    pid: 'host'
+    network_mode: 'host'
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_LOG_LEVEL=info
+      - KERNEL_MONITOR_OWNER=backend
+      - DB_PATH=/app/data/events.db
+      - EVENT_CACHE_SIZE=1000
+      - BACKEND_URL=http://localhost:8000
+    volumes:
+      - ./data:/app/data
+      - /lib/modules:/lib/modules:ro
+      - /usr/src:/usr/src:ro
+      - /sys/kernel/debug:/sys/kernel/debug

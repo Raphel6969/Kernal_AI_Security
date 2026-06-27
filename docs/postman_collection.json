@@ -123,6 +123,58 @@
       "response": []
     },
     {
+      "name": "Ingest Agent Event - Normal Memory",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent_id\": \"agent-1\",\n  \"command\": \"python -c \\\"print('Normal execution')\\\"\",\n  \"pid\": 1235,\n  \"ppid\": 1,\n  \"uid\": 1000,\n  \"gid\": 1000,\n  \"comm\": \"python\",\n  \"process_memory_mb\": 15.2,\n  \"system_memory_percent\": 45.0\n}"
+        },
+        "url": "{{API_URL}}/agent/events?session_token={{session_token}}"
+      },
+      "response": []
+    },
+    {
+      "name": "Ingest Agent Event - Memory Hog Penalty (>50MB)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent_id\": \"agent-1\",\n  \"command\": \"python -c \\\"import numpy\\\"\",\n  \"pid\": 1236,\n  \"ppid\": 1,\n  \"uid\": 1000,\n  \"gid\": 1000,\n  \"comm\": \"python\",\n  \"process_memory_mb\": 78.4,\n  \"system_memory_percent\": 45.0\n}"
+        },
+        "url": "{{API_URL}}/agent/events?session_token={{session_token}}"
+      },
+      "response": []
+    },
+    {
+      "name": "Ingest Agent Event - Critical System Memory (>80%)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent_id\": \"agent-1\",\n  \"command\": \"python -c \\\"print('Critical RAM warning')\\\"\",\n  \"pid\": 1237,\n  \"ppid\": 1,\n  \"uid\": 1000,\n  \"gid\": 1000,\n  \"comm\": \"python\",\n  \"process_memory_mb\": 12.0,\n  \"system_memory_percent\": 87.5\n}"
+        },
+        "url": "{{API_URL}}/agent/events?session_token={{session_token}}"
+      },
+      "response": []
+    },
+    {
+      "name": "Ingest Agent Event - Stacked Memory Anomalies (DoS Risk)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agent_id\": \"agent-1\",\n  \"command\": \"python -c \\\"import tensorflow as tf\\\"\",\n  \"pid\": 1238,\n  \"ppid\": 1,\n  \"uid\": 1000,\n  \"gid\": 1000,\n  \"comm\": \"python\",\n  \"process_memory_mb\": 150.0,\n  \"system_memory_percent\": 92.0\n}"
+        },
+        "url": "{{API_URL}}/agent/events?session_token={{session_token}}"
+      },
+      "response": []
+    },
+    {
       "name": "Get Events",
       "request": {
         "method": "GET",

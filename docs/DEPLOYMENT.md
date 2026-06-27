@@ -285,3 +285,71 @@ Current public Space: https://huggingface.co/spaces/Raphel3116/aegix_security
 4. License: Apache 2.0
 5. Space type: **Docker**
 6. Private/Public: Your choice
+
+---
+
+### Option C: Isolated Container Deployment with Native eBPF
+
+To run Aegix in a containerized, isolated environment (e.g. Docker) while retaining full **eBPF kernel-level process monitoring**, the container must have access to the host's kernel and compile tools.
+
+#### Why eBPF is disabled in standard containers
+By default, Docker isolates container processes in their own PID, network, and security namespaces. eBPF tracepoints require `CAP_SYS_ADMIN` or `CAP_BPF` permissions to load code into the host kernel and need access to kernel header files to compile the tracepoint source.
+
+#### Setup Requirements
+
+1. **Host OS**: The physical or virtual machine running Docker must be a Linux system (Kernel >= 5.4) with BCC headers installed (e.g. `linux-headers-$(uname -r)`).
+2. **Container Privileges**: The container must be run in **privileged mode** (`--privileged`) to allow syscall hooks.
+3. **PID Namespace**: Set the container PID mode to `host` so it can track process IDs across the entire machine.
+4. **Volume Mounts**: Mount the kernel headers, modules, and debug interfaces:
+   * `/lib/modules:/lib/modules:ro` (Kernel modules)
+   * `/usr/src:/usr/src:ro` (Kernel source files for header references)
+   * `/sys/kernel/debug:/sys/kernel/debug` (Kernel debug filesystem for eBPF ring buffer interaction)
+
+#### Docker Compose Configuration (`docker-compose.ebpf.yml`)
+
+Create a specialized Docker Compose file to launch Aegix with eBPF isolation:
+
+```yaml
+version: '3.8'
+
+services:
+  aegix-secure:
+    build: .
+    image: aegix:latest
+    container_name: aegix-secure-ebpf
+    restart: unless-stopped
+    privileged: true
+    pid: "host"
+    network_mode: "host"  # Binding directly to host ports for zero-overhead
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_LOG_LEVEL=info
+      - KERNEL_MONITOR_OWNER=backend  # The container's backend daemon compiles and attaches eBPF
+      - DB_PATH=/app/data/events.db
+      - EVENT_CACHE_SIZE=5000
+      - BACKEND_URL=http://localhost:8000
+    volumes:
+      - ./data:/app/data
+      - /lib/modules:/lib/modules:ro
+      - /usr/src:/usr/src:ro
+      - /sys/kernel/debug:/sys/kernel/debug
+```
+
+#### Launching the Isolated eBPF Daemon
+
+Run the container using the configuration:
+```bash
+# Build the image containing dependencies
+docker build -t aegix:latest .
+
+# Launch in isolated eBPF mode
+docker compose -f docker-compose.ebpf.yml up -d
+```
+
+Verify that the eBPF tracepoint is running inside the container:
+```bash
+docker logs -f aegix-secure-ebpf
+# Look for: "RCE Monitor started - monitoring execve syscalls"
+```
+

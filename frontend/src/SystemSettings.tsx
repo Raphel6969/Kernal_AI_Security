@@ -31,6 +31,67 @@ export function SystemSettings({
     return saved ? parseInt(saved, 10) : 50000;
   });
 
+  const [isTestingRemediation, setIsTestingRemediation] = useState(false);
+  const [testLog, setTestLog] = useState<{ type: string; text: string }[]>([]);
+
+  const runRemediationTest = async () => {
+    setIsTestingRemediation(true);
+    setTestLog([
+      { type: 'default', text: '⚡ Initializing active validation loop...' },
+    ]);
+
+    try {
+      await new Promise((r) => setTimeout(r, 600));
+      setTestLog((prev) => [...prev, { type: 'default', text: '⚙️ Requesting backend to spawn target process (python)...' }]);
+      
+      const url = new URL(`${API_URL}/settings/remediation/test`);
+      if (sessionToken) url.searchParams.set('session_token', sessionToken);
+
+      const res = await fetch(url.toString(), { method: 'POST' });
+      if (!res.ok) throw new Error(`Test request failed with status: ${res.status}`);
+
+      const data = await res.json();
+      await new Promise((r) => setTimeout(r, 600));
+
+      setTestLog((prev) => [
+        ...prev,
+        { type: 'info', text: `🟢 Spawned dummy target process (PID: ${data.pid})` },
+        { type: 'info', text: `🔍 Analyzing simulated malicious command: "${data.command}"` },
+        { type: 'info', text: `🧠 AI Verdict: ${data.classification.toUpperCase()} (Risk Score: ${Math.round(data.risk_score)}/100)` },
+      ]);
+
+      await new Promise((r) => setTimeout(r, 800));
+
+      if (data.remediation_enabled) {
+        if (data.is_dead) {
+          setTestLog((prev) => [
+            ...prev,
+            { type: 'success', text: `🛑 AUTO-REMEDIATION ISSUED: SIGKILL sent to PID ${data.pid}` },
+            { type: 'success', text: `✅ Process termination verified successfully. System protected!` }
+          ]);
+        } else {
+          setTestLog((prev) => [
+            ...prev,
+            { type: 'error', text: `❌ Remediation warning: SIGKILL was sent but process is still running!` }
+          ]);
+        }
+      } else {
+        setTestLog((prev) => [
+          ...prev,
+          { type: 'warning', text: `⚠️ Auto-Remediation is disabled. Process was NOT killed (remains active)` },
+          { type: 'success', text: `✅ Interception logged. Test cycle completed in audit-only mode.` }
+        ]);
+      }
+    } catch (err) {
+      setTestLog((prev) => [
+        ...prev,
+        { type: 'error', text: `❌ Test execution failed: ${err instanceof Error ? err.message : 'Unknown error'}` }
+      ]);
+    } finally {
+      setIsTestingRemediation(false);
+    }
+  };
+
   useEffect(() => {
     fetch(`${API_URL}/settings/thresholds`)
       .then((r) => r.json())
@@ -128,6 +189,63 @@ export function SystemSettings({
         >
           <span className="neon-toggle__thumb" />
         </button>
+      </div>
+
+      <div className="glass-card settings-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="settings-section__header" style={{ marginBottom: 0 }}>
+          <Shield size={18} style={{ color: '#a855f7' }} />
+          <div>
+            <strong>Remediation Test Center</strong>
+            <p>Trigger an automated execution cycle: spawns a background dummy process, executes a simulated attack command, and verifies auto-remediation interception.</p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => void runRemediationTest()}
+              disabled={isTestingRemediation || !apiOnline}
+              style={{
+                borderColor: '#a855f7',
+                color: '#a855f7',
+                boxShadow: isTestingRemediation ? 'none' : '0 0 10px rgba(168, 85, 247, 0.1)',
+                padding: '8px 16px',
+                fontWeight: 600
+              }}
+            >
+              {isTestingRemediation ? 'EXECUTING TEST...' : 'RUN REMEDIATION SIMULATION'}
+            </button>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              {!remediationEnabled && '⚠️ Note: Auto-Remediation is currently DISABLED. The test will verify safe detection bypass without killing.'}
+              {remediationEnabled && '🚀 Active mode: The simulator will spawn and SIGKILL the target process.'}
+            </span>
+          </div>
+
+          {testLog.length > 0 && (
+            <div style={{
+              background: 'rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '6px',
+              padding: '12px',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+              lineHeight: '1.6',
+              color: 'var(--text-primary)'
+            }}>
+              {testLog.map((log, idx) => (
+                <div key={idx} style={{
+                  color: log.type === 'error' ? 'var(--neon-red)' :
+                         log.type === 'success' ? 'var(--neon-green)' :
+                         log.type === 'info' ? 'var(--neon-cyan)' : 'var(--text-secondary)'
+                }}>
+                  {log.text}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="glass-card settings-section">

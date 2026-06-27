@@ -163,7 +163,39 @@ export function ThreatMonitor({ events, onFlush, sessionToken }: ThreatMonitorPr
                     >
                       {ev.command.length > 48 ? ev.command.slice(0, 48) + '…' : ev.command}
                     </td>
-                    <td><SeverityBadge classification={ev.classification} size="sm" /></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <SeverityBadge classification={ev.classification} size="sm" />
+                        {ev.remediation_status === 'success' && (
+                          <span className="remediation-badge-success" style={{
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: 'rgba(168, 85, 247, 0.15)',
+                            color: 'rgb(192, 132, 252)',
+                            border: '1px solid rgba(168, 85, 247, 0.3)',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            🛑 KILLED
+                          </span>
+                        )}
+                        {ev.remediation_status && ev.remediation_status !== 'success' && ev.remediation_status !== 'skipped_no_pid' && (
+                          <span className="remediation-badge-skipped" style={{
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: 'rgba(156, 163, 175, 0.15)',
+                            color: 'rgb(209, 213, 219)',
+                            border: '1px solid rgba(156, 163, 175, 0.3)',
+                            whiteSpace: 'nowrap',
+                          }} title={ev.remediation_status}>
+                            ⚠️ SKIPPED
+                          </span>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -204,7 +236,16 @@ export function ThreatMonitor({ events, onFlush, sessionToken }: ThreatMonitorPr
                 ['PID', String(selected.pid)],
                 ['PPID', String(selected.ppid)],
                 ['UID', String(selected.uid)],
-              ].map(([k, v]) => (
+                selected.process_memory_mb !== undefined && selected.process_memory_mb > 0
+                  ? ['Process RAM', `${selected.process_memory_mb.toFixed(1)} MB`]
+                  : null,
+                selected.system_memory_percent !== undefined && selected.system_memory_percent > 0
+                  ? ['System RAM', `${selected.system_memory_percent.toFixed(0)}%`]
+                  : null,
+                selected.remediation_status
+                  ? ['Remediation', selected.remediation_status.toUpperCase().replace(/_/g, ' ')]
+                  : null,
+              ].filter((item): item is [string, string] => item !== null).map(([k, v]) => (
                 <div key={k} className="threat-detail-meta__item">
                   <span>{k}</span>
                   <strong>{v}</strong>

@@ -59,6 +59,35 @@ def kill_process(pid: int) -> dict:
         result["detail"] = "No real PID captured (API-mode event, not from kernel hook)"
         return result
 
+    # Safety Check: Prevent killing the bouncer service itself
+    try:
+        self_pid = os.getpid()
+        if pid == self_pid:
+            result["status"] = "skipped_self_kill"
+            result["detail"] = f"Prevented self-termination request for backend process (PID {pid})"
+            logger.warning(f"🛡️ Remediation Safety: {result['detail']}")
+            return result
+    except Exception:
+        pass
+
+    # Safety Check: Prevent killing the parent process of the bouncer
+    try:
+        parent_pid = os.getppid()
+        if pid == parent_pid:
+            result["status"] = "skipped_parent_kill"
+            result["detail"] = f"Prevented termination of parent process (PID {pid}) to avoid service disruption"
+            logger.warning(f"🛡️ Remediation Safety: {result['detail']}")
+            return result
+    except Exception:
+        pass
+
+    # Safety Check: Prevent killing system-critical processes (init, systemd, kernel threads)
+    if pid <= 10:
+        result["status"] = "skipped_system_process"
+        result["detail"] = f"Prevented termination of system-critical process (PID {pid})"
+        logger.warning(f"🛡️ Remediation Safety: {result['detail']}")
+        return result
+
     # Require psutil
     if not PSUTIL_AVAILABLE:
         result["status"] = "unavailable"

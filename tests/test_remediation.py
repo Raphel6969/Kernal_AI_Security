@@ -76,7 +76,7 @@ class TestRemediationToggle:
 
 
 class TestKillProcessEdgeCases:
-    """Test kill_process() handles bad inputs gracefully."""
+    """Test kill_process() handles bad inputs and safety guardrails gracefully."""
 
     def test_skip_when_pid_is_zero(self):
         """PID 0 means the event came from the API (no real process). Skip gracefully."""
@@ -96,6 +96,26 @@ class TestKillProcessEdgeCases:
         assert "action" in result
         assert "status" in result
         assert "detail" in result
+
+    def test_prevent_self_kill(self):
+        """Should prevent the security system from killing its own process."""
+        self_pid = os.getpid()
+        result = kill_process(self_pid)
+        assert result["status"] == "skipped_self_kill"
+        assert "Prevented self-termination" in result["detail"]
+
+    def test_prevent_parent_kill(self):
+        """Should prevent the security system from killing its parent process."""
+        parent_pid = os.getppid()
+        result = kill_process(parent_pid)
+        assert result["status"] == "skipped_parent_kill"
+        assert "Prevented termination of parent process" in result["detail"]
+
+    def test_prevent_system_critical_kill(self):
+        """Should prevent the security system from killing system-critical processes (PID <= 10)."""
+        result = kill_process(1)  # init / systemd
+        assert result["status"] == "skipped_system_process"
+        assert "Prevented termination of system-critical process" in result["detail"]
 
 
 class TestKillRealProcess:
