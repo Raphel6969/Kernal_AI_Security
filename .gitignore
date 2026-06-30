@@ -65,3 +65,22 @@ backend/.mypy_cache/
 *.db
 events.db
 
+# Python backup folder — exclude compiled/cache artifacts
+backend_py_backup/__pycache__/
+backend_py_backup/**/__pycache__/
+backend_py_backup/**/*.pyc
+backend_py_backup/**/*.pyo
+backend_py_backup/**/*.pkl
+
+# Go build artifacts
+backend/bin/
+*.exe
+*.test
+*.out
+
+# Go module vendor (if used)
+backend/vendor/
+
+# Exported ML model (generated, not tracked)
+data/trained_model.json
+
