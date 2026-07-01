@@ -175,11 +175,10 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to_email: email.trim(),
-          provider: 'gmail',
-          department: department || null,
           format: format,
-          session_token: sessionToken,
+          event_limit: 100,
+          extra_to: [email.trim()],
+          session_id: sessionToken,
         }),
       });
       const data = await res.json();
