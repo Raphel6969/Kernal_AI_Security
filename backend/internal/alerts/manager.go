@@ -143,15 +143,81 @@ func (am *AlertManager) matchingWebhooks(classification string) []model.Webhook 
 
 // dispatch sends a single webhook HTTP POST and records the result.
 func (am *AlertManager) dispatch(wh model.Webhook, event *model.SecurityEvent) {
-	payload, _ := json.Marshal(map[string]any{
-		"event_id":       event.ID,
-		"timestamp":      event.DetectedAt,
-		"classification": event.DetectionResult.Classification,
-		"risk_score":     event.DetectionResult.RiskScore,
-		"command":        event.ExecveEvent.Command,
-		"matched_rules":  event.DetectionResult.MatchedRules,
-		"explanation":    event.DetectionResult.Explanation,
-	})
+	var payloadMap any
+
+	if strings.Contains(wh.URL, "discord.com") {
+		// Determine color and title based on classification
+		var color int
+		var titlePrefix string
+		switch event.DetectionResult.Classification {
+		case "malicious":
+			color = 16711680 // Red
+			titlePrefix = "🚨 Aegix: Malicious"
+		case "suspicious":
+			color = 16776960 // Yellow
+			titlePrefix = "⚠️ Aegix: Suspicious"
+		default:
+			color = 65280 // Green
+			titlePrefix = "✅ Aegix: Safe"
+		}
+
+		rulesStr := "None"
+		if len(event.DetectionResult.MatchedRules) > 0 {
+			rulesStr = strings.Join(event.DetectionResult.MatchedRules, ", ")
+		}
+
+		payloadMap = map[string]any{
+			"embeds": []map[string]any{
+				{
+					"title": fmt.Sprintf("%s Activity Detected", titlePrefix),
+					"color": color,
+					"fields": []map[string]any{
+						{
+							"name":   "Process ID",
+							"value":  fmt.Sprintf("%d", event.ExecveEvent.PID),
+							"inline": true,
+						},
+						{
+							"name":   "Risk Score",
+							"value":  fmt.Sprintf("%.1f/100", event.DetectionResult.RiskScore),
+							"inline": true,
+						},
+						{
+							"name":   "Command",
+							"value":  fmt.Sprintf("```bash\n%s\n```", event.ExecveEvent.Command),
+							"inline": false,
+						},
+						{
+							"name":   "Matched Rules",
+							"value":  rulesStr,
+							"inline": false,
+						},
+					},
+					"footer": map[string]any{
+						"text": "Aegix Automated Detection",
+					},
+				},
+			},
+		}
+	} else if strings.Contains(wh.URL, "hooks.slack.com") {
+		msg := fmt.Sprintf("🚨 *AEGIX Alert* [%s]\n*Command:* `%s`\n*Risk:* %.1f", 
+			strings.ToUpper(event.DetectionResult.Classification), 
+			event.ExecveEvent.Command, 
+			event.DetectionResult.RiskScore)
+		payloadMap = map[string]any{"text": msg}
+	} else {
+		payloadMap = map[string]any{
+			"event_id":       event.ID,
+			"timestamp":      event.DetectedAt,
+			"classification": event.DetectionResult.Classification,
+			"risk_score":     event.DetectionResult.RiskScore,
+			"command":        event.ExecveEvent.Command,
+			"matched_rules":  event.DetectionResult.MatchedRules,
+			"explanation":    event.DetectionResult.Explanation,
+		}
+	}
+
+	payload, _ := json.Marshal(payloadMap)
 
 	resp, err := am.client.Post(wh.URL, "application/json", bytes.NewReader(payload))
 

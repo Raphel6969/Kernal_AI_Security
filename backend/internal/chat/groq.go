@@ -21,7 +21,7 @@ import (
 
 const (
 	groqEndpoint  = "https://api.groq.com/openai/v1/chat/completions"
-	groqMaxTokens = 600
+	groqMaxTokens = 1500
 )
 
 // ChatMessage is one turn in a conversation.
@@ -186,9 +186,8 @@ func buildExplainPrompt(command, classification string, riskScore float64, rules
 			"Classification: %s\n"+
 			"Risk Score: %.1f/100\n"+
 			"Detected Patterns: %s\n\n"+
-			"Provide a concise 2-3 sentence explanation of the security risk and "+
-			"why this command is classified as %s. Be technical and direct.",
-		command, classification, riskScore, rulesStr, classification,
+			"Provide a highly detailed, comprehensive explanation of this command. Break down exactly what the command does, what vulnerabilities or systems it targets, the mechanisms it uses (e.g., evasion, network connections), and the potential impact on the system. Format your response in clear paragraphs or bullet points.",
+		command, classification, riskScore, rulesStr,
 	)
 }
 

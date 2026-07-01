@@ -47,7 +47,7 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
   const [tab, setTab] = useState<'feed' | 'email'>('feed');
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unread, setUnread] = useState(0);
-  const [departments, setDepartments] = useState<Record<string, string>>({});
+  const [departments, setDepartments] = useState<{name: string, email: string}[]>([]);
   const [email, setEmail] = useState('');
   const [department, setDepartment] = useState('');
   const [format, setFormat] = useState('json');
@@ -92,7 +92,7 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
   const fetchDepartments = useCallback(() => {
     fetch(`${API_URL}/reports/departments`)
       .then((r) => r.json())
-      .then((d) => setDepartments(d.departments ?? {}))
+      .then((d) => setDepartments(d.departments ?? []))
       .catch(() => {});
   }, []);
 
@@ -139,7 +139,7 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
       const res = await fetch(`${API_URL}/reports/departments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newDeptName.trim(), email: newDeptEmail.trim() }),
+        body: JSON.stringify({ departments: [...departments, { name: newDeptName.trim(), email: newDeptEmail.trim() }] }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to add');
@@ -155,8 +155,11 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
 
   const deleteDept = async (name: string) => {
     try {
-      const res = await fetch(`${API_URL}/reports/departments/${encodeURIComponent(name)}`, {
-        method: 'DELETE',
+      const updated = departments.filter((d) => d.name !== name);
+      const res = await fetch(`${API_URL}/reports/departments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departments: updated }),
       });
       if (res.ok) {
         fetchDepartments();
@@ -302,19 +305,19 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
 
               {/* List */}
               <div className="dept-list" style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {Object.keys(departments).length === 0 ? (
+                {departments.length === 0 ? (
                   <p className="notification-empty" style={{ margin: 0, padding: 10 }}>No departments added yet.</p>
                 ) : (
-                  Object.entries(departments).map(([name, addr]) => (
-                    <div key={name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'rgba(255,255,255,0.03)', borderRadius: 4, border: '1px solid var(--border-color)', fontSize: 12 }}>
+                  departments.map((d) => (
+                    <div key={d.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'rgba(255,255,255,0.03)', borderRadius: 4, border: '1px solid var(--border-color)', fontSize: 12 }}>
                       <div style={{ minWidth: 0, flex: 1, paddingRight: 8 }}>
-                        <strong style={{ display: 'block', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{name}</strong>
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'block' }}>{addr}</span>
+                        <strong style={{ display: 'block', color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{d.name}</strong>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'block' }}>{d.email}</span>
                       </div>
                       <button
                         type="button"
                         style={{ background: 'none', border: 'none', color: 'var(--neon-red)', cursor: 'pointer', padding: 4 }}
-                        onClick={() => deleteDept(name)}
+                        onClick={() => deleteDept(d.name)}
                       >
                         <Trash2 size={12} />
                       </button>
@@ -369,9 +372,9 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
                 style={{ marginTop: 6 }}
               >
                 <option value="">None — send only to me</option>
-                {Object.entries(departments).map(([name, addr]) => (
-                  <option key={name} value={name}>
-                    {name} ({addr})
+                {departments.map((d) => (
+                  <option key={d.name} value={d.name}>
+                    {d.name} ({d.email})
                   </option>
                 ))}
               </select>

@@ -62,10 +62,10 @@ func main() {
 	// ── 3. Postgres Cold Store (optional) ─────────────────────────────────────
 	var cold store.ColdStore
 	if cfg.DatabaseURL != "" {
-		cold, err = store.NewPostgresStore(ctx, cfg.DatabaseURL)
-		if err != nil {
+		if ps, err := store.NewPostgresStore(ctx, cfg.DatabaseURL); err != nil {
 			slog.Warn("⚠️  Postgres cold store unavailable — running hot-only mode", "err", err)
 		} else {
+			cold = ps
 			defer cold.Close()
 			slog.Info("✅ Postgres cold store connected")
 		}

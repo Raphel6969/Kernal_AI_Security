@@ -591,7 +591,7 @@ func (s *Server) handleSendEmailReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sid := s.resolveSession(r)
-	if req.SessionID != nil {
+	if s.cfg.SessionMode && req.SessionID != nil {
 		sid = req.SessionID
 	}
 	events, _ := s.hot.GetRecent(limit, nil, sid)

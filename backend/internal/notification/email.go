@@ -80,7 +80,14 @@ func (es *EmailService) SendReport(
 		from = es.cfg.GmailUser
 	}
 
-	msg := es.buildMIME(from, recipients, subject, body, contentType)
+	var filename string
+	if format == "csv" {
+		filename = fmt.Sprintf("AEGIX_Audit_%s.csv", time.Now().Format("20060102_1504"))
+	} else if format == "json" {
+		filename = fmt.Sprintf("AEGIX_Audit_%s.json", time.Now().Format("20060102_1504"))
+	}
+
+	msg := es.buildMIME(from, recipients, subject, body, contentType, filename)
 	addr := fmt.Sprintf("%s:%d", es.cfg.GmailSMTPHost, es.cfg.GmailSMTPPort)
 	auth := smtp.PlainAuth("", es.cfg.GmailUser, es.cfg.GmailAppPassword, es.cfg.GmailSMTPHost)
 
@@ -193,13 +200,16 @@ func (es *EmailService) buildJSONBody(events []*model.SecurityEvent) ([]byte, st
 
 // ── MIME builder ──────────────────────────────────────────────────────────────
 
-func (es *EmailService) buildMIME(from string, to []string, subject string, body []byte, contentType string) []byte {
+func (es *EmailService) buildMIME(from string, to []string, subject string, body []byte, contentType string, filename string) []byte {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "From: AEGIX Security <%s>\r\n", from)
 	fmt.Fprintf(&buf, "To: %s\r\n", strings.Join(to, ", "))
 	fmt.Fprintf(&buf, "Subject: %s\r\n", subject)
 	fmt.Fprintf(&buf, "MIME-Version: 1.0\r\n")
 	fmt.Fprintf(&buf, "Content-Type: %s; charset=UTF-8\r\n", contentType)
+	if filename != "" {
+		fmt.Fprintf(&buf, "Content-Disposition: attachment; filename=\"%s\"\r\n", filename)
+	}
 	fmt.Fprintf(&buf, "\r\n")
 	buf.Write(body)
 	return buf.Bytes()
