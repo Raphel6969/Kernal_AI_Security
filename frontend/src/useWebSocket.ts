@@ -52,7 +52,8 @@ export function useWebSocket(sessionToken?: string) {
         if (sessionToken) url.searchParams.set('session_token', sessionToken);
         const response = await fetch(url.toString());
         if (!response.ok) return;
-        const history = (await response.json()) as SecurityEvent[];
+        const data = await response.json() as { events: SecurityEvent[] };
+        const history = data.events || [];
         if (!mountedRef.current || history.length === 0) return;
 
         setEvents((current) => {
