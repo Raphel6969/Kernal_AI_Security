@@ -99,8 +99,8 @@ export function AlertsIntegrations() {
   };
 
   const activeCount = webhooks.filter((w) => w.is_active).length;
-  const fmtDate = (ts: number) => new Date(ts * 1000).toLocaleDateString('en-GB');
-  const fmtTime = (ts: number) => new Date(ts * 1000).toLocaleTimeString('en-GB', { hour12: false });
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB');
+  const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour12: false });
 
   return (
     <div className="alerts-page">
@@ -203,14 +203,14 @@ export function AlertsIntegrations() {
                 </td>
               </tr>
             ) : (
-              alertHistory.map((a) => (
+              alertHistory.map((a: any) => (
                 <tr key={a.id}>
-                  <td>{fmtTime(a.timestamp)}</td>
-                  <td>{a.url.length > 50 ? a.url.slice(0, 50) + '…' : a.url}</td>
+                  <td>{fmtTime(a.dispatched_at)}</td>
+                  <td>{a.webhook_url?.length > 50 ? a.webhook_url.slice(0, 50) + '…' : a.webhook_url}</td>
                   <td>
-                    <span className="dispatch-ok">{a.status === 'success' || a.status === 'ok' ? 'OK' : a.status}</span>
+                    <span className="dispatch-ok">{a.success ? 'OK' : 'FAIL'}</span>
                   </td>
-                  <td>{a.status === 'success' || a.status === 'ok' ? '200' : '—'}</td>
+                  <td>{a.status_code || '—'}</td>
                 </tr>
               ))
             )}
