@@ -90,7 +90,7 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
   }, [withSession]);
 
   const fetchDepartments = useCallback(() => {
-    fetch(`${API_URL}/api/reports/departments`)
+    fetch(`${API_URL}/reports/departments`)
       .then((r) => r.json())
       .then((d) => setDepartments(d.departments ?? {}))
       .catch(() => {});
@@ -136,7 +136,7 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
     setAddingDept(true);
     setDeptError('');
     try {
-      const res = await fetch(`${API_URL}/api/reports/departments`, {
+      const res = await fetch(`${API_URL}/reports/departments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newDeptName.trim(), email: newDeptEmail.trim() }),
@@ -155,7 +155,7 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
 
   const deleteDept = async (name: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/reports/departments/${encodeURIComponent(name)}`, {
+      const res = await fetch(`${API_URL}/reports/departments/${encodeURIComponent(name)}`, {
         method: 'DELETE',
       });
       if (res.ok) {
@@ -171,7 +171,7 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
     setSending(true);
     setEmailStatus('');
     try {
-      const res = await fetch(`${API_URL}/api/reports/email`, {
+      const res = await fetch(`${API_URL}/reports/email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

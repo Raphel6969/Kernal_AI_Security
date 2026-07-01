@@ -224,7 +224,7 @@ func (s *Server) handleAnalyzeLLMExplain(w http.ResponseWriter, r *http.Request)
 	}
 
 	explanation := s.groqExplain(req.Command, req.Classification, req.RiskScore, req.MatchedRules)
-	writeJSON(w, http.StatusOK, map[string]string{"explanation": explanation})
+	writeJSON(w, http.StatusOK, map[string]string{"llm_explanation": explanation})
 }
 
 // ── Agent Events ──────────────────────────────────────────────────────────────
@@ -342,8 +342,8 @@ func (s *Server) handleEventLLMExplain(w http.ResponseWriter, r *http.Request) {
 	s.hub.BroadcastEvent(event)
 
 	writeJSON(w, http.StatusOK, map[string]string{
-		"event_id":    id,
-		"explanation": explanation,
+		"event_id":        id,
+		"llm_explanation": explanation,
 	})
 }
 

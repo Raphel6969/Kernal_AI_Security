@@ -40,11 +40,12 @@ export function ChatWidget() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_URL}/api/chat`, {
+      const res = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+          message: text,
+          history: messages.map((m) => ({ role: m.role, content: m.content })),
         }),
       });
 
@@ -53,8 +54,8 @@ export function ChatWidget() {
         throw new Error(errData.detail || `Server error ${res.status}`);
       }
 
-      const data = await res.json() as { reply: string };
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }]);
+      const data = await res.json() as { response: string };
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reach AEGIX Assistant.');
     } finally {
