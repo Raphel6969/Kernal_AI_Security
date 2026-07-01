@@ -35,7 +35,8 @@ export function AlertsIntegrations() {
     try {
       const res = await fetch(`${API_URL}/webhooks`);
       if (!res.ok) throw new Error('Failed to load webhooks');
-      setWebhooks(await res.json());
+      const data = await res.json();
+      setWebhooks(data.webhooks ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Load failed');
     }
@@ -44,7 +45,10 @@ export function AlertsIntegrations() {
   const loadHistory = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/alerts/history?limit=50`);
-      if (res.ok) setAlertHistory(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setAlertHistory(data.alerts ?? []);
+      }
     } catch { /* ignore */ }
     setRefreshCount((c) => c + 1);
   }, []);

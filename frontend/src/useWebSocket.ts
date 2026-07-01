@@ -96,19 +96,36 @@ export function useWebSocket(sessionToken?: string) {
 
       socket.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data) as SecurityEvent;
-          console.log(`📨 Received event: ${data.command.substring(0, 40)} (${data.classification})`);
-          // Always prepend — deduplication handled by React state updater below
-          setEvents((prev) => {
-            // If we already have this exact event, update it in place (e.g. remediation badge)
-            const exists = prev.findIndex((e) => e.id === data.id);
-            if (exists !== -1) {
-              const updated = [...prev];
-              updated[exists] = data;
-              return updated;
+          const payloads = (event.data as string).split('\n').filter((s) => s.trim() !== '');
+          const newEvents: SecurityEvent[] = [];
+          
+          for (const payloadStr of payloads) {
+            try {
+              const raw = JSON.parse(payloadStr);
+              if (raw.event) {
+                newEvents.push(raw.event as SecurityEvent);
+              }
+            } catch (e) {
+              console.warn('ws: failed to parse individual payload', e);
             }
-            seenEventIdsRef.current.add(data.id);
-            return [data, ...prev].slice(0, 1000);
+          }
+
+          if (newEvents.length === 0) return;
+
+          console.log(`📨 Received ${newEvents.length} batched event(s)`);
+          
+          setEvents((prev) => {
+            let updated = [...prev];
+            for (const data of newEvents) {
+              const exists = updated.findIndex((e) => e.id === data.id);
+              if (exists !== -1) {
+                updated[exists] = data;
+              } else {
+                seenEventIdsRef.current.add(data.id);
+                updated.unshift(data);
+              }
+            }
+            return updated.slice(0, 1000);
           });
         } catch (e) {
           console.error('Failed to parse event:', e);
