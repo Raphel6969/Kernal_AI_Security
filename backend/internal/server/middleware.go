@@ -7,6 +7,8 @@
 package server
 
 import (
+	"bufio"
+	"errors"
 	"log/slog"
 	"net"
 	"net/http"
@@ -42,6 +44,13 @@ type responseWriter struct {
 func (rw *responseWriter) WriteHeader(status int) {
 	rw.status = status
 	rw.ResponseWriter.WriteHeader(status)
+}
+
+func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := rw.ResponseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+	return nil, nil, errors.New("http.Hijacker not supported")
 }
 
 // ── CORS Middleware ───────────────────────────────────────────────────────────
