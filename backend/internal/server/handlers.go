@@ -1,8 +1,7 @@
 // Package server — HTTP handlers, Server struct, and session store.
 //
-// The Server struct holds all dependencies and exposes handler methods.
-// Phase 3 implements all core endpoints fully; Phase 4 handlers are stubbed
-// with correct response shapes so the React frontend works immediately.
+// Services bundles all Phase 4 dependencies.
+// All Phase 3 stubs are replaced with real implementations here.
 package server
 
 import (
@@ -20,11 +19,27 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/alerts"
+	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/chat"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/config"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/detector"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/model"
+	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/notification"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/store"
 )
+
+// Prevent unused import for chat package.
+var _ = chat.ChatMessage{}
+
+// ── Services ──────────────────────────────────────────────────────────────────
+
+// Services bundles Phase 4 external dependencies injected into the Server.
+type Services struct {
+	Alerts        *alerts.AlertManager
+	Notifications *notification.NotificationStore
+	Email         *notification.EmailService
+	Groq          *chat.GroqClient // used for both explain AND chat
+}
 
 // ── Server ────────────────────────────────────────────────────────────────────
 
@@ -36,8 +51,8 @@ type Server struct {
 	pipeline *detector.Pipeline
 	hub      *Hub
 	sessions *sessionStore
+	svc      Services
 
-	// Remediation settings (in-memory, protected by mutex)
 	remMu       sync.RWMutex
 	remediation remediationConfig
 }
@@ -49,11 +64,12 @@ type remediationConfig struct {
 	Signal  string `json:"signal"`
 }
 
-// NewServer constructs a Server and starts the WebSocket hub.
+// NewServer constructs a fully wired Server and starts the WebSocket hub.
 func NewServer(
 	cfg *config.Settings,
 	hot store.HotStore,
 	pipeline *detector.Pipeline,
+	svc Services,
 ) *Server {
 	s := &Server{
 		cfg:      cfg,
@@ -61,6 +77,7 @@ func NewServer(
 		pipeline: pipeline,
 		hub:      NewHub(),
 		sessions: newSessionStore(time.Duration(cfg.SessionTTL) * time.Second),
+		svc:      svc,
 		remediation: remediationConfig{
 			Enabled: false,
 			Mode:    "kill",
@@ -88,30 +105,22 @@ func newSessionStore(ttl time.Duration) *sessionStore {
 	if ttl <= 0 {
 		ttl = time.Hour
 	}
-	s := &sessionStore{
-		sessions: make(map[string]sessionEntry),
-		ttl:      ttl,
-	}
+	s := &sessionStore{sessions: make(map[string]sessionEntry), ttl: ttl}
 	go s.cleanup()
 	return s
 }
 
-// Create generates a new (token, sessionID) pair and stores it.
 func (ss *sessionStore) Create() (token, sessionID string) {
-	tb := make([]byte, 32)
-	sb := make([]byte, 16)
+	tb, sb := make([]byte, 32), make([]byte, 16)
 	rand.Read(tb) //nolint:errcheck
 	rand.Read(sb) //nolint:errcheck
-	token = hex.EncodeToString(tb)
-	sessionID = hex.EncodeToString(sb)
-
+	token, sessionID = hex.EncodeToString(tb), hex.EncodeToString(sb)
 	ss.mu.Lock()
 	ss.sessions[token] = sessionEntry{sessionID: sessionID, expiresAt: time.Now().Add(ss.ttl)}
 	ss.mu.Unlock()
 	return
 }
 
-// Validate returns the sessionID if the token is valid and not expired.
 func (ss *sessionStore) Validate(token string) (sessionID string, ok bool) {
 	ss.mu.RLock()
 	entry, found := ss.sessions[token]
@@ -142,22 +151,13 @@ func (ss *sessionStore) cleanup() {
 
 // ── Health ────────────────────────────────────────────────────────────────────
 
-// GET /healthz — always healthy if the process is running.
 func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status":  "healthy",
-		"version": "go-v1.0",
-	})
+	writeJSON(w, http.StatusOK, map[string]string{"status": "healthy", "version": "go-v1.0"})
 }
 
-// GET /readyz — healthy only when the SQLite store is accessible.
 func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
-	_, err := s.hot.Size(nil, nil)
-	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]string{
-			"status": "not_ready",
-			"error":  err.Error(),
-		})
+	if _, err := s.hot.Size(nil, nil); err != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "not_ready", "error": err.Error()})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
@@ -165,7 +165,6 @@ func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
 
 // ── Session ───────────────────────────────────────────────────────────────────
 
-// GET /session — creates a new session token and returns it.
 func (s *Server) handleGetSession(w http.ResponseWriter, r *http.Request) {
 	token, sessionID := s.sessions.Create()
 	writeJSON(w, http.StatusOK, map[string]string{
@@ -176,7 +175,6 @@ func (s *Server) handleGetSession(w http.ResponseWriter, r *http.Request) {
 
 // ── Analysis ─────────────────────────────────────────────────────────────────
 
-// analyzeRequest is the JSON body for POST /analyze.
 type analyzeRequest struct {
 	Command             string  `json:"command"`
 	AgentID             *string `json:"agent_id"`
@@ -185,7 +183,6 @@ type analyzeRequest struct {
 	SystemMemoryPercent float64 `json:"system_memory_percent"`
 }
 
-// POST /analyze — runs the detection pipeline and stores the result.
 func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	var req analyzeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -196,51 +193,42 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "command must not be empty")
 		return
 	}
-
-	// Override session from header/query if session mode is active.
 	if s.cfg.SessionMode {
 		if sid := s.sessionFromRequest(r); sid != nil {
 			req.SessionID = sid
 		}
 	}
 
-	result := s.pipeline.Detect(req.Command, req.ProcessMemoryMB, req.SystemMemoryPercent)
-
-	now := unixNow()
-	event := &model.SecurityEvent{
-		ID: newEventID(),
-		ExecveEvent: model.ExecveEvent{
-			Command:             req.Command,
-			AgentID:             req.AgentID,
-			SessionID:           req.SessionID,
-			Timestamp:           now,
-			ProcessMemoryMB:     req.ProcessMemoryMB,
-			SystemMemoryPercent: req.SystemMemoryPercent,
-		},
-		DetectionResult: *result,
-		DetectedAt:      now,
-	}
-
-	if err := s.hot.Append(event); err != nil {
-		slog.Error("handleAnalyze: store append", "err", err)
+	event := s.buildAndStoreEvent(req.Command, req.AgentID, req.SessionID,
+		0, 0, 0, 0, "", "", req.ProcessMemoryMB, req.SystemMemoryPercent, unixNow())
+	if event == nil {
 		writeErr(w, http.StatusInternalServerError, "failed to store event")
 		return
 	}
 
-	s.hub.BroadcastEvent(event)
+	s.postProcess(event)
 	writeJSON(w, http.StatusOK, event.Flatten())
 }
 
-// POST /analyze/llm-explain — Tier C Groq explanation (Phase 4).
+// POST /analyze/llm-explain — one-shot Groq explanation without storing.
 func (s *Server) handleAnalyzeLLMExplain(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"explanation": "LLM explanations are implemented in Phase 4.",
-	})
+	var req struct {
+		Command        string   `json:"command"`
+		Classification string   `json:"classification"`
+		RiskScore      float64  `json:"risk_score"`
+		MatchedRules   []string `json:"matched_rules"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	explanation := s.groqExplain(req.Command, req.Classification, req.RiskScore, req.MatchedRules)
+	writeJSON(w, http.StatusOK, map[string]string{"explanation": explanation})
 }
 
 // ── Agent Events ──────────────────────────────────────────────────────────────
 
-// agentEventRequest is the JSON body for POST /agent/events.
 type agentEventRequest struct {
 	Command             string  `json:"command"`
 	PID                 int64   `json:"pid"`
@@ -256,59 +244,32 @@ type agentEventRequest struct {
 	SessionID           *string `json:"session_id"`
 }
 
-// POST /agent/events — ingests an execve event from a remote eBPF agent.
 func (s *Server) handleAgentEvents(w http.ResponseWriter, r *http.Request) {
 	var req agentEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErr(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-
-	result := s.pipeline.Detect(req.Command, req.ProcessMemoryMB, req.SystemMemoryPercent)
-
-	now := unixNow()
 	ts := req.Timestamp
 	if ts == 0 {
-		ts = now
+		ts = unixNow()
 	}
 
-	event := &model.SecurityEvent{
-		ID: newEventID(),
-		ExecveEvent: model.ExecveEvent{
-			PID:                 req.PID,
-			PPID:                req.PPID,
-			UID:                 req.UID,
-			GID:                 req.GID,
-			Command:             req.Command,
-			ArgvStr:             req.ArgvStr,
-			Comm:                req.Comm,
-			Timestamp:           ts,
-			ProcessMemoryMB:     req.ProcessMemoryMB,
-			SystemMemoryPercent: req.SystemMemoryPercent,
-			AgentID:             req.AgentID,
-			SessionID:           req.SessionID,
-		},
-		DetectionResult: *result,
-		DetectedAt:      now,
-	}
-
-	if err := s.hot.Append(event); err != nil {
-		slog.Error("handleAgentEvents: store append", "err", err)
+	event := s.buildAndStoreEvent(req.Command, req.AgentID, req.SessionID,
+		req.PID, req.PPID, req.UID, req.GID,
+		req.ArgvStr, req.Comm,
+		req.ProcessMemoryMB, req.SystemMemoryPercent, ts)
+	if event == nil {
 		writeErr(w, http.StatusInternalServerError, "failed to store event")
 		return
 	}
 
-	s.hub.BroadcastEvent(event)
-
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status":   "ok",
-		"event_id": event.ID,
-	})
+	s.postProcess(event)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "event_id": event.ID})
 }
 
 // ── Event History ─────────────────────────────────────────────────────────────
 
-// GET /events — returns recent events from the hot store.
 func (s *Server) handleGetEvents(w http.ResponseWriter, r *http.Request) {
 	limit := queryInt(r, "limit", 100)
 	agentID := queryString(r, "agent_id")
@@ -316,37 +277,27 @@ func (s *Server) handleGetEvents(w http.ResponseWriter, r *http.Request) {
 
 	events, err := s.hot.GetRecent(limit, agentID, sessionID)
 	if err != nil {
-		slog.Error("handleGetEvents: GetRecent", "err", err)
 		writeErr(w, http.StatusInternalServerError, "failed to fetch events")
 		return
 	}
-
 	flat := make([]map[string]any, len(events))
 	for i, e := range events {
 		flat[i] = e.Flatten()
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"events": flat,
-		"count":  len(flat),
-	})
+	writeJSON(w, http.StatusOK, map[string]any{"events": flat, "count": len(flat)})
 }
 
-// DELETE /events — clears event history.
 func (s *Server) handleClearEvents(w http.ResponseWriter, r *http.Request) {
-	sessionID := s.resolveSession(r)
-	if err := s.hot.Clear(sessionID); err != nil {
+	if err := s.hot.Clear(s.resolveSession(r)); err != nil {
 		writeErr(w, http.StatusInternalServerError, "failed to clear events")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// GET /events/{id} — fetches a single event.
 func (s *Server) handleGetEvent(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	sessionID := s.resolveSession(r)
-
-	event, err := s.hot.GetEvent(id, sessionID)
+	event, err := s.hot.GetEvent(id, s.resolveSession(r))
 	if err != nil || event == nil {
 		writeErr(w, http.StatusNotFound, fmt.Sprintf("event %q not found", id))
 		return
@@ -354,12 +305,9 @@ func (s *Server) handleGetEvent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, event.Flatten())
 }
 
-// GET /events/{id}/explain — returns the rule explanation for an event.
 func (s *Server) handleGetEventExplain(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	sessionID := s.resolveSession(r)
-
-	event, err := s.hot.GetEvent(id, sessionID)
+	event, err := s.hot.GetEvent(id, s.resolveSession(r))
 	if err != nil || event == nil {
 		writeErr(w, http.StatusNotFound, fmt.Sprintf("event %q not found", id))
 		return
@@ -370,18 +318,37 @@ func (s *Server) handleGetEventExplain(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /events/{id}/llm-explain — async Groq explanation (Phase 4 stub).
+// POST /events/{id}/llm-explain — call Groq, persist, and broadcast.
 func (s *Server) handleEventLLMExplain(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	event, err := s.hot.GetEvent(id, nil)
+	if err != nil || event == nil {
+		writeErr(w, http.StatusNotFound, fmt.Sprintf("event %q not found", id))
+		return
+	}
+
+	explanation := s.groqExplain(
+		event.ExecveEvent.Command,
+		event.DetectionResult.Classification,
+		event.DetectionResult.RiskScore,
+		event.DetectionResult.MatchedRules,
+	)
+
+	// Persist and broadcast the updated event.
+	if err := s.hot.UpdateLLMExplanation(id, explanation); err != nil {
+		slog.Warn("handleEventLLMExplain: UpdateLLMExplanation", "err", err)
+	}
+	event.DetectionResult.LLMExplanation = explanation
+	s.hub.BroadcastEvent(event)
+
 	writeJSON(w, http.StatusOK, map[string]string{
 		"event_id":    id,
-		"explanation": "LLM explanations are implemented in Phase 4.",
+		"explanation": explanation,
 	})
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
-// GET /stats — returns event classification counts.
 func (s *Server) handleGetStats(w http.ResponseWriter, r *http.Request) {
 	agentID := queryString(r, "agent_id")
 	sessionID := s.resolveSession(r)
@@ -396,13 +363,12 @@ func (s *Server) handleGetStats(w http.ResponseWriter, r *http.Request) {
 		"safe":           safe,
 		"suspicious":     suspicious,
 		"malicious":      malicious,
-		"risk_score_avg": 0.0, // TODO: aggregate in store
+		"risk_score_avg": 0.0,
 	})
 }
 
-// ── Settings: Thresholds ──────────────────────────────────────────────────────
+// ── Settings ──────────────────────────────────────────────────────────────────
 
-// GET /settings/thresholds — returns current detection thresholds.
 func (s *Server) handleGetThresholds(w http.ResponseWriter, r *http.Request) {
 	susp, mal := s.pipeline.GetThresholds()
 	writeJSON(w, http.StatusOK, map[string]float64{
@@ -411,7 +377,6 @@ func (s *Server) handleGetThresholds(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /settings/thresholds — updates detection thresholds at runtime.
 func (s *Server) handlePostThresholds(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Suspicious float64 `json:"suspicious_threshold"`
@@ -433,9 +398,6 @@ func (s *Server) handlePostThresholds(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ── Settings: Remediation ─────────────────────────────────────────────────────
-
-// GET /settings/remediation — returns current remediation settings.
 func (s *Server) handleGetRemediation(w http.ResponseWriter, r *http.Request) {
 	s.remMu.RLock()
 	rem := s.remediation
@@ -443,7 +405,6 @@ func (s *Server) handleGetRemediation(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, rem)
 }
 
-// POST /settings/remediation — updates remediation settings.
 func (s *Server) handlePostRemediation(w http.ResponseWriter, r *http.Request) {
 	var req remediationConfig
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -456,7 +417,6 @@ func (s *Server) handlePostRemediation(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "settings": req})
 }
 
-// POST /settings/remediation/test — tests remediation on a PID (Phase 5 stub).
 func (s *Server) handleRemediationTest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status": "ok",
@@ -466,130 +426,296 @@ func (s *Server) handleRemediationTest(w http.ResponseWriter, r *http.Request) {
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 
-// GET /ws — upgrades the connection to WebSocket.
-// Replays the last 100 events to the new client immediately after connecting.
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error("ws: upgrade", "err", err)
 		return
 	}
-
 	sessionID := s.sessionFromRequest(r)
-	client := &Client{
-		hub:       s.hub,
-		conn:      conn,
-		send:      make(chan []byte, 256),
-		sessionID: sessionID,
-	}
+	client := &Client{hub: s.hub, conn: conn, send: make(chan []byte, 256), sessionID: sessionID}
 	s.hub.register <- client
-
-	// Replay last 100 events before starting pumps.
 	go s.replayEvents(client, sessionID)
-
 	go client.writePump()
 	client.readPump()
 }
 
-// replayEvents sends the last 100 stored events to a newly connected client.
 func (s *Server) replayEvents(client *Client, sessionID *string) {
 	events, err := s.hot.GetRecent(100, nil, sessionID)
 	if err != nil {
-		slog.Error("ws: replay GetRecent", "err", err)
 		return
 	}
-
-	// Events come back newest-first; reverse for chronological order.
 	for i, j := 0, len(events)-1; i < j; i, j = i+1, j-1 {
 		events[i], events[j] = events[j], events[i]
 	}
-
 	for _, event := range events {
-		payload, err := json.Marshal(map[string]any{
-			"type":  "replay_event",
-			"event": event.Flatten(),
-		})
+		payload, err := json.Marshal(map[string]any{"type": "replay_event", "event": event.Flatten()})
 		if err != nil {
 			continue
 		}
 		select {
 		case client.send <- payload:
 		default:
-			return // client's buffer full
+			return
 		}
 	}
 }
 
-// ── Phase 4 Stubs ─────────────────────────────────────────────────────────────
-// These return the correct response shapes so the frontend doesn't break.
-// Full implementations land in Phase 4.
+// ── Webhooks ──────────────────────────────────────────────────────────────────
 
 func (s *Server) handleGetWebhooks(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"webhooks": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{"webhooks": s.svc.Alerts.ListWebhooks()})
 }
 
 func (s *Server) handlePostWebhook(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "message": "Webhooks implemented in Phase 4."})
+	var req struct {
+		URL               string `json:"url"`
+		TriggerSafe       bool   `json:"trigger_safe"`
+		TriggerSuspicious bool   `json:"trigger_suspicious"`
+		TriggerMalicious  bool   `json:"trigger_malicious"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	wh, err := s.svc.Alerts.AddWebhook(req.URL, req.TriggerSafe, req.TriggerSuspicious, req.TriggerMalicious)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	// Notify via WebSocket
+	s.hub.BroadcastRaw(mustMarshal(map[string]any{"type": "webhook_added", "webhook": wh}))
+	writeJSON(w, http.StatusCreated, wh)
 }
 
 func (s *Server) handleDeleteWebhook(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if !s.svc.Alerts.RemoveWebhook(id) {
+		writeErr(w, http.StatusNotFound, fmt.Sprintf("webhook %q not found", id))
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// ── Alert History ─────────────────────────────────────────────────────────────
+
 func (s *Server) handleGetAlertHistory(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"alerts": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{"alerts": s.svc.Alerts.GetHistory()})
 }
 
+// ── Notifications ─────────────────────────────────────────────────────────────
+
 func (s *Server) handleGetNotifications(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"notifications": []any{}, "unread_count": 0})
+	sid := s.resolveSession(r)
+	items := s.svc.Notifications.List(sid)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"notifications": items,
+		"unread_count":  s.svc.Notifications.UnreadCount(sid),
+	})
 }
 
 func (s *Server) handlePostNotification(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	var n model.Notification
+	if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	n.SessionID = s.resolveSession(r)
+	s.svc.Notifications.Add(&n)
+	writeJSON(w, http.StatusCreated, n)
 }
 
 func (s *Server) handleMarkNotificationRead(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := s.svc.Notifications.MarkRead(id, s.resolveSession(r)); err != nil {
+		writeErr(w, http.StatusNotFound, err.Error())
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (s *Server) handleMarkAllNotificationsRead(w http.ResponseWriter, r *http.Request) {
+	s.svc.Notifications.MarkAllRead(s.resolveSession(r))
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (s *Server) handleDeleteNotification(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := s.svc.Notifications.Delete(id, s.resolveSession(r)); err != nil {
+		writeErr(w, http.StatusNotFound, err.Error())
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (s *Server) handleClearNotifications(w http.ResponseWriter, r *http.Request) {
+	s.svc.Notifications.Clear(s.resolveSession(r))
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// ── Reports / Departments ─────────────────────────────────────────────────────
+
 func (s *Server) handleGetDepartments(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"departments": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{"departments": s.svc.Notifications.GetDepartments()})
 }
 
 func (s *Server) handlePostDepartments(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	var req struct {
+		Departments []model.Department `json:"departments"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	s.svc.Notifications.SetDepartments(req.Departments)
+	writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "departments": req.Departments})
 }
 
 func (s *Server) handleSendEmailReport(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status":  "ok",
-		"message": "Email reports are implemented in Phase 4.",
+	var req struct {
+		Format     string   `json:"format"`
+		EventLimit int      `json:"event_limit"`
+		ExtraTo    []string `json:"extra_to"`
+		SessionID  *string  `json:"session_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Format == "" {
+		req.Format = "html"
+	}
+	limit := req.EventLimit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	sid := s.resolveSession(r)
+	if req.SessionID != nil {
+		sid = req.SessionID
+	}
+	events, _ := s.hot.GetRecent(limit, nil, sid)
+
+	depts := s.svc.Notifications.GetDepartments()
+	if err := s.svc.Email.SendReport(events, req.Format, depts, req.ExtraTo); err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":     "ok",
+		"message":    fmt.Sprintf("Report sent to %d department(s)", len(depts)+len(req.ExtraTo)),
+		"event_count": len(events),
 	})
 }
 
+// ── Chat ──────────────────────────────────────────────────────────────────────
+
 func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Message string             `json:"message"`
+		History []chat.ChatMessage `json:"history"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if strings.TrimSpace(req.Message) == "" {
+		writeErr(w, http.StatusBadRequest, "message must not be empty")
+		return
+	}
+
+	response, err := s.svc.Groq.Chat(req.Message, req.History)
+	if err != nil {
+		slog.Error("handleChat: groq", "err", err)
+		response = "I encountered an error. Please try again."
+	}
 	writeJSON(w, http.StatusOK, map[string]string{
-		"response": "AI chat is implemented in Phase 4.",
+		"response": response,
 		"type":     "text",
 	})
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Internal helpers ──────────────────────────────────────────────────────────
 
-// sessionFromRequest extracts a session ID from X-Session-Token header or
-// session_token query param when session mode is active.
+// buildAndStoreEvent runs detection, creates a SecurityEvent, and appends it to
+// the hot store.  Returns nil on storage failure.
+func (s *Server) buildAndStoreEvent(
+	command string,
+	agentID, sessionID *string,
+	pid, ppid, uid, gid int64,
+	argvStr, comm string,
+	processMem, systemMem float64,
+	ts float64,
+) *model.SecurityEvent {
+	result := s.pipeline.Detect(command, processMem, systemMem)
+	event := &model.SecurityEvent{
+		ID: newEventID(),
+		ExecveEvent: model.ExecveEvent{
+			PID:                 pid,
+			PPID:                ppid,
+			UID:                 uid,
+			GID:                 gid,
+			Command:             command,
+			ArgvStr:             argvStr,
+			Comm:                comm,
+			Timestamp:           ts,
+			ProcessMemoryMB:     processMem,
+			SystemMemoryPercent: systemMem,
+			AgentID:             agentID,
+			SessionID:           sessionID,
+		},
+		DetectionResult: *result,
+		DetectedAt:      unixNow(),
+	}
+	if err := s.hot.Append(event); err != nil {
+		slog.Error("buildAndStoreEvent: Append", "err", err)
+		return nil
+	}
+	return event
+}
+
+// postProcess runs after every new event: WebSocket broadcast, alert dispatch,
+// and automatic notification creation.
+func (s *Server) postProcess(event *model.SecurityEvent) {
+	s.hub.BroadcastEvent(event)
+
+	if s.svc.Alerts != nil {
+		s.svc.Alerts.DispatchAsync(event)
+	}
+
+	if s.svc.Notifications != nil {
+		s.maybeCreateNotification(event)
+	}
+}
+
+// maybeCreateNotification auto-creates a notification for suspicious/malicious events.
+func (s *Server) maybeCreateNotification(event *model.SecurityEvent) {
+	cls := event.DetectionResult.Classification
+	if cls == "safe" {
+		return
+	}
+	title := "⚠️ Suspicious Command Detected"
+	if cls == "malicious" {
+		title = "🚨 Malicious Command Detected"
+	}
+	s.svc.Notifications.Add(&model.Notification{
+		Category:  "logs",
+		Title:     title,
+		Message:   fmt.Sprintf("%s | Risk: %.0f%%", truncate(event.ExecveEvent.Command, 60), event.DetectionResult.RiskScore),
+		SessionID: event.ExecveEvent.SessionID,
+	})
+}
+
+// groqExplain calls the Groq client if configured, otherwise returns a graceful empty string.
+func (s *Server) groqExplain(command, classification string, riskScore float64, rules []string) string {
+	if s.svc.Groq == nil {
+		return ""
+	}
+	expl, _ := s.svc.Groq.Explain(command, classification, riskScore, rules)
+	return expl
+}
+
+// sessionFromRequest extracts a validated sessionID from the request.
 func (s *Server) sessionFromRequest(r *http.Request) *string {
 	if !s.cfg.SessionMode {
 		return nil
@@ -608,8 +734,7 @@ func (s *Server) sessionFromRequest(r *http.Request) *string {
 	return &sessionID
 }
 
-// resolveSession returns the session ID for filtering — from the request
-// when session mode is active, or from the query param "session_id" directly.
+// resolveSession returns the session filter for store queries.
 func (s *Server) resolveSession(r *http.Request) *string {
 	if s.cfg.SessionMode {
 		return s.sessionFromRequest(r)
@@ -617,18 +742,16 @@ func (s *Server) resolveSession(r *http.Request) *string {
 	return queryString(r, "session_id")
 }
 
-// newEventID generates a short event ID in the same format as the Python backend.
-// Format: "evt_" + first 8 hex chars of a UUID (e.g., "evt_550e8400").
+// ── Utility ───────────────────────────────────────────────────────────────────
+
 func newEventID() string {
 	return "evt_" + strings.ReplaceAll(uuid.New().String(), "-", "")[:8]
 }
 
-// unixNow returns the current Unix timestamp as a float64 with sub-second precision.
 func unixNow() float64 {
 	return float64(time.Now().UnixNano()) / 1e9
 }
 
-// writeJSON writes a JSON response with the given HTTP status code.
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -637,12 +760,10 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
-// writeErr writes a standard JSON error response.
 func writeErr(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
 
-// queryInt reads an integer query parameter, returning def if missing or invalid.
 func queryInt(r *http.Request, key string, def int) int {
 	if v := r.URL.Query().Get(key); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
@@ -652,7 +773,6 @@ func queryInt(r *http.Request, key string, def int) int {
 	return def
 }
 
-// queryString reads a string query parameter, returning nil if missing.
 func queryString(r *http.Request, key string) *string {
 	if v := r.URL.Query().Get(key); v != "" {
 		return &v
@@ -660,5 +780,17 @@ func queryString(r *http.Request, key string) *string {
 	return nil
 }
 
-// Prevent unused import errors for fmt package.
+func truncate(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + "…"
+}
+
+func mustMarshal(v any) []byte {
+	b, _ := json.Marshal(v)
+	return b
+}
+
+// Prevent unused import.
 var _ = fmt.Sprintf
