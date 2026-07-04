@@ -35,12 +35,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('aegix_user', JSON.stringify(u));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Call the logout endpoint to clear the HTTP-only cookie first
+    try {
+      await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch {
+      // Ignore network errors, proceed to clear local state anyway
+    }
+
     setUser(null);
     setAccessTokenState(null);
     localStorage.removeItem('aegix_user');
-    // Call the logout endpoint to clear the HTTP-only cookie
-    fetch(`${API_URL}/auth/logout`, { method: 'POST' }).catch(() => {});
   };
 
   return (
