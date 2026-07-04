@@ -39,6 +39,7 @@ type Services struct {
 	Notifications *notification.NotificationStore
 	Email         *notification.EmailService
 	Groq          *chat.GroqClient // used for both explain AND chat
+	DB            store.ColdStore  // Used for User Management and Auth
 }
 
 // ── Server ────────────────────────────────────────────────────────────────────

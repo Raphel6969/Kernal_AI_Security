@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from './config';
 import type { Theme } from './types';
-import { Cpu, Shield, Database, Copy, RefreshCw, KeyRound, HardDrive } from 'lucide-react';
+import { Cpu, Shield, Database, Copy, RefreshCw, KeyRound, HardDrive, LogOut } from 'lucide-react';
+import { useAuth } from './AuthContext';
 
 interface SystemSettingsProps {
   theme: Theme;
@@ -24,6 +25,7 @@ export function SystemSettings({
   apiOnline,
   wsConnected,
 }: SystemSettingsProps) {
+  const { logout } = useAuth();
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   const [sensitivity, setSensitivity] = useState(40);
   const [cacheSize, setCacheSize] = useState(() => {
@@ -348,6 +350,26 @@ export function SystemSettings({
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="glass-card settings-section" style={{ border: '1px solid var(--neon-red)' }}>
+        <div className="settings-section__header">
+          <LogOut size={18} style={{ color: 'var(--neon-red)' }} />
+          <div>
+            <strong>Session Administration</strong>
+            <p>Disconnect from the security console and clear active credentials.</p>
+          </div>
+        </div>
+        <div style={{ marginTop: 20 }}>
+          <button 
+            type="button" 
+            className="btn-danger-outline" 
+            style={{ width: '100%', justifyContent: 'center', display: 'flex', gap: '8px', alignItems: 'center' }} 
+            onClick={logout}
+          >
+            <LogOut size={14} /> LOGOUT SESSION
+          </button>
         </div>
       </div>
     </div>

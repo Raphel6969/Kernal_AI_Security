@@ -98,6 +98,15 @@ func (ps *PostgresStore) migrate(ctx context.Context) error {
 			ON security_events(session_id, timestamp DESC);
 		CREATE INDEX IF NOT EXISTS pg_idx_agent_ts
 			ON security_events(agent_id, timestamp DESC);
+
+		CREATE TABLE IF NOT EXISTS users (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			email TEXT UNIQUE NOT NULL,
+			password_hash TEXT NOT NULL,
+			role TEXT NOT NULL DEFAULT 'viewer',
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		);
 		CREATE INDEX IF NOT EXISTS pg_idx_classification
 			ON security_events(classification);
 		CREATE INDEX IF NOT EXISTS pg_idx_detected_at
@@ -388,4 +397,47 @@ func maskDSN(dsn string) string {
 		}
 	}
 	return dsn
+}
+
+// ── User Management ───────────────────────────────────────────────────────────
+
+func (ps *PostgresStore) CreateUser(ctx context.Context, u *model.User) error {
+	query := `
+		INSERT INTO users (id, email, password_hash, role, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`
+	_, err := ps.pool.Exec(ctx, query, u.ID, u.Email, u.PasswordHash, u.Role, u.CreatedAt, u.UpdatedAt)
+	return err
+}
+
+func (ps *PostgresStore) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	query := `
+		SELECT id, email, password_hash, role, created_at, updated_at
+		FROM users
+		WHERE email = $1
+	`
+	var u model.User
+	err := ps.pool.QueryRow(ctx, query, email).Scan(
+		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (ps *PostgresStore) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+	query := `
+		SELECT id, email, password_hash, role, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	`
+	var u model.User
+	err := ps.pool.QueryRow(ctx, query, id).Scan(
+		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
 }

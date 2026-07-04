@@ -13,6 +13,13 @@ envs/
 # SQLite DB
 data/*.db
 
+# Postgres Docker volume data (never commit raw DB files)
+data/postgres/
+
+# Go binary
+backend/aegix.exe
+backend/aegix
+
 # Node
 node_modules/
 frontend/node_modules/

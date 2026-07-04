@@ -7,7 +7,7 @@ interface WebhookRecord {
   id: string;
   url: string;
   is_active: boolean;
-  created_at: number;
+  created_at: string;
   trigger_safe: boolean;
   trigger_suspicious: boolean;
   trigger_malicious: boolean;

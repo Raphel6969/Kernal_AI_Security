@@ -125,6 +125,7 @@ func main() {
 		Notifications: notifStore,
 		Email:         emailService,
 		Groq:          groqClient,
+		DB:            cold,
 	}
 
 	// ── 7. HTTP Server ─────────────────────────────────────────────────────────

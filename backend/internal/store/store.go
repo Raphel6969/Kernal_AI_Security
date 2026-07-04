@@ -6,7 +6,11 @@
 //	SyncAgent — background goroutine that drains Hot → Cold
 package store
 
-import "github.com/Raphel6969/Kernal_AI_Security/backend/internal/model"
+import (
+	"context"
+
+	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/model"
+)
 
 // HotStore is the SQLite-backed synchronous event cache.
 // Every incoming event is written here first so dashboard reads are instant.
@@ -59,6 +63,15 @@ type HotStore interface {
 type ColdStore interface {
 	// UpsertBatch inserts a slice of events, ignoring duplicates (idempotent).
 	UpsertBatch(events []*model.SecurityEvent) error
+
+	// CreateUser registers a new user in the database.
+	CreateUser(ctx context.Context, u *model.User) error
+
+	// GetUserByEmail retrieves a user for authentication.
+	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
+
+	// GetUserByID retrieves a user by their UUID.
+	GetUserByID(ctx context.Context, id string) (*model.User, error)
 
 	// GetRecent returns up to limit events from Postgres.
 	GetRecent(limit int, agentID, sessionID *string) ([]*model.SecurityEvent, error)

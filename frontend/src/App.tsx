@@ -18,6 +18,10 @@ import {
 import aegixLogo from './assets/aegix-logo.png';
 import aegixLogoWhite from './assets/aegix_logo_white.jpeg';
 
+import { AuthProvider, useAuth } from './AuthContext';
+import { Login } from './Login';
+import { injectAuth } from './api';
+
 const NAV_ITEMS: { id: Page; label: string; icon: typeof Home }[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'monitor', label: 'Threat Monitor', icon: Shield },
@@ -71,12 +75,20 @@ function GlowingCursor() {
   );
 }
 
-function App() {
+function Dashboard() {
   const [apiStatus, setApiStatus] = useState<'connecting' | 'online' | 'offline'>('connecting');
   const [activePage, setActivePage] = useState<Page>('home');
   const [theme, setTheme] = useState<Theme>('dark');
   const [remediationEnabled, setRemediationEnabled] = useState(false);
   const [utcTime, setUtcTime] = useState('');
+
+  const { user, accessToken, setAccessToken } = useAuth();
+  
+  // Inject the auth state into the API fetch wrapper
+  useEffect(() => {
+    injectAuth(() => accessToken, setAccessToken);
+  }, [accessToken, setAccessToken]);
+
   const [sessionToken, setSessionToken] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('aegix_session_token');
@@ -169,9 +181,13 @@ function App() {
       .catch(console.error);
   }, []);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : prev === 'light' ? 'system' : 'dark'));
-  };
+  const toggleTheme = useCallback(() => {
+    setTheme(t => t === 'dark' ? 'light' : t === 'light' ? 'system' : 'dark');
+  }, []);
+
+  if (!user) {
+    return <Login />;
+  }
 
   const meta = PAGE_META[activePage];
   const eventCount = events.length >= 1000 ? '1K+' : events.length > 0 ? String(events.length) : '0';
@@ -291,5 +307,12 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <Dashboard />
+    </AuthProvider>
+  );
+}
+
 export type { Theme } from './types';
