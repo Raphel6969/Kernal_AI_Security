@@ -40,9 +40,9 @@ jobs:
       - name: 🔍 Lint (golangci-lint)
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.65.0   # first release with Go 1.25 toolchain support
+          version: v1.64.8
           working-directory: backend
-          args: --timeout=5m
+          args: --timeout=5m --go=1.24
 
   # ── Job 2: React Frontend ──────────────────────────────────────────────────
   frontend:
