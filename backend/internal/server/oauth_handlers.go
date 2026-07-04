@@ -26,7 +26,7 @@ var (
 )
 
 func getOAuthConfig(provider string) (*oauth2.Config, error) {
-	callbackURL := "http://localhost:8000/api/auth/" + provider + "/callback"
+	callbackURL := "http://localhost/api/auth/" + provider + "/callback"
 	
 	switch provider {
 	case "google":
