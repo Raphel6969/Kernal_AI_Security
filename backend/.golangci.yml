@@ -1,0 +1,36 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck        # Check for unchecked errors
+    - govet           # Reports suspicious constructs
+    - staticcheck     # State of the art Go static analysis
+    - unused          # Checks for unused code
+    - gosimple        # Simplify code
+    - ineffassign     # Detect ineffectual assignments
+    - bodyclose       # HTTP response body close check
+    - gocritic        # Various diagnostics
+    - noctx           # HTTP requests without context
+    - revive          # Replacement for golint
+
+linters-settings:
+  govet:
+    enable:
+      - shadow
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+
+issues:
+  exclude-rules:
+    # Ignore test files for some strict rules
+    - path: "_test\\.go"
+      linters:
+        - errcheck
+        - gocritic
+    # Ignore main.go for complexity
+    - path: "cmd/"
+      linters:
+        - gocritic
