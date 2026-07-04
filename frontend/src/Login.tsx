@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Loader2 } from 'lucide-react';
 import { API_URL } from './config';
 
 export const Login: React.FC = () => {
@@ -9,7 +9,22 @@ export const Login: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isCheckingOAuth, setIsCheckingOAuth] = useState(true);
   const { login } = useAuth();
+
+  useEffect(() => {
+    // Attempt to silently log in if returning from OAuth (valid HTTP-only cookie)
+    fetch(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        if (data.user && data.access_token) {
+          login(data.user, data.access_token);
+        }
+      })
+      .catch(() => {
+        setIsCheckingOAuth(false);
+      });
+  }, [login]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +57,20 @@ export const Login: React.FC = () => {
       setError(err.message);
     }
   };
+
+  if (isCheckingOAuth) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-dark)',
+      }}>
+        <Loader2 className="animate-spin" size={32} color="var(--neon-cyan)" />
+      </div>
+    );
+  }
 
   return (
     <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
