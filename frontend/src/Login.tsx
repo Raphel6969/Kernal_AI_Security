@@ -87,7 +87,32 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0 1rem 0' }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
+          <span style={{ padding: '0 1rem', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Or continue with</span>
+          <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            type="button" 
+            className="btn-outline" 
+            style={{ flex: 1, justifyContent: 'center', backgroundColor: '#18181b', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
+            onClick={() => window.location.href = `${API_URL}/auth/github/login`}
+          >
+            GitHub
+          </button>
+          <button 
+            type="button" 
+            className="btn-outline" 
+            style={{ flex: 1, justifyContent: 'center', backgroundColor: '#ffffff', color: '#000000', borderColor: '#ffffff' }}
+            onClick={() => window.location.href = `${API_URL}/auth/google/login`}
+          >
+            Google
+          </button>
+        </div>
+
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <button 
             type="button" 
             className="btn-outline" 

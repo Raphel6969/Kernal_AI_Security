@@ -107,6 +107,9 @@ func (ps *PostgresStore) migrate(ctx context.Context) error {
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		);
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT 'local';
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS provider_id TEXT NOT NULL DEFAULT '';
+		
 		CREATE INDEX IF NOT EXISTS pg_idx_classification
 			ON security_events(classification);
 		CREATE INDEX IF NOT EXISTS pg_idx_detected_at
@@ -403,22 +406,22 @@ func maskDSN(dsn string) string {
 
 func (ps *PostgresStore) CreateUser(ctx context.Context, u *model.User) error {
 	query := `
-		INSERT INTO users (id, email, password_hash, role, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO users (id, email, password_hash, auth_provider, provider_id, role, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
-	_, err := ps.pool.Exec(ctx, query, u.ID, u.Email, u.PasswordHash, u.Role, u.CreatedAt, u.UpdatedAt)
+	_, err := ps.pool.Exec(ctx, query, u.ID, u.Email, u.PasswordHash, u.Provider, u.ProviderID, u.Role, u.CreatedAt, u.UpdatedAt)
 	return err
 }
 
 func (ps *PostgresStore) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	query := `
-		SELECT id, email, password_hash, role, created_at, updated_at
+		SELECT id, email, password_hash, auth_provider, provider_id, role, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
 	var u model.User
 	err := ps.pool.QueryRow(ctx, query, email).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt,
+		&u.ID, &u.Email, &u.PasswordHash, &u.Provider, &u.ProviderID, &u.Role, &u.CreatedAt, &u.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -428,16 +431,31 @@ func (ps *PostgresStore) GetUserByEmail(ctx context.Context, email string) (*mod
 
 func (ps *PostgresStore) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	query := `
-		SELECT id, email, password_hash, role, created_at, updated_at
+		SELECT id, email, password_hash, auth_provider, provider_id, role, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
 	var u model.User
 	err := ps.pool.QueryRow(ctx, query, id).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt,
+		&u.ID, &u.Email, &u.PasswordHash, &u.Provider, &u.ProviderID, &u.Role, &u.CreatedAt, &u.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &u, nil
+}
+
+func (ps *PostgresStore) UpsertOAuthUser(ctx context.Context, u *model.User) error {
+	query := `
+		INSERT INTO users (id, email, password_hash, auth_provider, provider_id, role, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		ON CONFLICT (email) DO UPDATE SET
+			auth_provider = EXCLUDED.auth_provider,
+			provider_id = EXCLUDED.provider_id,
+			updated_at = NOW()
+		RETURNING id, role, created_at
+	`
+	return ps.pool.QueryRow(ctx, query, 
+		u.ID, u.Email, u.PasswordHash, u.Provider, u.ProviderID, u.Role, u.CreatedAt, u.UpdatedAt,
+	).Scan(&u.ID, &u.Role, &u.CreatedAt)
 }

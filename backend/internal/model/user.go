@@ -18,6 +18,8 @@ type User struct {
 	ID           string    `json:"id"`            // UUID
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"-"`             // Never serialize the password hash
+	Provider     string    `json:"provider"`      // local, google, github
+	ProviderID   string    `json:"provider_id"`   // OAuth ID (if applicable)
 	Role         Role      `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

@@ -73,6 +73,9 @@ type ColdStore interface {
 	// GetUserByID retrieves a user by their UUID.
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 
+	// UpsertOAuthUser finds or creates a user by OAuth email and provider ID.
+	UpsertOAuthUser(ctx context.Context, u *model.User) error
+
 	// GetRecent returns up to limit events from Postgres.
 	GetRecent(limit int, agentID, sessionID *string) ([]*model.SecurityEvent, error)
 

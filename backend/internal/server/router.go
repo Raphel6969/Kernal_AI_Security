@@ -83,9 +83,11 @@ func NewRouter(s *Server, cfg *config.Settings) http.Handler {
 	r.Post("/webhooks", s.handlePostWebhook)
 	r.Delete("/webhooks/{id}", s.handleDeleteWebhook)
 
-	// ── Authentication (Phase 5) ───────────────────────────────────────────────
+	// ── Authentication (Phase 5 & 6) ───────────────────────────────────────────
 	r.Post("/auth/register", s.handleRegister)
 	r.Post("/auth/login", s.handleLogin)
+	r.Get("/auth/{provider}/login", s.handleOAuthLogin)
+	r.Get("/auth/{provider}/callback", s.handleOAuthCallback)
 
 	// ── Alert History (Phase 4) ────────────────────────────────────────────────
 	r.Get("/alerts/history", s.handleGetAlertHistory)
