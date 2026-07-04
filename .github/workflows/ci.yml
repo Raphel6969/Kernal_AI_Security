@@ -27,18 +27,16 @@ jobs:
           cache-dependency-path: backend/go.sum
 
       - name: ✅ Verify go.mod is tidy
-        working-directory: ./backend
         run: |
+          cd backend
           go mod tidy
           git diff --exit-code go.mod go.sum
 
       - name: 🔨 Build binary
-        working-directory: ./backend
-        run: go build -v ./cmd/aegix/
+        run: cd backend && go build -v ./cmd/aegix/
 
       - name: 🧪 Run tests
-        working-directory: ./backend
-        run: go test -v -race -timeout 60s ./...
+        run: cd backend && go test -v -race -timeout 60s ./...
 
       - name: 🔍 Lint (golangci-lint)
         uses: golangci/golangci-lint-action@v6
