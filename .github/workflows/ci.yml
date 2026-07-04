@@ -42,7 +42,7 @@ jobs:
         with:
           version: v1.64.8
           working-directory: backend
-          args: --timeout=5m --go=1.24
+          args: --timeout=5m
 
   # ── Job 2: React Frontend ──────────────────────────────────────────────────
   frontend:
