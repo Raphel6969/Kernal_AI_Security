@@ -14,7 +14,8 @@ linters:
 
 linters-settings:
   govet:
-    check-shadowing: true
+    enable:
+      - shadow
   revive:
     rules:
       - name: exported
