@@ -86,6 +86,8 @@ func NewRouter(s *Server, cfg *config.Settings) http.Handler {
 	// ── Authentication (Phase 5 & 6) ───────────────────────────────────────────
 	r.Post("/auth/register", s.handleRegister)
 	r.Post("/auth/login", s.handleLogin)
+	r.Post("/auth/refresh", s.handleRefresh)
+	r.Post("/auth/logout", s.handleLogout)
 	r.Get("/auth/{provider}/login", s.handleOAuthLogin)
 	r.Get("/auth/{provider}/callback", s.handleOAuthCallback)
 

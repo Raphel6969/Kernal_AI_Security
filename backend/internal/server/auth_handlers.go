@@ -142,7 +142,22 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   7 * 24 * 60 * 60,
 	})
 
-	writeJSON(w, http.StatusOK, map[string]string{
+	writeJSON(w, http.StatusOK, map[string]any{
+		"user":         user,
 		"access_token": tokens.AccessToken,
 	})
+}
+
+// handleLogout clears the HTTP-only refresh cookie
+func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   -1,
+	})
+	w.WriteHeader(http.StatusOK)
 }
