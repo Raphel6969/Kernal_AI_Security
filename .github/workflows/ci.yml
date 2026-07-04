@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
 
 jobs:
   # ── Job 1: Go Backend ──────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ jobs:
       - name: 🔍 Lint (golangci-lint)
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.65.0   # first release with Go 1.25 toolchain support
           working-directory: backend
           args: --timeout=5m
 
