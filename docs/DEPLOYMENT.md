@@ -19,36 +19,38 @@ This guide covers deploying the Aegix system in production, including the backen
 
 ## Architecture Overview
 
-**Single Container, Static Frontend Approach**
+**Multi-Container Docker Compose Stack**
 
 ```
-┌─────────────────────────────────────┐
-│      Docker Container               │
-│  (aegix:latest)                     │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │   FastAPI + Uvicorn Server    │  │
-│  │   Port 8000                   │  │
-│  ├───────────────────────────────┤  │
-│  │   API Routes (JSON)           │  │
-│  │  /stats, /events, /analyze    │  │
-│  │  /agent/events, /ws           │  │
-│  ├───────────────────────────────┤  │
-│  │   Static Files (Frontend)     │  │
-│  │  /index.html, /assets/*       │  │
-│  └───────────────────────────────┘  │
-│                                     │
-│   Volume: /app/data                │
-│   (SQLite persistence)              │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   DOCKER COMPOSE NETWORK                    │
+│                                                             │
+│  ┌─────────────────┐       ┌─────────────────────────────┐  │
+│  │ NGINX (Port 80) │──────▶│ React Frontend (Port 5173)  │  │
+│  │ Reverse Proxy   │       │ / (Static SPA routing)      │  │
+│  └───────┬─────────┘       └─────────────────────────────┘  │
+│          │                                                  │
+│          │ /api/*                                           │
+│          ▼                                                  │
+│  ┌─────────────────────────────┐    ┌────────────────────┐  │
+│  │ Go Backend (Port 8000)      │───▶│ PostgreSQL (5432)  │  │
+│  │ Chi Router, OAuth logic     │    │ Central Storage    │  │
+│  └───────┬─────────────────────┘    └────────────────────┘  │
+│          │                                                  │
+│          │ Edge Sync / Caching                              │
+│          ▼                                                  │
+│  ┌─────────────────────────────┐                            │
+│  │ SQLite (.aegix_edge.db)     │                            │
+│  │ Local high-speed persistence│                            │
+│  └─────────────────────────────┘                            │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 **Benefits:**
-- Single deployment artifact
-- No CORS complexity
-- Frontend and backend version-locked
-- Easy scaling with load balancer
-- SQLite data persists across restarts
+- Highly scalable and decoupled services
+- Secure reverse-proxy routing via NGINX (hides internal ports)
+- Dual-database architecture ensures zero event loss at the edge
+- Production-grade authentication with HTTP-only cookies and SameSite restrictions
 
 ---
 
@@ -56,80 +58,55 @@ This guide covers deploying the Aegix system in production, including the backen
 
 Before deploying to production, test the Docker image locally.
 
-### 1. Build Frontend
+### 1. Setup Environment Variables
 
 ```bash
-cd frontend
-npm install
-npm run build
-cd ..
+cp .env.example .env
+```
+Edit the `.env` file to include your OAuth credentials:
+```env
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
 ```
 
-This creates `frontend/dist/` with production-optimized React app.
-
-### 2. Build Docker Image
+### 2. Build and Run via Docker Compose
 
 ```bash
-docker build -t aegix:latest .
+docker-compose up -d --build
 ```
 
-Verify the build succeeded:
+Verify all services are running:
 ```bash
-docker images | grep aegix
-# Should see: aegix  latest  <image-id>  <size>
+docker-compose ps
+# You should see nginx, postgres, backend, and frontend containers running
 ```
 
-### 3. Run Container Locally
-
-```bash
-# Create data directory
-mkdir -p ./data
-
-# Run with volume mount for persistence
-docker run -d \
-  --name aibouncer-test \
-  -p 8000:8000 \
-  -v $(pwd)/data:/app/data \
-  aibouncer-backend:latest
-```
-
-### 4. Test Endpoints
+### 3. Test Endpoints
 
 **Local Testing**:
 ```bash
 # Check API health
-curl http://localhost:8000/stats
+curl http://localhost/api/healthz
 
-# Open frontend in browser
-open http://localhost:8000
+# Analyze a command
+curl -X POST http://localhost/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"command":"curl http://example.com"}'
 
 # Test WebSocket
 curl -i -N -H "Connection: Upgrade" \
   -H "Upgrade: websocket" \
   -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
   -H "Sec-WebSocket-Version: 13" \
-  http://localhost:8000/ws
+  http://localhost/api/ws
 ```
 
-**Production Testing**:
-```bash
-# Health check
-curl https://<your-space-subdomain>.hf.space/healthz
-
-# Get statistics
-curl https://<your-space-subdomain>.hf.space/stats
-
-# Analyze a command
-curl -X POST https://<your-space-subdomain>.hf.space/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"command":"curl http://example.com"}'
-```
-
-### 5. Stop Test Container
+### 4. Stop Services
 
 ```bash
-docker stop aegix-test
-docker rm aegix-test
+docker-compose down
 ```
 
 ---

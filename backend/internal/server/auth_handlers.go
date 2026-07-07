@@ -11,12 +11,29 @@ import (
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/model"
 )
 
+type RegisterRequest struct {
+	Email    string `json:"email" example:"user@example.com"`
+	Password string `json:"password" example:"secret123"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" example:"user@example.com"`
+	Password string `json:"password" example:"secret123"`
+}
+
 // handleRegister registers a new user
+//	@Summary		Register User
+//	@Description	Create a new user account with email and password
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		RegisterRequest	true	"Registration details"
+//	@Success		201		{object}	map[string]string
+//	@Failure		400		{object}	map[string]string
+//	@Failure		500		{object}	map[string]string
+//	@Router			/auth/register [post]
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErr(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -51,11 +68,19 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogin validates credentials and issues JWTs
+//	@Summary		Login User
+//	@Description	Authenticate user and return access token + HTTP-only refresh cookie
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		LoginRequest	true	"Login details"
+//	@Success		200		{object}	map[string]any
+//	@Failure		400		{object}	map[string]string
+//	@Failure		401		{object}	map[string]string
+//	@Failure		503		{object}	map[string]string
+//	@Router			/auth/login [post]
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErr(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -101,6 +126,14 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleRefresh issues a new access token using an HTTP-only refresh cookie
+//	@Summary		Refresh Access Token
+//	@Description	Uses the HTTP-only refresh_token cookie to issue a new access token
+//	@Tags			Auth
+//	@Produce		json
+//	@Success		200		{object}	map[string]any
+//	@Failure		401		{object}	map[string]string
+//	@Failure		503		{object}	map[string]string
+//	@Router			/auth/refresh [post]
 func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
@@ -149,6 +182,12 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogout clears the HTTP-only refresh cookie
+//	@Summary		Logout User
+//	@Description	Clears the HTTP-only refresh_token cookie
+//	@Tags			Auth
+//	@Produce		json
+//	@Success		200		"Logged out successfully"
+//	@Router			/auth/logout [post]
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",

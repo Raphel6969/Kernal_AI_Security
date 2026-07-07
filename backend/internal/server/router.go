@@ -15,7 +15,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	_ "github.com/Raphel6969/Kernal_AI_Security/backend/docs"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/config"
 )
 
@@ -33,6 +35,11 @@ func NewRouter(s *Server, cfg *config.Settings) http.Handler {
 	// ── Infrastructure ─────────────────────────────────────────────────────────
 	r.Get("/healthz", s.handleHealthz)
 	r.Get("/readyz", s.handleReadyz)
+
+	// ── API Documentation (Swagger) ────────────────────────────────────────────
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/api/swagger/doc.json"), // NGINX routes /api to /
+	))
 
 	// ── Session ────────────────────────────────────────────────────────────────
 	r.Get("/session", s.handleGetSession)

@@ -9,6 +9,31 @@
 //   6. Initialise Phase 4 services (alerts, notifications, email, Groq)
 //   7. Wire HTTP server (Chi router + WebSocket hub)
 //   8. Serve with graceful shutdown on SIGINT / SIGTERM
+//	@title			Aegix Security API
+//	@version		1.0
+//	@description	The Backend API for the Aegix AI Kernel Security System.
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	Aegix Security Team
+//	@contact.url	https://aegix.example.com/support
+//	@contact.email	support@aegix.example.com
+
+//	@license.name	MIT
+//	@license.url	https://opensource.org/licenses/MIT
+
+//	@host		localhost
+//	@BasePath	/api
+//	@schemes	http https
+
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							cookie
+//	@name						refresh_token
+
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+//	@description				Type "Bearer" followed by a space and your access token.
+
 package main
 
 import (

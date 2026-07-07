@@ -14,12 +14,12 @@
 <br/>
 
 <!-- BADGES ROW 1 — Core Tech -->
-<a href="https://www.python.org/downloads/release/python-311/"><img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white"/></a>
-<a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white"/></a>
+<a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.25+-00ADD8?style=for-the-badge&logo=go&logoColor=white"/></a>
+<a href="https://go-chi.io/"><img src="https://img.shields.io/badge/Chi-Router-009688?style=for-the-badge&logo=go&logoColor=white"/></a>
 <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black"/></a>
 <a href="https://ebpf.io/"><img src="https://img.shields.io/badge/eBPF-Kernel%20Guard-EE0000?style=for-the-badge&logo=linux&logoColor=white"/></a>
-<a href="https://scikit-learn.org/"><img src="https://img.shields.io/badge/ML-Scikit--Learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white"/></a>
-<a href="https://www.sqlite.org/"><img src="https://img.shields.io/badge/SQLite-Persistent-003B57?style=for-the-badge&logo=sqlite&logoColor=white"/></a>
+<a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white"/></a>
+<a href="https://nginx.org/"><img src="https://img.shields.io/badge/NGINX-Proxy-009639?style=for-the-badge&logo=nginx&logoColor=white"/></a>
 
 <br/>
 
@@ -134,18 +134,18 @@ Seccomp / AppArmor     →  Blocks, but no intelligence
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║  👁️  LAYER 3 — DASHBOARD  (The Eye)                             ║
+║  👁️  LAYER 4 — DASHBOARD  (The Eye)                             ║
 ║                                                                  ║
 ║   React 18 · WebSocket real-time feed · Attack explanations      ║
 ║   Live event table · Risk score histogram · Remediation toggle   ║
-║   http://localhost:5173                                          ║
+║   Proxy: NGINX (Port 80) → routes /api to backend, / to frontend ║
 ╚════════════════════════╦═════════════════════════════════════════╝
                          ║  WebSocket  ws://
                          ▼
 ╔══════════════════════════════════════════════════════════════════╗
-║  🧠  LAYER 2 — AI BOUNCER  (The Brain)                          ║
+║  🧠  LAYER 3 — AI BOUNCER  (The Brain)                          ║
 ║                                                                  ║
-║   FastAPI · SQLite persistence · WebSocket broadcast             ║
+║   Golang (Chi Router) · PostgreSQL (Cold Storage)                ║
 ║   ┌────────────────────────────────────────────────────┐         ║
 ║   │  TIER A — Rule Engine         60% weight  < 1 ms  │         ║
 ║   │  ├─ Pattern matching: shells, injections, RCEs     │         ║
@@ -153,7 +153,7 @@ Seccomp / AppArmor     →  Blocks, but no intelligence
 ║   │  └─ Entropy detection: Base64, hex, ${IFS}…       │         ║
 ║   ├────────────────────────────────────────────────────┤         ║
 ║   │  TIER B — ML Scorer           40% weight  ~ 5 ms  │         ║
-║   │  ├─ Logistic Regression on TF-IDF features        │         ║
+║   │  ├─ ONNX runtime / Go-native inference (Roadmap)  │         ║
 ║   │  └─ Trained on 2,300+ labelled command samples    │         ║
 ║   ├────────────────────────────────────────────────────┤         ║
 ║   │  TIER C — LLM Explainer  [Roadmap]  async         │         ║
@@ -165,11 +165,11 @@ Seccomp / AppArmor     →  Blocks, but no intelligence
                          ║
                          ▼
 ╔══════════════════════════════════════════════════════════════════╗
-║  💪  LAYER 1 — KERNEL GUARD  (The Muscle)                       ║
+║  💪  LAYER 1 & 2 — KERNEL GUARD & SYNC AGENT (The Muscle)       ║
 ║                                                                  ║
 ║   eBPF tracepoint on execve() syscall                            ║
 ║   ├─ Captures: PID · PPID · UID · GID · command · args         ║
-║   ├─ Streams events to user-space via ring buffer                ║
+║   ├─ High-speed SQLite for local Edge sync caching               ║
 ║   ├─ Zero-copy, < 1μs overhead per event                        ║
 ║   └─ Graceful fallback on Windows / macOS / WSL (API-only mode) ║
 ╚══════════════════════════════════════════════════════════════════╝

@@ -1,0 +1,162 @@
+basePath: /api
+definitions:
+  server.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secret123
+        type: string
+    type: object
+  server.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secret123
+        type: string
+    type: object
+host: localhost
+info:
+  contact:
+    email: support@aegix.example.com
+    name: Aegix Security Team
+    url: https://aegix.example.com/support
+  description: The Backend API for the Aegix AI Kernel Security System.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Aegix Security API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return access token + HTTP-only refresh cookie
+      parameters:
+      - description: Login details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/server.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login User
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Clears the HTTP-only refresh_token cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logged out successfully
+      summary: Logout User
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      description: Uses the HTTP-only refresh_token cookie to issue a new access token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh Access Token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email and password
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/server.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register User
+      tags:
+      - Auth
+schemes:
+- http
+- https
+securityDefinitions:
+  ApiKeyAuth:
+    in: cookie
+    name: refresh_token
+    type: apiKey
+  BearerAuth:
+    description: Type "Bearer" followed by a space and your access token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
