@@ -21,7 +21,7 @@ Aegix is a **four-layer real-time RCE prevention system** that combines an alway
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 3: Aegix API & Intelligence (The Brain)             │
 │  - Golang Backend (Chi Router)                             │
-│  - PostgreSQL (Cold Storage for users, alerts, settings)   │
+│  - Supabase Postgres (Cold Storage for users, settings)    │
 │  - OAuth Authentication (Google/GitHub, JWT Sessions)      │
 │  - Rule Engine & ML Scorer (Threat Detection)              │
 │  - Classification (safe/suspicious/malicious)             │
@@ -68,7 +68,7 @@ Rule Engine + ML Scorer analyze command
        ↓
 Risk score calculated (0-100)
        ↓
-Event synced to PostgreSQL (Central Cold Store)
+Event synced to Supabase Postgres (Cloud Cold Store)
        ↓
 WebSocket broadcasts to all connected clients
        ↓
@@ -104,7 +104,7 @@ Client receives JSON response
 **Responsibility**: Monitor system calls at kernel level and cache events locally before syncing to the cloud.
 
 **Key Features**:
-- High-speed local SQLite database (`data/.aegix_edge.db`) ensures zero event loss even if the central PostgreSQL server is unreachable.
+- High-speed local SQLite database (`data/.aegix_edge.db`) ensures zero event loss even if the cloud Supabase Postgres is unreachable.
 - Hooks `tracepoint/syscalls/sys_enter_execve` (kernel 5.4+) via eBPF (currently Python BCC, migrating to Cilium eBPF in Go).
 - Zero-copy event streaming via BPF ring buffer
 - Captures with minimal overhead (<1% CPU)
@@ -112,7 +112,7 @@ Client receives JSON response
 **Implementation Details**:
 - **Language**: Go (Edge Agent) + eBPF (Kernel hook)
 - **Local Cache**: SQLite with WAL mode enabled for maximum concurrency.
-- **Sync Strategy**: Background goroutine polls local SQLite and pushes batches to the central PostgreSQL database.
+- **Sync Strategy**: Background goroutine polls local SQLite and pushes batches to the cloud Supabase Postgres database.
 - **Data Transport**: BPF ring buffer (zero-copy, lock-free)
 - **Overhead**: <1% CPU on idle systems
 
@@ -388,9 +388,9 @@ if riskScore < 30 {
 - Targeted webhook tagging (Safe/Suspicious/Malicious)
 - Cyberpunk styled UI with real-time stats
 
-### Phase 9: Enterprise Architecture (The Go Rewrite) ✅
+### Phase 9: Enterprise Architecture (The Go Rewrite & Cloud DB) ✅
 - Ported backend from Python/FastAPI to Go/Chi for high performance
-- Dual-Database Architecture: PostgreSQL (Central) + SQLite (Edge Sync)
+- Dual-Database Architecture: Supabase Postgres (Cloud) + SQLite (Edge Sync)
 - NGINX Reverse Proxy for unified routing
 - Google and GitHub OAuth Authentication with secure HTTP-only JWT cookies
 
@@ -405,4 +405,4 @@ if riskScore < 30 {
 
 ---
 
-**Last Updated**: May 2026 | **Status**: Phase 8 Complete, Phase 9 Planned
+**Last Updated**: July 2026 | **Status**: Phase 9 Complete

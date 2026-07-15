@@ -32,10 +32,10 @@ This guide covers deploying the Aegix system in production, including the backen
 │          │                                                  │
 │          │ /api/*                                           │
 │          ▼                                                  │
-│  ┌─────────────────────────────┐    ┌────────────────────┐  │
-│  │ Go Backend (Port 8000)      │───▶│ PostgreSQL (5432)  │  │
-│  │ Chi Router, OAuth logic     │    │ Central Storage    │  │
-│  └───────┬─────────────────────┘    └────────────────────┘  │
+│  ┌─────────────────────────────┐                            │
+│  │ Go Backend (Port 8000)      │────(Outbound to Internet)─▶│ Supabase Postgres (Cold Store)
+│  │ Chi Router, OAuth logic     │                            │
+│  └───────┬─────────────────────┘                            │
 │          │                                                  │
 │          │ Edge Sync / Caching                              │
 │          ▼                                                  │
@@ -63,8 +63,9 @@ Before deploying to production, test the Docker image locally.
 ```bash
 cp .env.example .env
 ```
-Edit the `.env` file to include your OAuth credentials:
+Edit the `.env` file to include your OAuth credentials and Supabase URL:
 ```env
+DATABASE_URL=postgresql://postgres.xxx...
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GITHUB_CLIENT_ID=your-github-client-id
@@ -80,7 +81,7 @@ docker-compose up -d --build
 Verify all services are running:
 ```bash
 docker-compose ps
-# You should see nginx, postgres, backend, and frontend containers running
+# You should see nginx, backend, frontend, and redis containers running
 ```
 
 ### 3. Test Endpoints

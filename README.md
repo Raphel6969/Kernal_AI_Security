@@ -24,7 +24,7 @@
 <br/>
 
 <!-- BADGES ROW 2 — Quality & Status -->
-<a href="#"><img src="https://img.shields.io/badge/Tests-296%20Passing-brightgreen?style=flat-square&logo=pytest&logoColor=white"/></a>
+<a href="#"><img src="https://img.shields.io/badge/Tests-296%20Passing-brightgreen?style=flat-square&logo=go&logoColor=white"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Coverage-94%25-brightgreen?style=flat-square"/></a>
 <a href="#"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Platform-Linux%20%7C%20WSL2%20%7C%20macOS-lightgrey?style=flat-square&logo=linux"/></a>
@@ -145,7 +145,7 @@ Seccomp / AppArmor     →  Blocks, but no intelligence
 ╔══════════════════════════════════════════════════════════════════╗
 ║  🧠  LAYER 3 — AI BOUNCER  (The Brain)                          ║
 ║                                                                  ║
-║   Golang (Chi Router) · PostgreSQL (Cold Storage)                ║
+║   Golang (Chi Router) · Supabase PostgreSQL (Cold Storage)       ║
 ║   ┌────────────────────────────────────────────────────┐         ║
 ║   │  TIER A — Rule Engine         60% weight  < 1 ms  │         ║
 ║   │  ├─ Pattern matching: shells, injections, RCEs     │         ║
@@ -235,10 +235,10 @@ The detection engine covers attack patterns mapped to:
 
 | Tool | Version | Notes |
 |:---|:---|:---|
-| 🐍 Python | 3.10+ | [python.org](https://www.python.org/downloads/) |
+| 🐹 Go | 1.22+ | [go.dev](https://go.dev/dl/) |
+| 🐳 Docker | Latest | For local services and dependencies |
 | 📦 Node.js | 18+ | [nodejs.org](https://nodejs.org/) |
 | 🐧 Linux / WSL2 | Kernel 5.4+ | Required for eBPF (API-only mode works on macOS/Windows) |
-| 🐍 conda | Any | [Miniconda](https://docs.conda.io/en/latest/miniconda.html) (recommended) |
 
 ### Installation
 
@@ -247,34 +247,32 @@ The detection engine covers attack patterns mapped to:
 git clone https://github.com/Raphel6969/Kernal_AI_Security.git
 cd Kernal_AI_Security
 
-# 2. Backend (Python)
-conda create -n aibouncer python=3.11 -y
-conda activate aibouncer
-pip install -r requirements.txt
-
-# 3. Train the ML model
-python backend/models/train_model.py
-
-# 4. Frontend (React)
-cd frontend && npm install && cd ..
-
-# 5. Copy default config
+# 2. Copy default config
 cp .env.example .env
+# Edit .env with your Supabase credentials and API keys
+
+# 3. Start via Docker (Recommended)
+docker-compose up -d --build
 ```
 
-### Run
+### Run (Local Development)
+
+If you prefer to run services manually instead of Docker:
 
 Open **two terminals**:
 
 ```bash
 # Terminal 1 — Backend
-conda activate aibouncer
-python -m uvicorn backend.app:app --host 0.0.0.0 --port 8000
+cd backend
+go mod download
+go run ./cmd/aegix
 ```
 
 ```bash
 # Terminal 2 — Dashboard
-cd frontend && npm run dev
+cd frontend
+npm install
+npm run dev
 ```
 
 Then open **[http://localhost:5173](http://localhost:5173)** — you should see:
@@ -434,7 +432,7 @@ All configuration lives in `.env` at the project root:
 
 | Mode | Who attaches eBPF | When to use |
 |:---|:---|:---|
-| `backend` *(default)* | FastAPI process | Standard deployment |
+| `backend` *(default)* | Go process | Standard deployment |
 | `agent` | Sidecar agent | Agent runs separately from backend |
 | `disabled` | Nobody | macOS · Windows · CI/CD testing |
 
@@ -449,22 +447,9 @@ All configuration lives in `.env` at the project root:
 ```
 
 ```bash
-# Full suite
-pytest large_test_set/ -v
-
-# By category
-pytest large_test_set/test_01_rule_engine.py -v     # Rule engine unit tests
-pytest large_test_set/test_02_pipeline.py -v        # Detection pipeline
-pytest large_test_set/test_05_evasion.py -v         # Adversarial / evasion
-pytest large_test_set/test_06_websocket.py -v       # WebSocket broadcast
-pytest large_test_set/test_09_stress.py -v          # Concurrency / stress
-pytest large_test_set/test_10_shell_attacks.sh      # Live shell integration
-
-# Run shell-based integration suite (requires live backend)
-bash large_test_set/test_10_shell_attacks.sh
-
-# Full end-to-end sweep (all 296 commands against live backend)
-bash scripts/run_all_commands.sh
+# Run the full Go test suite
+cd backend
+go test ./... -v
 ```
 
 <!--### Test Categories
@@ -486,7 +471,7 @@ bash scripts/run_all_commands.sh
 
 ## 📊 Benchmark Results
 
-Tested on Ubuntu 22.04, Kernel 5.15, Python 3.11, i7-12th gen:
+Tested on Ubuntu 22.04, Kernel 5.15, Go 1.22, i7-12th gen:
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -614,7 +599,7 @@ This project is licensed under the **MIT License** — see [`LICENSE`](LICENSE) 
 
 <br/>
 
-*Built with eBPF · FastAPI · React · scikit-learn*
+*Built with eBPF · Go · React · Supabase*
 
 <br/>
 
