@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,6 +58,11 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	if s.svc.DB != nil {
 		if err := s.svc.DB.CreateUser(r.Context(), user); err != nil {
+			if strings.Contains(err.Error(), "SQLSTATE 23505") {
+				writeErr(w, http.StatusConflict, "email already registered")
+				return
+			}
+			slog.Error("failed to create user in db", "error", err, "email", req.Email)
 			writeErr(w, http.StatusInternalServerError, "failed to create user")
 			return
 		}
