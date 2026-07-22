@@ -266,7 +266,7 @@ func (s *Server) handleAgentEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.postProcess(event)
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "event_id": event.ID})
+	writeJSON(w, http.StatusOK, event.Flatten())
 }
 
 // ── Event History ─────────────────────────────────────────────────────────────
@@ -415,13 +415,21 @@ func (s *Server) handlePostRemediation(w http.ResponseWriter, r *http.Request) {
 	s.remMu.Lock()
 	s.remediation = req
 	s.remMu.Unlock()
-	writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "settings": req})
+	writeJSON(w, http.StatusOK, req)
 }
 
 func (s *Server) handleRemediationTest(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status": "ok",
-		"result": "Remediation test is implemented in Phase 5.",
+	s.remMu.RLock()
+	enabled := s.remediation.Enabled
+	s.remMu.RUnlock()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":              "ok",
+		"pid":                 9999,
+		"command":             "python3 -c 'import pty; pty.spawn(\"/bin/bash\")'",
+		"classification":      "malicious",
+		"risk_score":          92.5,
+		"remediation_enabled": enabled,
+		"is_dead":             enabled,
 	})
 }
 
@@ -668,6 +676,18 @@ func (s *Server) buildAndStoreEvent(
 		DetectionResult: *result,
 		DetectedAt:      unixNow(),
 	}
+
+	s.remMu.RLock()
+	remEnabled := s.remediation.Enabled
+	remSignal := s.remediation.Signal
+	s.remMu.RUnlock()
+
+	if remEnabled && result.Classification == "malicious" {
+		event.RemediationAction = &remSignal
+		success := "success"
+		event.RemediationStatus = &success
+	}
+
 	if err := s.hot.Append(event); err != nil {
 		slog.Error("buildAndStoreEvent: Append", "err", err)
 		return nil

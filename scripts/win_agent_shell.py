@@ -101,16 +101,22 @@ def main():
                     score = data.get("risk_score", 0.0)
                     rules = data.get("matched_rules", [])
                     
-                    emoji = "??" if classification == "safe" else "??" if classification == "suspicious" else "??"
+                    remediation_action = data.get("remediation_action")
+                    
+                    emoji = "✅" if classification == "safe" else "⚠️" if classification == "suspicious" else "🚨"
                     print(f"    -> {emoji} Bouncer Verdict: [{classification.upper()}] Risk: {score:.0f}/100")
                     if rules:
                         print(f"    -> Matched Rules: {', '.join(rules)}")
+                    
+                    if remediation_action:
+                        print(f"    -> 🛑 [REMEDIATION] Backend issued kill signal: {remediation_action}")
+                        proc.kill()
                     
                     time.sleep(0.5)
                     
                     poll = proc.poll()
                     if poll is not None:
-                        print(f"    -> ?? [REMEDIATION] Process {pid} was terminated (Exit code: {poll})!")
+                        print(f"    -> 🛑 [REMEDIATION] Process {pid} was terminated (Exit code: {poll})!")
                     else:
                         stdout, stderr = proc.communicate()
                         if stdout:
