@@ -64,7 +64,7 @@ export function ThreatMonitor({ events, onFlush, sessionToken }: ThreatMonitorPr
     a.download = `aegix_events_${new Date().toISOString()}.json`;
     a.click();
     try {
-      const url = new URL(`${API_URL}/notifications/activity`);
+      const url = new URL(`${API_URL}/notifications/activity`, window.location.origin);
       if (sessionToken) url.searchParams.set('session_token', sessionToken);
       await fetch(url.toString(), {
         method: 'POST',
@@ -83,7 +83,7 @@ export function ThreatMonitor({ events, onFlush, sessionToken }: ThreatMonitorPr
     if (!window.confirm('Delete all stored events?')) return;
     setIsFlushing(true);
     try {
-      const url = new URL(`${API_URL}/events`);
+      const url = new URL(`${API_URL}/events`, window.location.origin);
       if (sessionToken) url.searchParams.set('session_token', sessionToken);
       const res = await fetch(url.toString(), { method: 'DELETE' });
       if (!res.ok) throw new Error('Flush failed');

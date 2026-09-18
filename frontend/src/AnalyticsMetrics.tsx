@@ -26,7 +26,7 @@ export function AnalyticsMetrics({ events, sessionToken }: AnalyticsMetricsProps
   const [stats, setStats] = useState({ total_events: 0, safe: 0, suspicious: 0, malicious: 0 });
 
   useEffect(() => {
-    const url = new URL(`${API_URL}/stats`);
+    const url = new URL(`${API_URL}/stats`, window.location.origin);
     if (sessionToken) url.searchParams.set('session_token', sessionToken);
     fetch(url.toString()).then((r) => r.json()).then(setStats).catch(() => {});
   }, [events.length, sessionToken]);

@@ -47,7 +47,7 @@ export function useWebSocket(sessionToken?: string) {
     // Defined first so connect()'s onopen closure can reference it safely
     const hydrateEvents = async () => {
       try {
-        const url = new URL(`${API_URL}/events`);
+        const url = new URL(`${API_URL}/events`, window.location.origin);
         url.searchParams.set('limit', '100');
         if (sessionToken) url.searchParams.set('session_token', sessionToken);
         const response = await fetch(url.toString());
@@ -78,9 +78,15 @@ export function useWebSocket(sessionToken?: string) {
       if (!sessionToken) {
         return;
       }
-      const wsUrl = new URL(WS_URL);
-      if (sessionToken) wsUrl.searchParams.set('session_token', sessionToken);
-      const socket = new WebSocket(wsUrl.toString());
+      let wsTarget = WS_URL;
+      if (!wsTarget.startsWith('ws://') && !wsTarget.startsWith('wss://')) {
+        const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const cleanPath = wsTarget.startsWith('/') ? wsTarget : `/${wsTarget}`;
+        wsTarget = `${proto}//${window.location.host}${cleanPath}`;
+      }
+      const sep = wsTarget.includes('?') ? '&' : '?';
+      const finalWsUrl = sessionToken ? `${wsTarget}${sep}session_token=${encodeURIComponent(sessionToken)}` : wsTarget;
+      const socket = new WebSocket(finalWsUrl);
       socketRef.current = socket;
       setWs(socket);
 

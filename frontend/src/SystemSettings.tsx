@@ -46,7 +46,7 @@ export function SystemSettings({
       await new Promise((r) => setTimeout(r, 600));
       setTestLog((prev) => [...prev, { type: 'default', text: '⚙️ Requesting backend to spawn target process (python)...' }]);
       
-      const url = new URL(`${API_URL}/settings/remediation/test`);
+      const url = new URL(`${API_URL}/settings/remediation/test`, window.location.origin);
       if (sessionToken) url.searchParams.set('session_token', sessionToken);
 
       const res = await fetch(url.toString(), { method: 'POST' });

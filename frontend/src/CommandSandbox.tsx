@@ -85,7 +85,7 @@ export function CommandSandbox() {
 
     try {
       const sessionToken = window.localStorage.getItem('aegix_session_token');
-      const url = new URL(`${API_URL}/analyze`);
+      const url = new URL(`${API_URL}/analyze`, window.location.origin);
       if (sessionToken) url.searchParams.set('session_token', sessionToken);
 
       const t0 = performance.now();

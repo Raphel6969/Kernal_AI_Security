@@ -29,7 +29,7 @@ export function useLlmExplain() {
     setLoading(true);
     setError('');
     try {
-      const url = new URL(`${API_URL}/events/${encodeURIComponent(eventId)}/llm-explain`);
+      const url = new URL(`${API_URL}/events/${encodeURIComponent(eventId)}/llm-explain`, window.location.origin);
       if (sessionToken) url.searchParams.set('session_token', sessionToken);
       if (force) url.searchParams.set('force', 'true');
       const res = await fetch(url.toString(), { method: 'POST' });
@@ -50,7 +50,7 @@ export function useLlmExplain() {
     setLoading(true);
     setError('');
     try {
-      const url = new URL(`${API_URL}/analyze/llm-explain`);
+      const url = new URL(`${API_URL}/analyze/llm-explain`, window.location.origin);
       if (sessionToken) url.searchParams.set('session_token', sessionToken);
       const res = await fetch(url.toString(), {
         method: 'POST',

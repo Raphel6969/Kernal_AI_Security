@@ -72,9 +72,9 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
 
   const refresh = useCallback(async () => {
     try {
-      const listUrl = withSession(new URL(`${API_URL}/api/notifications`));
+      const listUrl = withSession(new URL(`${API_URL}/notifications`, window.location.origin));
       listUrl.searchParams.set('limit', '40');
-      const countUrl = withSession(new URL(`${API_URL}/api/notifications/unread-count`));
+      const countUrl = withSession(new URL(`${API_URL}/notifications/unread-count`, window.location.origin));
       const [listRes, countRes] = await Promise.all([
         fetch(listUrl.toString()),
         fetch(countUrl.toString()),
@@ -119,13 +119,13 @@ export function NotificationCenter({ sessionToken }: NotificationCenterProps) {
   }, [open]);
 
   const markAllRead = async () => {
-    const url = withSession(new URL(`${API_URL}/api/notifications/read-all`));
+    const url = withSession(new URL(`${API_URL}/notifications/read-all`, window.location.origin));
     await fetch(url.toString(), { method: 'POST' });
     void refresh();
   };
 
   const clearAll = async () => {
-    const url = withSession(new URL(`${API_URL}/api/notifications`));
+    const url = withSession(new URL(`${API_URL}/notifications`, window.location.origin));
     await fetch(url.toString(), { method: 'DELETE' });
     void refresh();
   };
