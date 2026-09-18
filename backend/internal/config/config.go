@@ -91,7 +91,7 @@ func Load() *Settings {
 
 	s := &Settings{
 		APIHost:     env("API_HOST", "0.0.0.0"),
-		APIPort:     envInt("API_PORT", 8000),
+		APIPort:     envInt("PORT", envInt("API_PORT", 8000)),
 		APILogLevel: env("API_LOG_LEVEL", "info"),
 
 		FrontendOrigins: parseCSV(env(
@@ -232,6 +232,7 @@ func projectRoot() string {
 func envFileCandidates() []string {
 	root := projectRoot()
 	return []string{
+		"/etc/secrets/.env",        // Render Secret Files location
 		filepath.Join(root, ".env"),
 		".env",
 		"../.env",
