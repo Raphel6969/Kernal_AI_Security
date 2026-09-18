@@ -5,8 +5,7 @@ export const injectAuth = (get: () => string | null, set: (token: string) => voi
   getAccessToken = get;
   setAccessToken = set;
 };
-
-const API_URL = 'http://localhost:8000/api';
+import { API_URL } from './config';
 
 // fetchWithAuth wraps the native fetch, adding the Bearer token and handling silent refresh.
 export const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {

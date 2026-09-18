@@ -12,9 +12,20 @@ import (
 
 // JWT configuration
 var (
-	// Secret key for signing JWTs. In production, load this from environment variables.
-	JWTSecret = []byte("super-secret-aegix-jwt-key")
+	// JWTSecret is the HMAC-SHA256 key used to sign JWTs.
+	// It MUST be initialised at startup via InitSecret before any tokens are issued.
+	// Defaults to a placeholder that will panic if accidentally used without init.
+	JWTSecret = []byte("aegix-unset-jwt-secret-call-InitSecret")
 )
+
+// InitSecret sets the JWT signing secret from the application config.
+// Call this once at server startup before any auth handlers are wired.
+func InitSecret(secret string) {
+	if secret == "" {
+		return
+	}
+	JWTSecret = []byte(secret)
+}
 
 // Claims represents the JWT payload.
 type Claims struct {

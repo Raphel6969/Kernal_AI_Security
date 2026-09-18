@@ -17,8 +17,10 @@ services:
     build:
       context: ./frontend
       dockerfile: ../Dockerfile.frontend
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost/api}
     environment:
-      - VITE_API_URL=http://localhost/api
+      - VITE_API_URL=${VITE_API_URL:-http://localhost/api}
     networks:
       - aegix_net
 
@@ -31,10 +33,11 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - API_LOG_LEVEL=info
-      - FRONTEND_ORIGINS=http://localhost
-      - REDIS_URL=redis://redis:6379/0
+      - FRONTEND_ORIGINS=${FRONTEND_ORIGINS:-http://localhost,http://localhost:5173}
       - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=super-secret-aegix-jwt-key
+      - JWT_SECRET=${JWT_SECRET:-super-secret-aegix-jwt-key}
+      - OAUTH_CALLBACK_URL=${OAUTH_CALLBACK_URL:-http://localhost/api/auth}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -44,22 +47,13 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - GROQ_MODEL=${GROQ_MODEL}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./backend/data:/app/data
     dns:
       - 8.8.8.8
       - 1.1.1.1
-    depends_on:
-      redis:
-        condition: service_started
     ports:
       - "8000:8000"
-    networks:
-      - aegix_net
-
-  # ── Hot Storage (In-Memory Cache) ──
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
     networks:
       - aegix_net
 

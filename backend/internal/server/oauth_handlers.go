@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -26,7 +27,12 @@ var (
 )
 
 func getOAuthConfig(provider string) (*oauth2.Config, error) {
-	callbackURL := "http://localhost/api/auth/" + provider + "/callback"
+	baseURL := os.Getenv("OAUTH_CALLBACK_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost/api/auth"
+	}
+	baseURL = strings.TrimRight(baseURL, "/")
+	callbackURL := baseURL + "/" + provider + "/callback"
 	
 	switch provider {
 	case "google":
@@ -201,7 +207,7 @@ func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		Value:    tokens.RefreshToken,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
+		Secure:   isSecureCookie(r),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   7 * 24 * 60 * 60, // 7 days
 	})

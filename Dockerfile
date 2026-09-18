@@ -1,51 +1,55 @@
-# Dockerfile for Aegix security backend/dashboard.
-# Hugging Face Docker Spaces expose app_port 7860 by default.
-FROM node:20-slim AS frontend-builder
+# Modern multi-stage Dockerfile for Aegix security backend and dashboard.
+# Compatible with Hugging Face Spaces (port 7860), Render, and standalone Docker deployments.
+
+# ── Stage 1: Frontend Build ────────────────────────────────────────────────────
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
+
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 
-# Build the React frontend inside the image so clean checkouts work everywhere.
 COPY frontend/package*.json ./
 RUN npm install
 
 COPY frontend/ ./
 RUN npm run build
 
-FROM python:3.11-slim
+# ── Stage 2: Go Backend Build ──────────────────────────────────────────────────
+FROM golang:alpine AS backend-builder
+
+WORKDIR /app/backend
+
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+COPY backend/ ./
+RUN go build -o aegix ./cmd/aegix
+
+# ── Stage 3: Production Runtime ────────────────────────────────────────────────
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 
-# Install system dependencies needed for the backend runtime.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy Go binary
+COPY --from=backend-builder /app/backend/aegix /usr/local/bin/aegix
 
-# Install backend dependencies first for better cache reuse.
-COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install --no-cache-dir -r backend/requirements.txt
-
-# Copy backend source and training data before building the trained model artifact.
-COPY backend/ /app/backend/
-COPY data/ /app/data/
-
-# Train the ML model during image build so deployments include the artifact.
-RUN python backend/models/train_model.py
-
-# Copy the built frontend bundle from the build stage.
+# Copy frontend static build for embedded Chi SPA serving
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
-COPY README.md /app/README.md
 
-ENV PYTHONUNBUFFERED=1
-ENV PORT=7860
-ENV API_HOST=0.0.0.0
-ENV API_PORT=7860
-ENV KERNEL_MONITOR_OWNER=disabled
-ENV DB_PATH=/tmp/aegix/events.db
-ENV EVENT_CACHE_SIZE=1000
+# Copy trained model weights and initial data
+COPY data/trained_model.json /app/data/trained_model.json
 
-EXPOSE 7860
+# Default environment
+ENV API_HOST=0.0.0.0 \
+    API_PORT=7860 \
+    PORT=7860 \
+    DB_PATH=/app/data/events.db \
+    KERNEL_MONITOR_OWNER=disabled \
+    EVENT_CACHE_SIZE=1000
 
-CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-7860}"]
+EXPOSE 7860 8000
+
+CMD ["aegix"]

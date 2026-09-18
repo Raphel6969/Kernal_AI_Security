@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -12,6 +13,14 @@ import (
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/auth"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/model"
 )
+
+// isSecureCookie determines if cookies should have the Secure attribute.
+func isSecureCookie(r *http.Request) bool {
+	if os.Getenv("COOKIE_SECURE") == "true" {
+		return true
+	}
+	return r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+}
 
 type RegisterRequest struct {
 	Email    string `json:"email" example:"user@example.com"`
@@ -121,7 +130,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		Value:    tokens.RefreshToken,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
+		Secure:   isSecureCookie(r),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   7 * 24 * 60 * 60, // 7 days
 	})
@@ -177,7 +186,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		Value:    tokens.RefreshToken,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, 
+		Secure:   isSecureCookie(r),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   7 * 24 * 60 * 60,
 	})
@@ -201,7 +210,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   isSecureCookie(r),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   -1,
 	})

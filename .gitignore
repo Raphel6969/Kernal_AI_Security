@@ -88,6 +88,7 @@ backend/bin/
 # Go module vendor (if used)
 backend/vendor/
 
-# Exported ML model (generated, not tracked)
-data/trained_model.json
+# Session secrets
+.session_secret
+**/.session_secret
 

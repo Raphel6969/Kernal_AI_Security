@@ -62,6 +62,9 @@ type Settings struct {
 	GeminiAPIKey    string
 	GeminiChatModel string
 
+	// ── JWT Authentication ────────────────────────────────────────────────────
+	JWTSecret string // HMAC-SHA256 key for JWT signing; required in production
+
 	// ── Sync Agent (new — Go specific) ───────────────────────────────────────
 	SyncIntervalSeconds int // how often the SQLite→Postgres drain runs
 	SyncBatchSize       int // max events per drain cycle
@@ -123,6 +126,8 @@ func Load() *Settings {
 		GeminiAPIKey:    env("GEMINI_API_KEY", ""),
 		GeminiChatModel: env("GEMINI_CHAT_MODEL", "gemini-flash-latest"),
 
+		JWTSecret: env("JWT_SECRET", ""),
+
 		SyncIntervalSeconds: envInt("SYNC_INTERVAL_SECONDS", 5),
 		SyncBatchSize:       envInt("SYNC_BATCH_SIZE", 100),
 	}
@@ -130,6 +135,12 @@ func Load() *Settings {
 	// Ensure a secret key exists (persist to disk so restarts reuse the same key).
 	if s.SecretKey == "" {
 		s.SecretKey = loadOrGenerateSecret(s.DBPath)
+	}
+
+	// Ensure a JWT secret is set. In production this MUST be provided via JWT_SECRET env var.
+	if s.JWTSecret == "" {
+		slog.Warn("config: JWT_SECRET not set — falling back to session secret (set JWT_SECRET in production)")
+		s.JWTSecret = s.SecretKey
 	}
 
 	instance = s

@@ -8,7 +8,9 @@ COPY . .
 RUN go build -o aegix ./cmd/aegix
 
 FROM alpine:latest
+RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=build /app/aegix /usr/local/bin/aegix
+COPY --from=build /app/data /app/data
 EXPOSE 8000
 CMD ["aegix"]

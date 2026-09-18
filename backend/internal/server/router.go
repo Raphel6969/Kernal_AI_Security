@@ -32,6 +32,22 @@ func NewRouter(s *Server, cfg *config.Settings) http.Handler {
 	r.Use(corsMiddleware(cfg.FrontendOrigins))
 	r.Use(rateLimiter(200, time.Minute)) // 200 req/min per IP
 
+	// ── Register API routes at root and under /api prefix ─────────────────────
+	registerAPIRoutes(r, s)
+	r.Route("/api", func(api chi.Router) {
+		registerAPIRoutes(api, s)
+	})
+
+	// ── Static Frontend ───────────────────────────────────────────────────────
+	// If frontend/dist/ exists, serve the React SPA.
+	// The catch-all must come last so API routes take priority.
+	mountFrontend(r, cfg)
+
+	return r
+}
+
+// registerAPIRoutes binds all API handlers to the provided router.
+func registerAPIRoutes(r chi.Router, s *Server) {
 	// ── Infrastructure ─────────────────────────────────────────────────────────
 	r.Get("/healthz", s.handleHealthz)
 	r.Get("/readyz", s.handleReadyz)
@@ -116,13 +132,6 @@ func NewRouter(s *Server, cfg *config.Settings) http.Handler {
 
 	// ── Chat (Phase 4) ────────────────────────────────────────────────────────
 	r.Post("/chat", s.handleChat)
-
-	// ── Static Frontend ───────────────────────────────────────────────────────
-	// If frontend/dist/ exists, serve the React SPA.
-	// The catch-all must come last so API routes take priority.
-	mountFrontend(r, cfg)
-
-	return r
 }
 
 // mountFrontend serves the React build output if it exists, otherwise

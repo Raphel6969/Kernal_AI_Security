@@ -48,6 +48,7 @@ import (
 	"time"
 
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/alerts"
+	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/auth"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/chat"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/config"
 	"github.com/Raphel6969/Kernal_AI_Security/backend/internal/detector"
@@ -61,6 +62,9 @@ func main() {
 	cfg := config.Load()
 	setupLogger(cfg.APILogLevel)
 	printBanner(cfg)
+
+	// Initialise JWT signing secret from config (reads JWT_SECRET env var).
+	auth.InitSecret(cfg.JWTSecret)
 
 	// Root context — cancelled on shutdown to stop all background goroutines.
 	ctx, cancel := context.WithCancel(context.Background())
